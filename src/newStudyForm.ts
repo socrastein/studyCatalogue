@@ -1,3 +1,5 @@
+import "./style/newStudyForm.css";
+
 export default function newStudyForm() {
   const container = document.createElement("div");
   container.id = "newStudyForm";
@@ -19,7 +21,7 @@ export default function newStudyForm() {
 
   const titleInput = document.createElement("input");
   titleInput.id = "newStudyTitle";
-  titleInput.classList.add("newStudyTitle");
+  titleInput.classList.add("newStudyInput");
 
   title.append(titleLabel);
   title.append(titleInput);
@@ -37,7 +39,7 @@ export default function newStudyForm() {
 
   const authorsInput = document.createElement("input");
   authorsInput.id = "newStudyAuthors";
-  authorsInput.classList.add("newStudyAuthors");
+  authorsInput.classList.add("newStudyInput");
 
   authors.append(authorsLabel);
   authors.append(authorsInput);
@@ -55,7 +57,7 @@ export default function newStudyForm() {
 
   const yearInput = document.createElement("input");
   yearInput.id = "newStudyYear";
-  yearInput.classList.add("newStudyYear");
+  yearInput.classList.add("newStudyInput");
 
   year.append(yearLabel);
   year.append(yearInput);
@@ -73,7 +75,7 @@ export default function newStudyForm() {
 
   const linkInput = document.createElement("input");
   linkInput.id = "newStudyLink";
-  linkInput.classList.add("newStudyLink");
+  linkInput.classList.add("newStudyInput");
 
   link.append(linkLabel);
   link.append(linkInput);
@@ -91,7 +93,7 @@ export default function newStudyForm() {
 
   const descriptionInput = document.createElement("textarea");
   descriptionInput.id = "newStudyDescription";
-  descriptionInput.classList.add("newStudyDescription");
+  descriptionInput.classList.add("newStudyInput");
 
   description.append(descriptionLabel);
   description.append(descriptionInput);
@@ -109,10 +111,18 @@ export default function newStudyForm() {
 
   const journalInput = document.createElement("input");
   journalInput.id = "newStudyJournal";
-  journalInput.classList.add("newStudyJournal");
+  journalInput.classList.add("newStudyInput");
 
   journal.append(journalLabel);
   journal.append(journalInput);
+
+  /**
+   * Confirm
+   */
+  const confirmButton = document.createElement("button");
+  confirmButton.id = "studyFormConfirmButton";
+  confirmButton.textContent = "ADD STUDY";
+  confirmButton.onclick = () => {};
 
   container.append(header);
   container.append(title);
@@ -121,6 +131,7 @@ export default function newStudyForm() {
   container.append(link);
   container.append(description);
   container.append(journal);
+  container.append(confirmButton);
 
   return container;
 }

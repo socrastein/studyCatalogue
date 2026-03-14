@@ -1,3 +1,4 @@
+import "./style.css";
 import newStudyForm from "./newStudyForm.ts";
 
 const app = document.getElementById("app");
