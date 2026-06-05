@@ -1,137 +1,150 @@
 import "./style/newStudyForm.css";
 
-export default function newStudyForm() {
-  const container = document.createElement("div");
-  container.id = "newStudyForm";
-
+function header() {
   const header = document.createElement("div");
   header.id = "newStudyFormHeader";
   header.textContent = "New Study";
 
-  /**
-   * Title
-   */
+  return header;
+}
+
+function inputTitle() {
   const title = document.createElement("div");
   title.classList.add("studyFormInputContainer");
 
-  const titleLabel = document.createElement("label");
-  titleLabel.classList.add("studyFormLabel");
-  titleLabel.htmlFor = "newStudyTitle";
-  titleLabel.textContent = "Title";
+  const label = document.createElement("label");
+  label.classList.add("studyFormLabel");
+  label.htmlFor = "newStudyTitle";
+  label.textContent = "Title";
 
-  const titleInput = document.createElement("input");
-  titleInput.id = "newStudyTitle";
-  titleInput.classList.add("newStudyInput");
+  const input = document.createElement("input");
+  input.id = "newStudyTitle";
+  input.classList.add("newStudyInput");
 
-  title.append(titleLabel);
-  title.append(titleInput);
+  title.append(label);
+  title.append(input);
 
-  /**
-   * Authors
-   */
+  return title;
+}
+
+function inputAuthors() {
   const authors = document.createElement("div");
   authors.classList.add("studyFormInputContainer");
 
-  const authorsLabel = document.createElement("label");
-  authorsLabel.classList.add("studyFormLabel");
-  authorsLabel.htmlFor = "newStudyAuthors";
+  const label = document.createElement("label");
+  label.classList.add("studyFormLabel");
+  label.htmlFor = "newStudyAuthors";
   authors.textContent = "Authors";
 
-  const authorsInput = document.createElement("input");
-  authorsInput.id = "newStudyAuthors";
-  authorsInput.classList.add("newStudyInput");
+  const input = document.createElement("input");
+  input.id = "newStudyAuthors";
+  input.classList.add("newStudyInput");
 
-  authors.append(authorsLabel);
-  authors.append(authorsInput);
+  authors.append(label);
+  authors.append(input);
 
-  /**
-   * Year
-   */
+  return authors;
+}
+
+function inputYear() {
   const year = document.createElement("div");
   year.classList.add("studyFormInputContainer");
 
-  const yearLabel = document.createElement("label");
-  yearLabel.classList.add("studyFormLabel");
-  yearLabel.htmlFor = "newStudyYear";
-  yearLabel.textContent = "Year";
+  const label = document.createElement("label");
+  label.classList.add("studyFormLabel");
+  label.htmlFor = "newStudyYear";
+  label.textContent = "Year";
 
-  const yearInput = document.createElement("input");
-  yearInput.id = "newStudyYear";
-  yearInput.classList.add("newStudyInput");
+  const input = document.createElement("input");
+  input.id = "newStudyYear";
+  input.classList.add("newStudyInput");
 
-  year.append(yearLabel);
-  year.append(yearInput);
+  year.append(label);
+  year.append(input);
 
-  /**
-   * Link
-   */
-  const link = document.createElement("div");
-  link.classList.add("studyFormInputContainer");
+  return year;
+}
 
-  const linkLabel = document.createElement("label");
-  linkLabel.classList.add("studyFormLabel");
-  linkLabel.htmlFor = "newStudyLink";
-  linkLabel.textContent = "Web link";
-
-  const linkInput = document.createElement("input");
-  linkInput.id = "newStudyLink";
-  linkInput.classList.add("newStudyInput");
-
-  link.append(linkLabel);
-  link.append(linkInput);
-
-  /**
-   * Description
-   */
-  const description = document.createElement("div");
-  description.classList.add("studyFormInputContainer");
-
-  const descriptionLabel = document.createElement("label");
-  descriptionLabel.classList.add("studyFormLabel");
-  descriptionLabel.htmlFor = "newStudyDescription";
-  descriptionLabel.textContent = "Description";
-
-  const descriptionInput = document.createElement("textarea");
-  descriptionInput.id = "newStudyDescription";
-  descriptionInput.classList.add("newStudyInput");
-
-  description.append(descriptionLabel);
-  description.append(descriptionInput);
-
-  /**
-   * Journal
-   */
+function inputJournal() {
   const journal = document.createElement("div");
   journal.classList.add("studyFormInputContainer");
 
-  const journalLabel = document.createElement("label");
-  journalLabel.classList.add("studyFormLabel");
-  journalLabel.htmlFor = "newStudyJournal";
-  journalLabel.textContent = "Journal";
+  const label = document.createElement("label");
+  label.classList.add("studyFormLabel");
+  label.htmlFor = "newStudyJournal";
+  label.textContent = "Journal";
 
-  const journalInput = document.createElement("input");
-  journalInput.id = "newStudyJournal";
-  journalInput.classList.add("newStudyInput");
+  const input = document.createElement("input");
+  input.id = "newStudyJournal";
+  input.classList.add("newStudyInput");
 
-  journal.append(journalLabel);
-  journal.append(journalInput);
+  journal.append(label);
+  journal.append(input);
 
-  /**
-   * Confirm
-   */
+  return journal;
+}
+
+function inputAbstract() {
+  const abstract = document.createElement("div");
+  abstract.classList.add("studyFormInputContainer");
+
+  const label = document.createElement("label");
+  label.classList.add("studyFormLabel");
+  label.htmlFor = "newStudyAbstract";
+  label.textContent = "Abstract";
+
+  const input = document.createElement("textarea");
+  input.id = "newStudyAbstract";
+  input.classList.add("newStudyInput");
+
+  abstract.append(label);
+  abstract.append(input);
+
+  return abstract;
+}
+
+function inputURL() {
+  const URL = document.createElement("div");
+  URL.classList.add("studyFormInputContainer");
+
+  const label = document.createElement("label");
+  label.classList.add("studyFormLabel");
+  label.htmlFor = "newStudyURL";
+  label.textContent = "URL";
+
+  const input = document.createElement("input");
+  input.id = "newStudyURL";
+  input.classList.add("newStudyInput");
+
+  URL.append(label);
+  URL.append(input);
+
+  return URL;
+}
+
+function inputCategories() {}
+
+function inputConfirm() {
   const confirmButton = document.createElement("button");
   confirmButton.id = "studyFormConfirmButton";
   confirmButton.textContent = "ADD STUDY";
   confirmButton.onclick = () => {};
 
-  container.append(header);
-  container.append(title);
-  container.append(authors);
-  container.append(year);
-  container.append(link);
-  container.append(description);
-  container.append(journal);
-  container.append(confirmButton);
+  return confirmButton;
+}
+
+export default function newStudyForm() {
+  const container = document.createElement("div");
+  container.id = "newStudyForm";
+
+  container.append(header());
+  container.append(inputTitle());
+  container.append(inputAuthors());
+  container.append(inputYear());
+  container.append(inputJournal());
+  container.append(inputAbstract());
+  container.append(inputURL());
+  container.append(inputConfirm());
 
   return container;
 }

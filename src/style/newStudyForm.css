@@ -23,6 +23,10 @@
   width: 100%;
 }
 
+#newStudyAbstract {
+  resize: vertical;
+}
+
 #studyFormConfirmButton {
   width: 6rem;
   height: 2rem;
