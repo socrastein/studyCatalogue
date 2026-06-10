@@ -1,29 +1,55 @@
 #newStudyForm {
+  background-color: var(--secondary-background);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1.25rem;
 
   width: min(90%, 24rem);
 
   border: solid black 3px;
   border-radius: 0.5rem;
-  padding: 0.5rem;
+  padding: 1.5rem 0.5rem;
 }
 
 .studyFormInputContainer {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  width: 20rem;
   justify-content: center;
+  gap: 0.25rem;
+
+  width: min(100%, 20rem);
+}
+
+.newStudyFormLabel {
+  font-weight: bold;
 }
 
 .newStudyInput {
   width: 100%;
 }
 
+#newStudyFormHeader {
+  color: var(--secondary-color);
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+#newStudyTitle {
+  height: 3rem;
+  resize: none;
+}
+
+#newStudyAuthors {
+}
+
+#newStudyYear {
+  width: 5rem;
+}
+
 #newStudyAbstract {
+  height: 8rem;
   resize: vertical;
 }
 

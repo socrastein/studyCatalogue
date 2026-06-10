@@ -1,9 +1,9 @@
-import "./style/newStudyForm.css";
+import "../style/newStudyForm.css";
 
 function header() {
   const header = document.createElement("div");
   header.id = "newStudyFormHeader";
-  header.textContent = "New Study";
+  header.textContent = "Add New Study";
 
   return header;
 }
@@ -13,11 +13,11 @@ function inputTitle() {
   title.classList.add("studyFormInputContainer");
 
   const label = document.createElement("label");
-  label.classList.add("studyFormLabel");
+  label.classList.add("newStudyFormLabel");
   label.htmlFor = "newStudyTitle";
   label.textContent = "Title";
 
-  const input = document.createElement("input");
+  const input = document.createElement("textarea");
   input.id = "newStudyTitle";
   input.classList.add("newStudyInput");
 
@@ -32,9 +32,9 @@ function inputAuthors() {
   authors.classList.add("studyFormInputContainer");
 
   const label = document.createElement("label");
-  label.classList.add("studyFormLabel");
+  label.classList.add("newStudyFormLabel");
   label.htmlFor = "newStudyAuthors";
-  authors.textContent = "Authors";
+  label.textContent = "Authors";
 
   const input = document.createElement("input");
   input.id = "newStudyAuthors";
@@ -51,7 +51,7 @@ function inputYear() {
   year.classList.add("studyFormInputContainer");
 
   const label = document.createElement("label");
-  label.classList.add("studyFormLabel");
+  label.classList.add("newStudyFormLabel");
   label.htmlFor = "newStudyYear";
   label.textContent = "Year";
 
@@ -70,7 +70,7 @@ function inputJournal() {
   journal.classList.add("studyFormInputContainer");
 
   const label = document.createElement("label");
-  label.classList.add("studyFormLabel");
+  label.classList.add("newStudyFormLabel");
   label.htmlFor = "newStudyJournal";
   label.textContent = "Journal";
 
@@ -89,7 +89,7 @@ function inputAbstract() {
   abstract.classList.add("studyFormInputContainer");
 
   const label = document.createElement("label");
-  label.classList.add("studyFormLabel");
+  label.classList.add("newStudyFormLabel");
   label.htmlFor = "newStudyAbstract";
   label.textContent = "Abstract";
 
@@ -108,7 +108,7 @@ function inputURL() {
   URL.classList.add("studyFormInputContainer");
 
   const label = document.createElement("label");
-  label.classList.add("studyFormLabel");
+  label.classList.add("newStudyFormLabel");
   label.htmlFor = "newStudyURL";
   label.textContent = "URL";
 
