@@ -1,5 +1,5 @@
 import "./style.css";
-import newStudyForm from "./modules/newStudyForm.ts";
+import newStudyForm from "./modules/newStudyForm/newStudyForm.ts";
 import appSettings from "./modules/appSettings.ts";
 
 const app = document.getElementById("app");

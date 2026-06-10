@@ -3,9 +3,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.25rem;
+  gap: 1rem;
 
-  width: min(90%, 24rem);
+  width: min(96%, 26rem);
 
   border: solid black 3px;
   border-radius: 0.5rem;
@@ -19,7 +19,7 @@
   justify-content: center;
   gap: 0.25rem;
 
-  width: min(100%, 20rem);
+  width: min(100%, 24rem);
 }
 
 .newStudyFormLabel {
@@ -49,11 +49,133 @@
 }
 
 #newStudyAbstract {
-  height: 8rem;
+  height: 6rem;
   resize: vertical;
 }
 
+#newStudyDOI {
+}
+
+#newStudyURL {
+}
+
+#newStudyCategories {
+}
+
+/* ─── Accordion container ─────────────────────────────────────────────────── */
+
+.accordion {
+  border: 1px solid var(--secondary-color);
+  border-radius: 0.5rem;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* ─── Individual accordion item ───────────────────────────────────────────── */
+
+.accordionItem {
+  border-bottom: 1px solid var(--secondary-color);
+}
+
+.accordionItem:last-child {
+  border-bottom: none;
+}
+
+/* ─── Header row ──────────────────────────────────────────────────────────── */
+
+.accordionHeader {
+  display: flex;
+
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  user-select: none;
+  background: var(--secondary-background);
+  transition: background 0.15s ease;
+}
+
+.accordionHeader:hover {
+  background: var(--color-theme);
+}
+
+.categoryCheckbox {
+  flex-shrink: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.accordionTitle {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+/* ─── Selected-count badge ────────────────────────────────────────────────── */
+
+.categoryBadge {
+  display: none;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 0.5rem;
+  background: var(--primary-background);
+  color: var(--secondary-color);
+}
+
+.categoryBadgeVisible {
+  display: inline-block;
+}
+
+/* ─── Chevron ─────────────────────────────────────────────────────────────── */
+
+.accordionChevron {
+  font-size: 0.75rem;
+  color: var(--secondary-color);
+  transition: transform 0.2s ease;
+  line-height: 1;
+}
+
+/* ─── Subfield body ───────────────────────────────────────────────────────── */
+
+.accordionBody {
+  display: none;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 16px;
+  padding: 0.5rem 1rem;
+  background: var(--secondary-background);
+  border-top: 1px solid var(--secondary-color);
+}
+
+.accordionItemOpen .accordionBody {
+  display: grid;
+}
+
+/* ─── Subfield checkbox + label ───────────────────────────────────────────── */
+
+.subfieldLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--primary-color);
+  cursor: pointer;
+  line-height: 1.5;
+}
+
+.subfieldLabel:hover {
+  color: var(--color-theme);
+}
+
+.subfieldCheckbox {
+  flex-shrink: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
 #studyFormConfirmButton {
-  width: 6rem;
-  height: 2rem;
+  margin-top: 2rem;
+  font-size: 1rem;
+  height: 3rem;
+  width: 9rem;
 }
