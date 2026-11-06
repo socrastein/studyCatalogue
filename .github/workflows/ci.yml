@@ -1,0 +1,39 @@
+# Continuous integration: on every push and pull request, GitHub runs the same fast checks we run locally before
+# committing, on a fresh machine, so a broken or unformatted commit shows a red mark.
+#
+# Browser tests are not added here yet. When they arrive they run locally (and at most as a nightly backstop on main),
+# never as a gate on each push ("Testing in tiers" in the global CLAUDE.md).
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      # Clone the repo at the pushed commit.
+      - uses: actions/checkout@v7
+
+      # Install Node (Vite 8 needs 20.19+ or 22.12+) and cache npm's downloads.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      # Install the exact versions pinned in package-lock.json.
+      - run: npm ci
+
+      # Fail if any file is not in Prettier style.
+      - run: npm run format:check
+
+      # Typecheck the app.
+      - run: npm run typecheck
+
+      # Run the unit tests once.
+      - run: npm test
