@@ -73,3 +73,16 @@ export function isFacetId<Values extends readonly FacetValue[]>(
 ): candidate is Values[number]["id"] {
   return values.some((value) => value.id === candidate);
 }
+
+/**
+ * The display label of a facet value.
+ *
+ * @param values One facet's vocabulary.
+ * @param id An id from that vocabulary.
+ * @returns The label, e.g. "Older adults (65+)"; the id itself if it is not in the vocabulary, which validated data
+ *   never has.
+ */
+export function facetLabel(values: readonly FacetValue[], id: string): string {
+  const match = values.find((value) => value.id === id);
+  return match === undefined ? id : match.label;
+}
