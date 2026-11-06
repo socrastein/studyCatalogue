@@ -1,4 +1,11 @@
-const colorThemes = {
+/**
+ * Light/dark mode and colour theme for the whole app. Both live on the root element: the mode as the `data-theme`
+ * attribute that `style.css` switches its colour tokens on, and the colour theme as the `--color-theme` custom property,
+ * whose shade depends on the mode (darker on a light background, lighter on a dark one).
+ */
+
+/** The accent colour of each theme, one shade for each mode. */
+export const COLOR_THEMES = {
   blue: { light: "#0353CC", dark: "#5B9FFF" },
   purple: { light: "#3B2861", dark: "#9D88CC" },
   pink: { light: "#7A007A", dark: "#E066E0" },
@@ -6,58 +13,61 @@ const colorThemes = {
   orange: { light: "#A84400", dark: "#F07E2A" },
   yellow: { light: "#B58B00", dark: "#FED06C" },
   green: { light: "#0A7A44", dark: "#34C97A" },
-};
+} as const;
 
-// For setting CSS root variables related to light and color themes
-const root = document.documentElement;
-let colorTheme: keyof typeof colorThemes = "blue";
+export type ColorThemeName = keyof typeof COLOR_THEMES;
+export type Mode = "light" | "dark";
 
-function setToLightMode() {
-  root.setAttribute("data-theme", "light");
+/** The theme `style.css` defines `--color-theme` with, so the page matches this module before anything is set. */
+let currentColorTheme: ColorThemeName = "blue";
+
+/**
+ * The mode the page is showing.
+ *
+ * @returns "dark" only when dark mode was set; "light" otherwise, because `style.css` uses the light tokens when the
+ *   root element has no `data-theme` attribute.
+ */
+export function getMode(): Mode {
+  return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
 }
 
-function setToDarkMode() {
-  root.setAttribute("data-theme", "dark");
+/**
+ * Switches the page to the given mode, and the accent colour to the current theme's shade for that mode.
+ *
+ * @param mode The mode to show.
+ */
+export function setMode(mode: Mode): void {
+  document.documentElement.dataset.theme = mode;
+  applyColorTheme();
 }
 
-const appSettings = {
-  getMode() {
-    return root.getAttribute("data-theme") as "light" | "dark";
-  },
+/** Switches from light to dark mode or back. */
+export function toggleMode(): void {
+  const oppositeMode = getMode() === "light" ? "dark" : "light";
+  setMode(oppositeMode);
+}
 
-  setMode(mode: "light" | "dark") {
-    if (mode === this.getMode()) return;
+/**
+ * The colour theme last set.
+ *
+ * @returns The theme's name; "blue" until one is set.
+ */
+export function getColorTheme(): ColorThemeName {
+  return currentColorTheme;
+}
 
-    if (mode === "light") {
-      setToLightMode();
-    } else {
-      setToDarkMode();
-    }
-  },
+/**
+ * Switches the accent colour to the given theme, in the shade for the current mode.
+ *
+ * @param theme The theme to show.
+ */
+export function setColorTheme(theme: ColorThemeName): void {
+  currentColorTheme = theme;
+  applyColorTheme();
+}
 
-  toggleLightMode() {
-    const currentMode = this.getMode();
-    if (currentMode === "light") {
-      setToDarkMode();
-    } else {
-      setToLightMode();
-    }
-  },
-
-  getColorTheme() {
-    return colorTheme;
-  },
-
-  setColorTheme(theme: keyof typeof colorThemes) {
-    const selectedTheme = colorThemes[theme];
-    const currentMode = this.getMode();
-
-    if (currentMode === "light") {
-      root.style.setProperty("--primary-theme", selectedTheme.light);
-    } else {
-      root.style.setProperty("--primary-theme", selectedTheme.dark);
-    }
-  },
-};
-
-export default appSettings;
+/** Sets `--color-theme` to the current theme's shade for the current mode. */
+function applyColorTheme(): void {
+  const shade = COLOR_THEMES[currentColorTheme][getMode()];
+  document.documentElement.style.setProperty("--color-theme", shade);
+}
