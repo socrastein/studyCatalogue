@@ -45,7 +45,8 @@ textarea {
   caret-color: var(--primary-color);
 }
 
-input:focus, textarea:focus {
+input:focus,
+textarea:focus {
   outline: none;
   border: solid 1px var(--color-theme);
   box-shadow: 0 0 1px 1px var(--color-theme);
