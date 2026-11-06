@@ -17,7 +17,7 @@ import {
   type StudyFilters,
 } from "../catalogue/filterStudies";
 import type { Tag } from "../catalogue/tags";
-import FacetCheckboxGroup from "./FacetCheckboxGroup.vue";
+import CheckboxGroup from "./CheckboxGroup.vue";
 import TagCombobox from "./TagCombobox.vue";
 
 defineProps<{ tags: readonly Tag[] }>();
@@ -86,31 +86,31 @@ function clearFilters(): void {
       :tags="tags"
       :allow-create="false"
     />
-    <FacetCheckboxGroup
+    <CheckboxGroup
       id="filter-design"
       v-model="designs"
       legend="Study design"
       :values="STUDY_DESIGNS"
     />
-    <FacetCheckboxGroup
+    <CheckboxGroup
       id="filter-subjects"
       v-model="subjects"
       legend="Subjects"
       :values="SUBJECTS"
     />
-    <FacetCheckboxGroup
+    <CheckboxGroup
       id="filter-age"
       v-model="ageGroups"
       legend="Age group"
       :values="AGE_GROUPS"
     />
-    <FacetCheckboxGroup
+    <CheckboxGroup
       id="filter-training"
       v-model="trainingStatuses"
       legend="Training status"
       :values="TRAINING_STATUSES"
     />
-    <FacetCheckboxGroup
+    <CheckboxGroup
       id="filter-sex"
       v-model="sexes"
       legend="Sex"

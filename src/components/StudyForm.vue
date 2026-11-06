@@ -21,8 +21,8 @@ import {
 import { useCatalogue } from "../stores/catalogueStore";
 import AuthorsFieldset from "./AuthorsFieldset.vue";
 import ErrorSummary from "./ErrorSummary.vue";
-import FacetCheckboxGroup from "./FacetCheckboxGroup.vue";
-import FacetRadioGroup from "./FacetRadioGroup.vue";
+import CheckboxGroup from "./CheckboxGroup.vue";
+import RadioGroup from "./RadioGroup.vue";
 import TagCombobox from "./TagCombobox.vue";
 import TextField from "./TextField.vue";
 import { errorSummaryItems } from "./studyFormErrors";
@@ -169,14 +169,14 @@ function createTag(name: string): void {
 
     <section class="formSection" aria-labelledby="design-heading">
       <h2 id="design-heading">Design</h2>
-      <FacetRadioGroup
+      <RadioGroup
         id="study-design"
         v-model="draft.design"
         legend="Study design"
         :values="STUDY_DESIGNS"
         :error="errors.design"
       />
-      <FacetRadioGroup
+      <RadioGroup
         id="study-subjects"
         v-model="draft.subjects"
         legend="Subjects"
@@ -191,19 +191,19 @@ function createTag(name: string): void {
         Check every group the study included. Leave a question unchecked if the
         study does not report it.
       </p>
-      <FacetCheckboxGroup
+      <CheckboxGroup
         id="study-age-groups"
         v-model="draft.ageGroups"
         legend="Age group"
         :values="AGE_GROUPS"
       />
-      <FacetCheckboxGroup
+      <CheckboxGroup
         id="study-training-statuses"
         v-model="draft.trainingStatuses"
         legend="Training status"
         :values="TRAINING_STATUSES"
       />
-      <FacetCheckboxGroup
+      <CheckboxGroup
         id="study-sexes"
         v-model="draft.sexes"
         legend="Sex"
