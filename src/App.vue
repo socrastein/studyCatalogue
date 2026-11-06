@@ -63,7 +63,8 @@ watch(
     >
       {{ noticeMessage }}
     </p>
-    <RouterView />
+    <!-- Keyed by path, so moving between two edit pages builds a fresh page with that item's details -->
+    <RouterView :key="route.path" />
   </main>
 </template>
 
