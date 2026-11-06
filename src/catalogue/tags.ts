@@ -4,6 +4,7 @@
  * also finds studies tagged with anything beneath it.
  */
 import { createId } from "./ids";
+import { containsFolded, foldForMatching } from "./textMatching";
 
 export type Tag = {
   id: string;
@@ -39,8 +40,47 @@ export function findTagByName(
   name: string,
   tags: readonly Tag[],
 ): Tag | undefined {
-  const wanted = comparableName(name);
-  return tags.find((tag) => tagNames(tag).map(comparableName).includes(wanted));
+  const wanted = foldForMatching(name);
+  return tags.find((tag) =>
+    tagNames(tag).map(foldForMatching).includes(wanted),
+  );
+}
+
+/**
+ * The tags whose name or an alias contains the query, for suggestions as a person types: tags whose name starts
+ * with the query first, then the rest, each group in alphabetical order.
+ *
+ * @param query What has been typed; matched ignoring case and accents.
+ * @param tags The tags to choose from.
+ */
+export function matchingTags(query: string, tags: readonly Tag[]): Tag[] {
+  const matches = tags.filter((tag) =>
+    tagNames(tag).some((name) => containsFolded(name, query)),
+  );
+  const startsWithQuery = (tag: Tag) =>
+    foldForMatching(tag.name).startsWith(foldForMatching(query));
+  const byName = (first: Tag, second: Tag) =>
+    first.name.localeCompare(second.name);
+  const leading = matches.filter(startsWithQuery).sort(byName);
+  const others = matches.filter((tag) => !startsWithQuery(tag)).sort(byName);
+  return [...leading, ...others];
+}
+
+/**
+ * A tag's name with its parents' names in parentheses, so two tags with the same name can be told apart: "Science
+ * (Philosophy)", "Creatine (Supplements, Strength)", or just "Nutrition" for a top-level tag.
+ *
+ * @param tag The tag to name.
+ * @param tags Every tag in the catalogue, to look up its parents.
+ */
+export function tagNameWithParents(tag: Tag, tags: readonly Tag[]): string {
+  const parentNames = tag.parentIds
+    .map(
+      (parentId) => tags.find((candidate) => candidate.id === parentId)?.name,
+    )
+    .filter((name) => name !== undefined);
+  if (parentNames.length === 0) return tag.name;
+  return `${tag.name} (${parentNames.join(", ")})`;
 }
 
 /**
@@ -93,11 +133,6 @@ export function wouldCreateCycle(
 /** A tag's name followed by its aliases. */
 function tagNames(tag: Tag): string[] {
   return [tag.name, ...tag.aliases];
-}
-
-/** A name lowercased and trimmed, so names that differ only in case or spacing compare equal. */
-function comparableName(name: string): string {
-  return name.trim().toLowerCase();
 }
 
 /** For each tag that has children, the ids of its direct children. */

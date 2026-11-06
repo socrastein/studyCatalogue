@@ -6,6 +6,8 @@ import {
   createTag,
   descendantIds,
   findTagByName,
+  matchingTags,
+  tagNameWithParents,
   wouldCreateCycle,
   type Tag,
 } from "./tags";
@@ -98,5 +100,47 @@ describe("wouldCreateCycle", () => {
 
   it("is false for an unrelated tag", () => {
     expect(wouldCreateCycle("protein", "strength", HIERARCHY)).toBe(false);
+  });
+});
+
+describe("matchingTags", () => {
+  const tags = [
+    tag("Creatine"),
+    tag("Protein"),
+    tag("Protein timing"),
+    tag("Whey", [], ["whey protein"]),
+    tag("Café culture"),
+  ];
+
+  it("lists names starting with the query before names merely containing it", () => {
+    const names = matchingTags("prot", tags).map((match) => match.name);
+    expect(names).toEqual(["Protein", "Protein timing", "Whey"]);
+  });
+
+  it("matches aliases", () => {
+    expect(matchingTags("whey prot", tags).map((match) => match.name)).toEqual([
+      "Whey",
+    ]);
+  });
+
+  it("ignores case and accents", () => {
+    expect(matchingTags("CAFE", tags).map((match) => match.name)).toEqual([
+      "Café culture",
+    ]);
+  });
+});
+
+describe("tagNameWithParents", () => {
+  it("adds every parent's name in parentheses", () => {
+    const creatine = HIERARCHY.find(
+      (candidate) => candidate.id === "creatine",
+    )!;
+    expect(tagNameWithParents(creatine, HIERARCHY)).toBe(
+      "creatine (supplements, strength)",
+    );
+  });
+
+  it("is just the name for a top-level tag", () => {
+    expect(tagNameWithParents(tag("nutrition"), HIERARCHY)).toBe("nutrition");
   });
 });
