@@ -121,3 +121,41 @@ describe("a failed save", () => {
     expect(store.state.saveProblem).toContain("could not be saved");
   });
 });
+
+describe("tag edits", () => {
+  it("are saved when they succeed", () => {
+    const store = createCatalogueStore(localStorage);
+    const problem = store.editTag("nutrition", {
+      name: "Diet",
+      aliases: [],
+      parentIds: [],
+    });
+    expect(problem).toBeNull();
+    expect(
+      savedCatalogue().tags.find((tag) => tag.id === "nutrition")?.name,
+    ).toBe("Diet");
+  });
+
+  it("return the problem and change nothing when refused", () => {
+    const store = createCatalogueStore(localStorage);
+    const problem = store.editTag("nutrition", {
+      name: "Physics",
+      aliases: [],
+      parentIds: [],
+    });
+    expect(problem).toBe('Another tag is already called "Physics".');
+    expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+  });
+
+  it("merge and delete through the store", () => {
+    const store = createCatalogueStore(localStorage);
+    store.mergeTags(
+      "exercise-science/cardio",
+      "exercise-science/general-health",
+    );
+    store.deleteTag("physics");
+    const ids = savedCatalogue().tags.map((tag) => tag.id);
+    expect(ids).not.toContain("exercise-science/cardio");
+    expect(ids).not.toContain("physics");
+  });
+});

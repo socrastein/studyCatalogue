@@ -17,6 +17,13 @@ import {
   type Study,
   type StudyDetails,
 } from "../catalogue/study";
+import {
+  deleteTag,
+  editTag,
+  mergeTags,
+  type TagChanges,
+  type TagEditResult,
+} from "../catalogue/tagEdits";
 import { createTag, findTagByName, type Tag } from "../catalogue/tags";
 
 /** The localStorage key the catalogue is saved under. */
@@ -71,6 +78,23 @@ type TagActions = {
    * @returns The existing or new tag.
    */
   findOrCreateTag(name: string): Tag;
+
+  /**
+   * Renames a tag and replaces its aliases and parents (see `editTag` in tagEdits.ts).
+   *
+   * @returns null when saved; otherwise why the change was refused, for the person.
+   */
+  editTag(tagId: string, changes: TagChanges): string | null;
+
+  /**
+   * Merges one tag into another (see `mergeTags` in tagEdits.ts).
+   *
+   * @returns null when merged; otherwise why it was refused, for the person.
+   */
+  mergeTags(mergedId: string, keptId: string): string | null;
+
+  /** Deletes a tag, removing it from studies and moving its subtopics up (see `deleteTag` in tagEdits.ts). */
+  deleteTag(tagId: string): void;
 };
 
 /**
@@ -149,7 +173,33 @@ function tagActions(state: StoreState, commit: Commit): TagActions {
       commit({ ...state.catalogue, tags: [...state.catalogue.tags, tag] });
       return tag;
     },
+
+    editTag(tagId, changes) {
+      return commitTagEdit(commit, editTag(state.catalogue, tagId, changes));
+    },
+
+    mergeTags(mergedId, keptId) {
+      return commitTagEdit(
+        commit,
+        mergeTags(state.catalogue, mergedId, keptId),
+      );
+    },
+
+    deleteTag(tagId) {
+      commit(deleteTag(state.catalogue, tagId));
+    },
   };
+}
+
+/**
+ * Commits a successful tag edit, or passes a refusal's message back without changing anything.
+ *
+ * @returns null when committed; the problem when refused.
+ */
+function commitTagEdit(commit: Commit, result: TagEditResult): string | null {
+  if (result.kind === "refused") return result.problem;
+  commit(result.catalogue);
+  return null;
 }
 
 let appStore: CatalogueStore | undefined;
