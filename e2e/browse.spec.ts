@@ -32,6 +32,8 @@ const STUDIES = [
   studyDetails({
     title: "Joint pain and protein",
     tagIds: ["nutrition/protein"],
+    // Reports no age group: the study the "does not report" note counts
+    ageGroups: [],
     abstract: "Joint pain outcomes",
     year: 2016,
   }),
