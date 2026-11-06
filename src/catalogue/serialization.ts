@@ -198,7 +198,10 @@ function checkUniqueIds(items: { id: string }[], itemKind: string): void {
 type TagReference = { id: string; from: string };
 
 /** Throws if a study's tag or a tag's parent is not one of the catalogue's tags. */
-function checkTagReferences(studies: Study[], tags: Tag[]): void {
+function checkTagReferences(
+  studies: readonly Study[],
+  tags: readonly Tag[],
+): void {
   const tagIds = new Set(tags.map((tag) => tag.id));
   const references = [
     ...studies.flatMap(studyTagReferences),

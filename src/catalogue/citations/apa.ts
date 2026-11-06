@@ -46,7 +46,7 @@ export function formatApa(study: Study): Citation {
  * The authors in APA order: "Family, G. G." each, commas between, "&" before the last; with more than 20, the first
  * 19, ". . .", then the last (with no "&").
  */
-function apaAuthorList(authors: Author[]): string {
+function apaAuthorList(authors: readonly Author[]): string {
   const names = authors.map(apaAuthorName);
   const lastName = names.at(-1) ?? "";
   if (names.length > MAX_LISTED_AUTHORS) {

@@ -9,9 +9,9 @@ export type Tag = {
   id: string;
   name: string;
   /** The tags this one sits under; empty for a top-level topic. */
-  parentIds: string[];
+  parentIds: readonly string[];
   /** Other names that should find this tag, e.g. "muscle growth" for Hypertrophy. */
-  aliases: string[];
+  aliases: readonly string[];
 };
 
 /**
@@ -20,7 +20,10 @@ export type Tag = {
  * @param name The tag's name, trimmed.
  * @param parentIds The tags it sits under; none makes it a top-level topic.
  */
-export function createTag(name: string, parentIds: string[] = []): Tag {
+export function createTag(
+  name: string,
+  parentIds: readonly string[] = [],
+): Tag {
   return { id: createId(), name: name.trim(), parentIds, aliases: [] };
 }
 
@@ -32,7 +35,10 @@ export function createTag(name: string, parentIds: string[] = []): Tag {
  * @param tags Every tag in the catalogue.
  * @returns The matching tag; undefined when no tag has that name or alias.
  */
-export function findTagByName(name: string, tags: Tag[]): Tag | undefined {
+export function findTagByName(
+  name: string,
+  tags: readonly Tag[],
+): Tag | undefined {
   const wanted = comparableName(name);
   return tags.find((tag) => tagNames(tag).map(comparableName).includes(wanted));
 }
@@ -47,7 +53,10 @@ export function findTagByName(name: string, tags: Tag[]): Tag | undefined {
  * @param tags Every tag in the catalogue.
  * @returns A set containing `tagId` and all its descendants.
  */
-export function descendantIds(tagId: string, tags: Tag[]): Set<string> {
+export function descendantIds(
+  tagId: string,
+  tags: readonly Tag[],
+): Set<string> {
   const childrenByParent = childIdsByParentId(tags);
   // Grows as the walk finds new tags; a tag already in it is not visited again, which is what stops a cycle
   const found = new Set<string>([tagId]);
@@ -76,7 +85,7 @@ export function descendantIds(tagId: string, tags: Tag[]): Set<string> {
 export function wouldCreateCycle(
   tagId: string,
   parentId: string,
-  tags: Tag[],
+  tags: readonly Tag[],
 ): boolean {
   return descendantIds(tagId, tags).has(parentId);
 }
@@ -92,7 +101,7 @@ function comparableName(name: string): string {
 }
 
 /** For each tag that has children, the ids of its direct children. */
-function childIdsByParentId(tags: Tag[]): Map<string, string[]> {
+function childIdsByParentId(tags: readonly Tag[]): Map<string, string[]> {
   const children = new Map<string, string[]>();
   for (const tag of tags) {
     for (const parentId of tag.parentIds) {

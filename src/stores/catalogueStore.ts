@@ -36,8 +36,13 @@ export type CatalogueStore = {
   /** Read-only view of the state; views read it reactively. */
   state: DeepReadonly<StoreState>;
 } & StudyActions &
-  TagActions &
-  CatalogueActions;
+  TagActions & {
+    /**
+     * Replaces the whole catalogue, as an import does, and saves it. Also clears a load problem: the person has
+     * chosen what the catalogue should be, so the unreadable data may now be overwritten.
+     */
+    replaceCatalogue(catalogue: Catalogue): void;
+  };
 
 type StudyActions = {
   /**
@@ -68,14 +73,6 @@ type TagActions = {
   findOrCreateTag(name: string): Tag;
 };
 
-type CatalogueActions = {
-  /**
-   * Replaces the whole catalogue, as an import does, and saves it. Also clears a load problem: the person has chosen
-   * what the catalogue should be, so the unreadable data may now be overwritten.
-   */
-  replaceCatalogue(catalogue: Catalogue): void;
-};
-
 /**
  * A catalogue store saving to the given storage, starting from what that storage holds. The app uses one, made by
  * `useCatalogue`; tests make their own with a fresh storage.
@@ -91,69 +88,66 @@ export function createCatalogueStore(storage: Storage): CatalogueStore {
     state.saveProblem = writeCatalogue(storage, state.catalogue);
   }
 
+  /** Makes the given catalogue the current one and saves it: the one way every action changes the catalogue. */
+  function commit(catalogue: Catalogue): void {
+    state.catalogue = catalogue;
+    save();
+  }
+
   return {
     state: readonly(state),
-    ...studyActions(state, save),
-    ...tagActions(state, save),
-    ...catalogueActions(state, save),
+    ...studyActions(state, commit),
+    ...tagActions(state, commit),
+    replaceCatalogue(catalogue) {
+      // Cleared first, so the commit's save may overwrite the unreadable data the person has chosen to replace
+      state.loadProblem = null;
+      commit(catalogue);
+    },
   };
 }
 
-/** The actions that add, edit and delete studies, each saving afterwards. */
-function studyActions(state: StoreState, save: () => void): StudyActions {
+/** Commits a changed catalogue; see `commit` in createCatalogueStore. */
+type Commit = (catalogue: Catalogue) => void;
+
+/** The actions that add, edit and delete studies. */
+function studyActions(state: StoreState, commit: Commit): StudyActions {
   return {
     addStudy(details) {
       const study = createStudy(details);
-      state.catalogue.studies.push(study);
-      save();
+      const studies = [...state.catalogue.studies, study];
+      commit({ ...state.catalogue, studies });
       return study;
     },
 
     editStudy(id, details) {
-      const studies = state.catalogue.studies;
-      const index = studies.findIndex((study) => study.id === id);
-      const existing = studies[index];
+      const existing = state.catalogue.studies.find((study) => study.id === id);
       if (existing === undefined) return undefined;
       const updated = updateStudy(existing, details);
-      studies[index] = updated;
-      save();
+      const studies = state.catalogue.studies.map((study) =>
+        study.id === id ? updated : study,
+      );
+      commit({ ...state.catalogue, studies });
       return updated;
     },
 
     deleteStudy(id) {
-      const remaining = state.catalogue.studies.filter(
+      const studies = state.catalogue.studies.filter(
         (study) => study.id !== id,
       );
-      state.catalogue.studies = remaining;
-      save();
+      commit({ ...state.catalogue, studies });
     },
   };
 }
 
-/** The actions on tags, each saving afterwards. */
-function tagActions(state: StoreState, save: () => void): TagActions {
+/** The actions on tags. */
+function tagActions(state: StoreState, commit: Commit): TagActions {
   return {
     findOrCreateTag(name) {
       const existing = findTagByName(name, state.catalogue.tags);
       if (existing) return existing;
       const tag = createTag(name);
-      state.catalogue.tags.push(tag);
-      save();
+      commit({ ...state.catalogue, tags: [...state.catalogue.tags, tag] });
       return tag;
-    },
-  };
-}
-
-/** The actions on the catalogue as a whole. */
-function catalogueActions(
-  state: StoreState,
-  save: () => void,
-): CatalogueActions {
-  return {
-    replaceCatalogue(catalogue) {
-      state.catalogue = catalogue;
-      state.loadProblem = null;
-      save();
     },
   };
 }

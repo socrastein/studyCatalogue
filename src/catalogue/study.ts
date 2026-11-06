@@ -1,6 +1,7 @@
 /**
  * A study: its bibliographic details (what a citation needs), its topic tags, and its facets (see facets.ts). The
- * catalogue stores studies as plain data; this module creates and updates them.
+ * catalogue stores studies as plain, read-only data: an edit replaces the study rather than changing it. This module
+ * creates and updates them.
  */
 import type {
   AgeGroupId,
@@ -21,7 +22,7 @@ export type Author = { family: string; given: string };
 export type StudyDetails = {
   title: string;
   /** In the order the paper lists them; never empty in a saved study. */
-  authors: Author[];
+  authors: readonly Author[];
   year: number;
   journal: string;
   volume: string | null;
@@ -33,15 +34,15 @@ export type StudyDetails = {
   /** A link to the paper for studies without a DOI, or a free full-text copy. */
   url: string | null;
   abstract: string;
-  tagIds: string[];
+  tagIds: readonly string[];
   design: StudyDesignId;
   subjects: SubjectsId;
   /** Empty when the study does not report it; several when it compares groups. */
-  ageGroups: AgeGroupId[];
+  ageGroups: readonly AgeGroupId[];
   /** Empty when the study does not report it; several when it compares groups. */
-  trainingStatuses: TrainingStatusId[];
+  trainingStatuses: readonly TrainingStatusId[];
   /** Empty when not reported; both for a mixed sample. */
-  sexes: SexId[];
+  sexes: readonly SexId[];
 };
 
 export type Study = StudyDetails & {

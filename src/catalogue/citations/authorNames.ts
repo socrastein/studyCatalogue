@@ -34,7 +34,7 @@ function initialsOfName(name: string): string[] {
  *
  * @param authors The study's authors, in order; never empty in a saved study.
  */
-export function shortAuthorMention(authors: Author[]): string {
+export function shortAuthorMention(authors: readonly Author[]): string {
   const familyNames = authors.map((author) => author.family);
   if (familyNames.length <= 2) return familyNames.join(" & ");
   return `${familyNames[0]} et al.`;

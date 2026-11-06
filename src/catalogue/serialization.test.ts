@@ -15,9 +15,8 @@ import { exampleStudyDetails } from "./testFixtures";
 
 /** A catalogue with the seed tags and one example study. */
 function exampleCatalogue(): Catalogue {
-  const catalogue = newCatalogue();
-  catalogue.studies.push(createStudy(exampleStudyDetails()));
-  return catalogue;
+  const study = createStudy(exampleStudyDetails());
+  return { ...newCatalogue(), studies: [study] };
 }
 
 /**

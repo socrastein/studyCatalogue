@@ -40,7 +40,7 @@ export function formatMla(study: Study): Citation {
  * The authors as MLA writes them: "Family, Given" for one; "Family, Given, and Given Family" for two; the first
  * author followed by "et al." for three or more.
  */
-function mlaAuthorList(authors: Author[]): string {
+function mlaAuthorList(authors: readonly Author[]): string {
   const [first, second] = authors;
   if (first === undefined) return "";
   if (authors.length > 2) return `${invertedName(first)}, et al`;
