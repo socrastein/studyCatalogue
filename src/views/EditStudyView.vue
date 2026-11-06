@@ -1,0 +1,91 @@
+<!--
+  The edit page for one study, found by the id in the URL: the study form filled in with its details, plus a delete
+  button that asks for confirmation first. Either way it returns to the study list with a confirmation. An id that
+  matches no study (deleted, or a mistyped link) gets a short page saying so, with a way back.
+-->
+<script setup lang="ts">
+import { computed, ref } from "vue";
+import { useRouter } from "vue-router";
+import type { StudyDetails } from "../catalogue/study";
+import { draftFromDetails } from "../catalogue/studyDraft";
+import ConfirmDialog from "../components/ConfirmDialog.vue";
+import StudyForm from "../components/StudyForm.vue";
+import { useCatalogue } from "../stores/catalogueStore";
+import { showNoticeOnNextPage } from "../stores/notice";
+
+const props = defineProps<{ id: string }>();
+
+const catalogue = useCatalogue();
+const router = useRouter();
+const confirmDelete = ref<InstanceType<typeof ConfirmDialog> | null>(null);
+
+const study = computed(() =>
+  catalogue.state.catalogue.studies.find(
+    (candidate) => candidate.id === props.id,
+  ),
+);
+
+const deleteMessage = computed(
+  () =>
+    `"${study.value?.title}" will be removed from the catalogue. This cannot be undone.`,
+);
+
+/** Saves the edited details, then shows the list with a confirmation. */
+async function saveStudy(details: StudyDetails): Promise<void> {
+  catalogue.editStudy(props.id, details);
+  showNoticeOnNextPage(`Saved changes to "${details.title}".`);
+  await router.push("/");
+}
+
+/** Asks for confirmation, then deletes the study and shows the list with a confirmation. */
+async function deleteStudy(): Promise<void> {
+  const title = study.value?.title ?? "";
+  const isConfirmed = (await confirmDelete.value?.ask()) ?? false;
+  if (!isConfirmed) return;
+  catalogue.deleteStudy(props.id);
+  showNoticeOnNextPage(`Deleted "${title}".`);
+  await router.push("/");
+}
+</script>
+
+<template>
+  <template v-if="study">
+    <h1 tabindex="-1">Edit study</h1>
+    <StudyForm
+      :key="study.id"
+      :initial-draft="draftFromDetails(study)"
+      submit-label="Save changes"
+      @save="saveStudy"
+    >
+      <template #extraActions>
+        <button
+          type="button"
+          class="dangerButton deleteButton"
+          @click="deleteStudy"
+        >
+          Delete study
+        </button>
+      </template>
+    </StudyForm>
+    <ConfirmDialog
+      ref="confirmDelete"
+      title="Delete this study?"
+      :message="deleteMessage"
+      confirm-label="Delete study"
+    />
+  </template>
+  <template v-else>
+    <h1 tabindex="-1">Study not found</h1>
+    <p>
+      There is no study at this address. It may have been deleted.
+      <RouterLink to="/">Back to the study list</RouterLink>
+    </p>
+  </template>
+</template>
+
+<style scoped>
+.deleteButton {
+  margin-left: auto;
+  padding: 0.6rem 1rem;
+}
+</style>

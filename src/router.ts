@@ -5,6 +5,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import BrowseView from "./views/BrowseView.vue";
 import NewStudyView from "./views/NewStudyView.vue";
+import EditStudyView from "./views/EditStudyView.vue";
 import TagsView from "./views/TagsView.vue";
 import SettingsView from "./views/SettingsView.vue";
 
@@ -25,6 +26,13 @@ export const router = createRouter({
       path: "/studies/new",
       component: NewStudyView,
       meta: { title: "Add a study" },
+    },
+    {
+      path: "/studies/:id/edit",
+      component: EditStudyView,
+      // The id reaches the view as a prop, so the view does not depend on the route object
+      props: true,
+      meta: { title: "Edit study" },
     },
     { path: "/tags", component: TagsView, meta: { title: "Tags" } },
     { path: "/settings", component: SettingsView, meta: { title: "Settings" } },

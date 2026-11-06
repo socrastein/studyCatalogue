@@ -26,12 +26,16 @@ the specs for the area while working and with each commit, the full suite before
 3. `src/views/`, `src/components/`: Vue single-file components. `src/router.ts` maps URLs to views; `src/App.vue` is
    the shell (skip link, header, nav).
 
-`src/modules/` holds the original hand-built form and theme settings, which the steps above replace.
+`src/modules/appSettings.ts` (light/dark mode and colour theme) predates the layers; the settings step moves it into
+`src/stores/`.
 
 ## Domain vocabulary
 
 - **Tag**: a topic, with optional parents; filtering by a tag includes its descendants.
 - **Facet**: a fixed vocabulary every study is described by: design, subjects (one value each), age groups, training
   statuses, sexes (several each; an empty list means "not reported").
+
+Browser specs find elements by role (`getByRole`), never `getByLabel`: see the note in `e2e/expectNoAxeViolations.ts`
+about a Firefox crash.
 
 Abbreviations allowed in names (beyond the global `id`): `doi`, `url`, `apa`, `mla`.

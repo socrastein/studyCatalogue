@@ -21,6 +21,10 @@ const WCAG_AA_TAGS = [
 /**
  * Fails the test with axe's list of problems if the page as it stands has any WCAG 2.2 AA violation.
  *
+ * Specs that call this find elements by role (`getByRole("textbox", { name })`), never `getByLabel`: in Playwright's
+ * Firefox build for this machine (v1572, the fallback build for an unsupported distribution), any `getByLabel` on a
+ * page with many labels makes the next axe run crash the page ("Page crashed"). Found 2026-11-06.
+ *
  * @param page The page to check, in the state to check it in.
  */
 export async function expectNoAxeViolations(page: Page): Promise<void> {

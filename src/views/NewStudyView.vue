@@ -1,19 +1,30 @@
 <!--
-  The add-a-study page. For now it mounts the original hand-built form (src/modules/newStudyForm) inside the Vue app,
-  until the Vue study form replaces it.
+  The add-a-study page: an empty study form. Saving adds the study and returns to the study list with a confirmation.
 -->
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
-import newStudyForm from "../modules/newStudyForm/newStudyForm.ts";
+import { useRouter } from "vue-router";
+import type { StudyDetails } from "../catalogue/study";
+import { emptyDraft } from "../catalogue/studyDraft";
+import StudyForm from "../components/StudyForm.vue";
+import { useCatalogue } from "../stores/catalogueStore";
+import { showNoticeOnNextPage } from "../stores/notice";
 
-const formHost = ref<HTMLDivElement | null>(null);
+const catalogue = useCatalogue();
+const router = useRouter();
 
-onMounted(() => {
-  formHost.value?.append(newStudyForm());
-});
+/** Adds the study, then shows the list with a confirmation naming it. */
+async function addStudy(details: StudyDetails): Promise<void> {
+  catalogue.addStudy(details);
+  showNoticeOnNextPage(`Added "${details.title}".`);
+  await router.push("/");
+}
 </script>
 
 <template>
   <h1 tabindex="-1">Add a study</h1>
-  <div ref="formHost"></div>
+  <StudyForm
+    :initial-draft="emptyDraft()"
+    submit-label="Add study"
+    @save="addStudy"
+  />
 </template>

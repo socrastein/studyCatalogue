@@ -6,8 +6,11 @@
 import { nextTick, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { APP_NAME } from "./router.ts";
+import { useCatalogue } from "./stores/catalogueStore";
+import { advanceNoticeOnNavigation, noticeMessage } from "./stores/notice";
 
 const route = useRoute();
+const catalogue = useCatalogue();
 const mainElement = ref<HTMLElement | null>(null);
 
 /**
@@ -24,6 +27,7 @@ async function focusPageHeading(): Promise<void> {
 watch(
   () => route.path,
   (_newPath, oldPath) => {
+    advanceNoticeOnNavigation();
     const isFirstLoad = oldPath === undefined;
     if (!isFirstLoad) void focusPageHeading();
   },
@@ -44,6 +48,21 @@ watch(
     </nav>
   </header>
   <main id="main" ref="mainElement">
+    <p
+      v-if="catalogue.state.saveProblem"
+      class="banner problemBanner"
+      role="alert"
+    >
+      {{ catalogue.state.saveProblem }}
+    </p>
+    <!-- Always present, so screen readers notice when a message appears in it -->
+    <p
+      class="banner noticeBanner"
+      :class="{ isEmpty: noticeMessage === '' }"
+      role="status"
+    >
+      {{ noticeMessage }}
+    </p>
     <RouterView />
   </main>
 </template>
@@ -104,6 +123,28 @@ watch(
 /* The current page: underlined in the accent colour, so it is marked by more than colour alone */
 .navList a[aria-current="page"] {
   border-bottom: 3px solid var(--color-theme);
+  font-weight: bold;
+}
+
+.banner {
+  width: min(100%, 44rem);
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border-left: 6px solid;
+  background: var(--secondary-background);
+}
+
+.noticeBanner {
+  border-color: var(--color-theme);
+}
+
+/* Keeps the status region in the page for screen readers while there is nothing to say */
+.noticeBanner.isEmpty {
+  display: contents;
+}
+
+.problemBanner {
+  border-color: var(--error-color);
   font-weight: bold;
 }
 
