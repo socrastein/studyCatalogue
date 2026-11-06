@@ -6,14 +6,6 @@ type StudyCategory = {
   subfields: string[];
 };
 
-function header(): HTMLDivElement {
-  const header = document.createElement("div");
-  header.id = "newStudyFormHeader";
-  header.textContent = "Add New Study";
-
-  return header;
-}
-
 function inputTitle(): HTMLDivElement {
   const title = document.createElement("div");
   title.classList.add("studyFormInputContainer");
@@ -290,7 +282,6 @@ export default function newStudyForm(): HTMLDivElement {
   const container = document.createElement("div");
   container.id = "newStudyForm";
 
-  container.append(header());
   container.append(inputTitle());
   container.append(inputAuthors());
   container.append(inputYear());

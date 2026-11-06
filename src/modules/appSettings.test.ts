@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 /**
  * Tests for the mode and colour theme settings: what they write to the root element, and that the accent colour
  * follows the mode.

@@ -5,19 +5,26 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vue-tsc --build && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc",
+    "typecheck": "vue-tsc --build",
     "test": "vitest run",
     "test:watch": "vitest",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@vitejs/plugin-vue": "^6.0.10",
     "jsdom": "^31.0.0",
     "prettier": "^3.9.10",
     "typescript": "~5.9.3",
     "vite": "^8.0.0",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.0",
+    "vue-tsc": "^3.3.14"
+  },
+  "dependencies": {
+    "vue": "^3.5.45",
+    "vue-router": "^5.4.0"
   }
 }

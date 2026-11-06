@@ -30,12 +30,6 @@
   width: 100%;
 }
 
-#newStudyFormHeader {
-  color: var(--secondary-color);
-  font-size: 1.25rem;
-  font-weight: bold;
-}
-
 #newStudyTitle {
   height: 3rem;
   resize: none;
