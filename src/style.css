@@ -67,7 +67,9 @@ input[type="number"] {
 
 button {
   background-color: var(--color-theme);
-  color: var(--secondary-background);
+  /* The page background reads well on the accent in both modes: dark text on the light accent of dark mode, light
+     text on the dark accent of light mode */
+  color: var(--primary-background);
   border: none;
   padding: 0.25rem 0.75rem;
   border-radius: 0.25rem;
@@ -76,9 +78,9 @@ button {
   cursor: pointer;
 }
 
+/* A ring instead of a border, so hovering does not change the button's size and shift what is around it */
 button:hover {
-  color: var(--primary-color);
-  border: 1px solid var(--primary-color);
+  box-shadow: 0 0 0 2px var(--primary-color);
 }
 
 #app {
