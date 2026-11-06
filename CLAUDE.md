@@ -16,8 +16,6 @@ Private for now, to be released later, so the global accessibility and usability
 
 CI (`.github/workflows/ci.yml`) runs format check, typecheck and unit tests on every push.
 
-`npm test` passes `--passWithNoTests` only until the first tests exist (catalogue model step); remove it then.
-
 ## Layers (target design; dependencies point down only)
 
 1. `src/catalogue/`: pure TypeScript domain (types, facets, tags, filtering, search, citations, serialization). No Vue,
