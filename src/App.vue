@@ -55,6 +55,13 @@ watch(
     >
       {{ catalogue.state.saveProblem }}
     </p>
+    <p
+      v-if="catalogue.state.loadProblem && route.path !== '/settings'"
+      class="banner problemBanner"
+    >
+      Your saved catalogue could not be read, so changes are not being saved.
+      <RouterLink to="/settings">Recover it in Settings</RouterLink>
+    </p>
     <!-- Always present, so screen readers notice when a message appears in it -->
     <p
       class="banner noticeBanner"
