@@ -1,13 +1,13 @@
 /**
- * Entry point: applies the starting mode and colour theme, then mounts the Vue app with its router.
+ * Entry point: applies the remembered appearance settings, then mounts the Vue app with its router. Settings come
+ * first so the page never shows a flash of the wrong mode or colour.
  */
 import "./style.css";
 import { createApp } from "vue";
 import App from "./App.vue";
 import { router } from "./router.ts";
-import { setColorTheme, setMode } from "./modules/appSettings.ts";
+import { useSettings } from "./stores/settingsStore.ts";
 
-setMode("dark");
-setColorTheme("purple");
+useSettings();
 
 createApp(App).use(router).mount("#app");

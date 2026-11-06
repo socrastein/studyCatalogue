@@ -21,7 +21,18 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
 
-  projects: [{ name: "firefox", use: { ...devices["Desktop Firefox"] } }],
+  // Every spec runs in both modes: the app follows the device's colour scheme by default, and each mode has its own
+  // colours, so axe checks contrast in each
+  projects: [
+    {
+      name: "firefox-light",
+      use: { ...devices["Desktop Firefox"], colorScheme: "light" },
+    },
+    {
+      name: "firefox-dark",
+      use: { ...devices["Desktop Firefox"], colorScheme: "dark" },
+    },
+  ],
 
   webServer: {
     command: `npx vite build && npx vite preview --port ${PORT} --strictPort`,

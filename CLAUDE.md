@@ -26,9 +26,6 @@ the specs for the area while working and with each commit, the full suite before
 3. `src/views/`, `src/components/`: Vue single-file components. `src/router.ts` maps URLs to views; `src/App.vue` is
    the shell (skip link, header, nav).
 
-`src/modules/appSettings.ts` (light/dark mode and colour theme) predates the layers; the settings step moves it into
-`src/stores/`.
-
 ## Domain vocabulary
 
 - **Tag**: a topic, with optional parents; filtering by a tag includes its descendants.
