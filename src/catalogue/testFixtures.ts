@@ -14,9 +14,9 @@ export function exampleStudyDetails(
     title:
       "Dose-response relationship between weekly resistance training volume and increases in muscle mass",
     authors: [
-      { family: "Schoenfeld", given: "Brad Jon" },
-      { family: "Ogborn", given: "Dan" },
-      { family: "Krieger", given: "James W." },
+      { kind: "person", family: "Schoenfeld", given: "Brad Jon" },
+      { kind: "person", family: "Ogborn", given: "Dan" },
+      { kind: "person", family: "Krieger", given: "James W." },
     ],
     year: 2017,
     journal: "Journal of Sports Sciences",

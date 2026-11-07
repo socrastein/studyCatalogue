@@ -21,6 +21,7 @@ export function exampleStudy(overrides: Partial<StudyDetails> = {}): Study {
  */
 export function numberedAuthors(count: number): Author[] {
   return Array.from({ length: count }, (_, index) => ({
+    kind: "person",
     family: `Author${index + 1}`,
     given: "A",
   }));

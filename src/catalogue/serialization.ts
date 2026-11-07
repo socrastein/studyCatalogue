@@ -175,10 +175,22 @@ function readAuthors(value: unknown, where: string): Author[] {
   return authors;
 }
 
-/** One author's family and given names. */
+/**
+ * One author: an organization's name, or a person's family and given names. Authors saved before organizations
+ * existed have no `kind`, and are people.
+ */
 function readAuthor(value: unknown, where: string): Author {
   const record = readRecord(value, `${where} item`);
+  if (record.kind === "organization") {
+    return {
+      kind: "organization",
+      name: readString(record.name, `${where}: organization name`),
+    };
+  }
+  if (record.kind !== undefined && record.kind !== "person")
+    throw new ShapeError(`${where}: unknown author kind`);
   return {
+    kind: "person",
     family: readString(record.family, `${where}: family name`),
     given: readString(record.given, `${where}: given name`),
   };

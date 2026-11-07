@@ -89,6 +89,22 @@ test("the authors box shows how it read the pasted names", async ({ page }) => {
   ).toHaveText(["Schoenfeld, B. J.", "Ogborn, D.", "Krieger, J. W."]);
 });
 
+test("an organization in braces is read whole and marked as one", async ({
+  page,
+}) => {
+  await textField(page, /^Authors$/).fill(
+    "{American College of Sports Medicine}; Smith, Jo",
+  );
+  await expect(
+    page
+      .getByRole("list", { name: "Read as 2 authors:" })
+      .getByRole("listitem"),
+  ).toHaveText([
+    "American College of Sports Medicine (organization)",
+    "Smith, J.",
+  ]);
+});
+
 test("the tag combobox adds an existing tag, creates a new one, and removes one", async ({
   page,
 }) => {

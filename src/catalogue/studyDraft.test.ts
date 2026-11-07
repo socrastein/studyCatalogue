@@ -83,8 +83,8 @@ describe("validateDraft turns a valid draft into details", () => {
   it("reading a pasted author list into names", () => {
     const draft = exampleDraft({ authors: "Smith J, Lee AB." });
     expect(detailsFor(draft).authors).toEqual([
-      { family: "Smith", given: "J" },
-      { family: "Lee", given: "AB" },
+      { kind: "person", family: "Smith", given: "J" },
+      { kind: "person", family: "Lee", given: "AB" },
     ]);
   });
 

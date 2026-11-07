@@ -39,7 +39,7 @@ describe("formatRedditLink", () => {
 
   it("escapes square brackets in the link text", () => {
     const study = exampleStudy({
-      authors: [{ family: "[Collaborators]", given: "" }],
+      authors: [{ kind: "person", family: "[Collaborators]", given: "" }],
     });
     expect(formatRedditLink(study).plainText).toMatch(
       /^\[\\\[Collaborators\\\] \(2017\)\]/,

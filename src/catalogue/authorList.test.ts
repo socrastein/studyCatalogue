@@ -3,11 +3,14 @@
  */
 import { describe, expect, it } from "vitest";
 import { formatAuthorList, hasEtAl, parseAuthorList } from "./authorList";
+import type { Author } from "./study";
 
-/** The authors as "Family | Given" strings, which read clearly in a failing test. */
+/** The authors as "Family | Given" strings, or "{Organization}", which read clearly in a failing test. */
 function read(text: string): string[] {
-  return parseAuthorList(text).map(
-    (author) => `${author.family} | ${author.given}`,
+  return parseAuthorList(text).map((author) =>
+    author.kind === "organization"
+      ? `{${author.name}}`
+      : `${author.family} | ${author.given}`,
   );
 }
 
@@ -91,13 +94,46 @@ describe("hasEtAl", () => {
 
 describe("formatAuthorList", () => {
   it("writes inverted names separated by semicolons, which read back unchanged", () => {
-    const authors = [
-      { family: "Schoenfeld", given: "Brad Jon" },
-      { family: "van Beethoven", given: "L." },
-      { family: "WHO", given: "" },
+    const authors: Author[] = [
+      { kind: "person", family: "Schoenfeld", given: "Brad Jon" },
+      { kind: "person", family: "van Beethoven", given: "L." },
+      { kind: "person", family: "Smith", given: "" },
+      { kind: "organization", name: "World Health Organization" },
     ];
     const text = formatAuthorList(authors);
-    expect(text).toBe("Schoenfeld, Brad Jon; van Beethoven, L.; WHO");
+    expect(text).toBe(
+      "Schoenfeld, Brad Jon; van Beethoven, L.; Smith; {World Health Organization}",
+    );
     expect(parseAuthorList(text)).toEqual(authors);
+  });
+});
+
+describe("parseAuthorList: organizations in braces", () => {
+  it("reads a braced name whole, in a semicolon list", () => {
+    expect(read("{American College of Sports Medicine}; Smith, J.")).toEqual([
+      "{American College of Sports Medicine}",
+      "Smith | J.",
+    ]);
+  });
+
+  it("keeps an organization's own 'and' and commas inside the braces, in a comma list", () => {
+    expect(
+      read("Smith J, {National Strength and Conditioning Association}, Doe R"),
+    ).toEqual([
+      "Smith | J",
+      "{National Strength and Conditioning Association}",
+      "Doe | R",
+    ]);
+  });
+
+  it("reads one in a reference list's form, with its ampersand", () => {
+    expect(read("Smith, J., & {Council of Europe, Sport Division}")).toEqual([
+      "Smith | J.",
+      "{Council of Europe, Sport Division}",
+    ]);
+  });
+
+  it("drops a brace without its partner, and empty braces, reading what is left as usual", () => {
+    expect(read("{Jane Doe; Smith J; {}")).toEqual(["Doe | Jane", "Smith | J"]);
   });
 });

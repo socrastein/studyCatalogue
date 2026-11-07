@@ -41,9 +41,9 @@ describe("crossrefFields", () => {
   it("writes authors in a form the Authors box reads back exactly", () => {
     const authors = crossrefFields(SCHOENFELD_2017).authors ?? "";
     expect(parseAuthorList(authors)).toEqual([
-      { family: "Schoenfeld", given: "Brad J." },
-      { family: "Ogborn", given: "Dan" },
-      { family: "Krieger", given: "James W." },
+      { kind: "person", family: "Schoenfeld", given: "Brad J." },
+      { kind: "person", family: "Ogborn", given: "Dan" },
+      { kind: "person", family: "Krieger", given: "James W." },
     ]);
   });
 

@@ -6,18 +6,21 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { parseAuthorList } from "../catalogue/authorList";
-import { givenInitials } from "../catalogue/citations/authorNames";
+import { apaAuthorName } from "../catalogue/citations/authorNames";
 import TextField from "./TextField.vue";
 
 defineProps<{ error?: string }>();
 
 const authorList = defineModel<string>({ required: true });
 
-/** Each author read from the box, written as APA will write it, e.g. "Schoenfeld, B. J.". */
+/**
+ * Each author read from the box, written as APA will write it ("Schoenfeld, B. J."), an organization marked as one so
+ * a misread is easy to spot.
+ */
 const readNames = computed(() =>
   parseAuthorList(authorList.value).map((author) => {
-    const initials = givenInitials(author.given);
-    return initials === "" ? author.family : `${author.family}, ${initials}`;
+    const name = apaAuthorName(author);
+    return author.kind === "organization" ? `${name} (organization)` : name;
   }),
 );
 </script>
@@ -28,7 +31,7 @@ const readNames = computed(() =>
       id="study-authors"
       v-model="authorList"
       label="Authors"
-      hint="Paste every author, in the paper's order: e.g. Schoenfeld BJ, Ogborn D, Krieger JW"
+      hint="Paste every author, in the paper's order: e.g. Schoenfeld BJ, Ogborn D, Krieger JW. Put an organization in braces: {World Health Organization}."
       :error="error"
       is-multiline
       :rows="2"

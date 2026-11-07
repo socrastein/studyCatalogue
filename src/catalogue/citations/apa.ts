@@ -9,7 +9,7 @@
  * proper nouns, acronyms and gene names, so the stored title is trusted instead.
  */
 import type { Author, Study } from "../study";
-import { givenInitials } from "./authorNames";
+import { apaAuthorName } from "./authorNames";
 import {
   italic,
   plain,
@@ -35,7 +35,11 @@ const AUTHORS_BEFORE_ELLIPSIS = 19;
 export function formatApa(study: Study): Citation {
   const link = studyLink(study);
   return renderCitation([
-    plain(`${apaAuthorList(study.authors)} (${study.year}). `),
+    // The author element always ends in a period; a person's last initial usually supplies it, an organization's
+    // name or a lone family name does not
+    plain(
+      `${withClosingPeriod(apaAuthorList(study.authors))} (${study.year}). `,
+    ),
     plain(withClosingPeriod(study.title)),
     ...apaSource(study),
     plain(link === null ? "" : ` ${link}`),
@@ -43,7 +47,7 @@ export function formatApa(study: Study): Citation {
 }
 
 /**
- * The authors in APA order: "Family, G. G." each, commas between, "&" before the last; with more than 20, the first
+ * The authors in APA order: "Family, G. G." each (an organization by its name), commas between, "&" before the last; with more than 20, the first
  * 19, ". . .", then the last (with no "&").
  */
 function apaAuthorList(authors: readonly Author[]): string {
@@ -56,12 +60,6 @@ function apaAuthorList(authors: readonly Author[]): string {
   if (names.length === 1) return lastName;
   const allButLast = names.slice(0, -1);
   return `${allButLast.join(", ")}, & ${lastName}`;
-}
-
-/** One author as "Family, G. G.", or just "Family" when no given name was entered. */
-function apaAuthorName(author: Author): string {
-  const initials = givenInitials(author.given);
-  return initials === "" ? author.family : `${author.family}, ${initials}`;
 }
 
 /**

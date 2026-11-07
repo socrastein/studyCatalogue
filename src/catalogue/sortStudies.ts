@@ -2,7 +2,8 @@
  * The orders the study list can be sorted in, chosen on the browse page and kept in its URL (views/filtersInUrl.ts).
  * Each is a vocabulary entry like a facet value: a stable id for the URL and a label for the drop-down.
  */
-import type { Study } from "./study";
+import { filingName } from "./citations/authorNames";
+import type { Author, Study } from "./study";
 
 export const SORT_ORDERS = [
   { id: "newest", label: "Newest published" },
@@ -60,8 +61,8 @@ function byMostRecentlyAdded(first: Study, second: Study): number {
 }
 
 /**
- * By the first author's family name, then given names; one author's studies oldest first, as an APA reference list
- * orders them. A study without authors (never saved by the form, but possible in old data) comes last.
+ * By the first author's filing name (a person's family name, an organization's name), then given names; one
+ * author's studies oldest first, as an APA reference list orders them. A study without authors (never saved by the form, but possible in old data) comes last.
  */
 function byFirstAuthor(first: Study, second: Study): number {
   const firstAuthor = first.authors[0];
@@ -71,9 +72,14 @@ function byFirstAuthor(first: Study, second: Study): number {
   if (firstAuthor === undefined) return 1;
   if (secondAuthor === undefined) return -1;
   const byName =
-    compareText(firstAuthor.family, secondAuthor.family) ||
-    compareText(firstAuthor.given, secondAuthor.given);
+    compareText(filingName(firstAuthor), filingName(secondAuthor)) ||
+    compareText(givenNames(firstAuthor), givenNames(secondAuthor));
   return byName || first.year - second.year || byTitle(first, second);
+}
+
+/** A person's given names, or "" for an organization, which has none. */
+function givenNames(author: Author): string {
+  return author.kind === "person" ? author.given : "";
 }
 
 /** Text order for people: "de Vries" beside "De Souza", "Ödegaard" beside "Odegaard". */

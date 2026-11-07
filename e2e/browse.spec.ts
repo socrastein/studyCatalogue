@@ -176,7 +176,7 @@ function studyByAuthor(family: string, year: number) {
   return studyDetails({
     title: `${family} ${year}`,
     year,
-    authors: [{ family, given: "J." }],
+    authors: [{ kind: "person", family, given: "J." }],
   });
 }
 

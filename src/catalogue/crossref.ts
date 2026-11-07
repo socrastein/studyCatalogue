@@ -98,7 +98,7 @@ function crossrefAuthor(entry: unknown): Author | undefined {
   const fields = entry as Record<string, unknown>;
   const family = plainText(fields.family) ?? plainText(fields.name);
   if (family === undefined) return undefined;
-  return { family, given: plainText(fields.given) ?? "" };
+  return { kind: "person", family, given: plainText(fields.given) ?? "" };
 }
 
 /** The year as text: the print issue's when known, otherwise the online publication's, otherwise the issue date's. */

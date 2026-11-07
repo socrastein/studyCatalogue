@@ -18,7 +18,7 @@ function study({
   title,
   year,
   createdAt = "2026-01-01T00:00:00.000Z",
-  authors = [{ family: "Smith", given: "J." }],
+  authors = [{ kind: "person", family: "Smith", given: "J." }],
 }: StudyShape): Study {
   return {
     ...exampleStudyDetails({ title, year, authors }),
@@ -30,7 +30,11 @@ function study({
 
 /** A study whose first author has the given family name. */
 function writtenBy(family: string, title: string, year: number): Study {
-  return study({ title, year, authors: [{ family, given: "J." }] });
+  return study({
+    title,
+    year,
+    authors: [{ kind: "person", family, given: "J." }],
+  });
 }
 
 /** The titles of the studies in the given order. */
@@ -79,6 +83,21 @@ describe("sortStudies", () => {
       "Krieger earlier",
       "Krieger later",
       "Schoenfeld",
+    ]);
+  });
+
+  it("files an organization author under its whole name", () => {
+    const byOrganization = study({
+      title: "ACSM position stand",
+      year: 2009,
+      authors: [
+        { kind: "organization", name: "American College of Sports Medicine" },
+      ],
+    });
+    const byPerson = writtenBy("Baker", "Baker", 2009);
+    expect(titlesIn("author", [byPerson, byOrganization])).toEqual([
+      "ACSM position stand",
+      "Baker",
     ]);
   });
 

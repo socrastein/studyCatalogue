@@ -13,10 +13,19 @@ import type {
 import { createId } from "./ids";
 
 /**
- * One author, split the way citation styles need. `given` is kept as entered: full given names ("Brad Jon") or
- * initials ("B. J."); the citation formatters derive initials where a style wants them.
+ * One author: a person, split the way citation styles need, or an organization (a group author such as "American
+ * College of Sports Medicine"), which every style cites under its full name.
  */
-export type Author = { family: string; given: string };
+export type Author = PersonAuthor | OrganizationAuthor;
+
+/**
+ * A person. `given` is kept as entered: full given names ("Brad Jon") or initials ("B. J."); the citation formatters
+ * derive initials where a style wants them.
+ */
+export type PersonAuthor = { kind: "person"; family: string; given: string };
+
+/** An organization, cited under its name as written: "World Health Organization", never "Organization, W. H.". */
+export type OrganizationAuthor = { kind: "organization"; name: string };
 
 /** Everything about a study that is entered in the form: the study minus its id and timestamps. */
 export type StudyDetails = {

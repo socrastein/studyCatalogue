@@ -6,6 +6,7 @@
  * Population facets (age group, training status, sex) can be unreported. A study that does not report a facet never
  * matches a filter on it, and the result counts how many such studies were left out, so they are not silently lost.
  */
+import { fullName } from "./citations/authorNames";
 import type {
   AgeGroupId,
   SexId,
@@ -192,7 +193,7 @@ function searchableText(study: Study, tags: readonly Tag[]): string {
   const studyTags = tags.filter((tag) => study.tagIds.includes(tag.id));
   const parts = [
     study.title,
-    ...study.authors.map((author) => `${author.given} ${author.family}`),
+    ...study.authors.map(fullName),
     study.journal,
     study.abstract,
     ...studyTags.flatMap((tag) => [tag.name, ...tag.aliases]),

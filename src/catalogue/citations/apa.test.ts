@@ -22,16 +22,27 @@ describe("formatApa", () => {
 
   it("writes a single author without an ampersand", () => {
     const study = exampleStudy({
-      authors: [{ family: "Krieger", given: "James W." }],
+      authors: [{ kind: "person", family: "Krieger", given: "James W." }],
     });
     expect(formatApa(study).plainText).toMatch(/^Krieger, J\. W\. \(2017\)\. /);
+  });
+
+  it("writes an organization author by its full name", () => {
+    const study = exampleStudy({
+      authors: [
+        { kind: "organization", name: "American College of Sports Medicine" },
+      ],
+    });
+    expect(formatApa(study).plainText).toMatch(
+      /^American College of Sports Medicine\. \(2017\)\. /,
+    );
   });
 
   it("puts a comma and ampersand between two authors", () => {
     const study = exampleStudy({
       authors: [
-        { family: "Schoenfeld", given: "Brad Jon" },
-        { family: "Ogborn", given: "Dan" },
+        { kind: "person", family: "Schoenfeld", given: "Brad Jon" },
+        { kind: "person", family: "Ogborn", given: "Dan" },
       ],
     });
     expect(formatApa(study).plainText).toMatch(
@@ -53,9 +64,11 @@ describe("formatApa", () => {
     expect(reference).not.toContain("Author20");
   });
 
-  it("writes just the family name for an author with no given name", () => {
-    const study = exampleStudy({ authors: [{ family: "WHO", given: "" }] });
-    expect(formatApa(study).plainText).toMatch(/^WHO \(2017\)\. /);
+  it("writes just the family name for an author with no given name, closing the author element with a period", () => {
+    const study = exampleStudy({
+      authors: [{ kind: "person", family: "Smith", given: "" }],
+    });
+    expect(formatApa(study).plainText).toMatch(/^Smith\. \(2017\)\. /);
   });
 
   it("does not add a period after a title ending in a question mark", () => {

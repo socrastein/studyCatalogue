@@ -22,16 +22,33 @@ describe("formatMla", () => {
 
   it("writes one author inverted, without doubling a period after an initial", () => {
     const study = exampleStudy({
-      authors: [{ family: "Krieger", given: "James W." }],
+      authors: [{ kind: "person", family: "Krieger", given: "James W." }],
     });
     expect(formatMla(study).plainText).toMatch(/^Krieger, James W\. "/);
+  });
+
+  it("writes an organization author by its full name, first or second", () => {
+    const organization = {
+      kind: "organization",
+      name: "American College of Sports Medicine",
+    } as const;
+    const alone = exampleStudy({ authors: [organization] });
+    expect(formatMla(alone).plainText).toMatch(
+      /^American College of Sports Medicine\. "/,
+    );
+    const second = exampleStudy({
+      authors: [{ kind: "person", family: "Smith", given: "Jo" }, organization],
+    });
+    expect(formatMla(second).plainText).toMatch(
+      /^Smith, Jo, and American College of Sports Medicine\. "/,
+    );
   });
 
   it("writes the second of two authors in direct order", () => {
     const study = exampleStudy({
       authors: [
-        { family: "Schoenfeld", given: "Brad Jon" },
-        { family: "Ogborn", given: "Dan" },
+        { kind: "person", family: "Schoenfeld", given: "Brad Jon" },
+        { kind: "person", family: "Ogborn", given: "Dan" },
       ],
     });
     expect(formatMla(study).plainText).toMatch(

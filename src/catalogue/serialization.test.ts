@@ -144,4 +144,30 @@ describe("parseCatalogue accepts", () => {
     });
     expect(parseCatalogue(text).kind).toBe("parsed");
   });
+
+  it("an author saved before organizations existed, as a person", () => {
+    const text = corruptedText((data) => {
+      data.studies[0].authors = [{ family: "Smith", given: "J." }];
+    });
+    const result = parseCatalogue(text);
+    expect(
+      result.kind === "parsed" && result.catalogue.studies[0]?.authors,
+    ).toEqual([{ kind: "person", family: "Smith", given: "J." }]);
+  });
+
+  it("an organization author", () => {
+    const text = corruptedText((data) => {
+      data.studies[0].authors = [{ kind: "organization", name: "WHO" }];
+    });
+    expect(parseCatalogue(text).kind).toBe("parsed");
+  });
+});
+
+describe("parseCatalogue rejects authors", () => {
+  it("of an unknown kind", () => {
+    const text = corruptedText((data) => {
+      data.studies[0].authors = [{ kind: "robot", name: "HAL" }];
+    });
+    expect(problemWith(text)).toContain("unknown author kind");
+  });
 });

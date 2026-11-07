@@ -2,7 +2,16 @@
  * Tests for author names in citation form: initials from given names, and the short in-text mention.
  */
 import { describe, expect, it } from "vitest";
-import { givenInitials, shortAuthorMention } from "./authorNames";
+import type { Author } from "../study";
+import {
+  apaAuthorName,
+  filingName,
+  fullName,
+  givenInitials,
+  shortAuthorMention,
+} from "./authorNames";
+
+const WHO: Author = { kind: "organization", name: "World Health Organization" };
 
 describe("givenInitials", () => {
   it.each([
@@ -20,9 +29,17 @@ describe("givenInitials", () => {
 });
 
 describe("shortAuthorMention", () => {
-  const schoenfeld = { family: "Schoenfeld", given: "Brad Jon" };
-  const ogborn = { family: "Ogborn", given: "Dan" };
-  const krieger = { family: "Krieger", given: "James W." };
+  const schoenfeld: Author = {
+    kind: "person",
+    family: "Schoenfeld",
+    given: "Brad Jon",
+  };
+  const ogborn: Author = { kind: "person", family: "Ogborn", given: "Dan" };
+  const krieger: Author = {
+    kind: "person",
+    family: "Krieger",
+    given: "James W.",
+  };
 
   it("is the family name for one author", () => {
     expect(shortAuthorMention([schoenfeld])).toBe("Schoenfeld");
@@ -37,6 +54,21 @@ describe("shortAuthorMention", () => {
   it("is the first author et al. for three or more", () => {
     expect(shortAuthorMention([schoenfeld, ogborn, krieger])).toBe(
       "Schoenfeld et al.",
+    );
+  });
+});
+
+describe("names of an organization", () => {
+  it("are its whole name, in every form", () => {
+    expect(filingName(WHO)).toBe("World Health Organization");
+    expect(fullName(WHO)).toBe("World Health Organization");
+    expect(apaAuthorName(WHO)).toBe("World Health Organization");
+  });
+
+  it("lead a short mention unabbreviated", () => {
+    const smith: Author = { kind: "person", family: "Smith", given: "J." };
+    expect(shortAuthorMention([WHO, smith])).toBe(
+      "World Health Organization & Smith",
     );
   });
 });

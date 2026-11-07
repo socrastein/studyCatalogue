@@ -17,6 +17,7 @@ import {
   withClosingPeriod,
   type Citation,
 } from "./citation";
+import { filingName, fullName } from "./authorNames";
 
 /**
  * The study's MLA 9 works-cited entry.
@@ -46,21 +47,14 @@ function mlaAuthorList(authors: readonly Author[]): string {
   if (authors.length > 2) return `${invertedName(first)}, et al`;
   // No second author: a single-author study
   if (second === undefined) return invertedName(first);
-  return `${invertedName(first)}, and ${directName(second)}`;
+  return `${invertedName(first)}, and ${fullName(second)}`;
 }
 
-/** "Family, Given", or just "Family" when no given name was entered. */
+/** "Family, Given", just "Family" when no given name was entered, or an organization's name. */
 function invertedName(author: Author): string {
-  return author.given === ""
-    ? author.family
-    : `${author.family}, ${author.given}`;
-}
-
-/** "Given Family", or just "Family" when no given name was entered. */
-function directName(author: Author): string {
-  return author.given === ""
-    ? author.family
-    : `${author.given} ${author.family}`;
+  if (author.kind === "organization" || author.given === "")
+    return filingName(author);
+  return `${author.family}, ${author.given}`;
 }
 
 /**
