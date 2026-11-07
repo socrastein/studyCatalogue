@@ -49,7 +49,7 @@ defineExpose({ focus });
 
 <style scoped>
 .errorSummary {
-  border: 3px solid var(--error-color);
+  border: 3px solid var(--danger);
   border-radius: 0.5rem;
   padding: 1rem 1.25rem;
   display: flex;
@@ -59,7 +59,7 @@ defineExpose({ focus });
 
 .errorSummary:focus-visible,
 .errorSummary:focus {
-  outline: 3px solid var(--color-theme);
+  outline: 3px solid var(--accentFull);
   outline-offset: 2px;
 }
 
@@ -75,7 +75,7 @@ ul {
 a {
   display: inline-block;
   padding: 0.25rem 0;
-  color: var(--error-color);
+  color: var(--danger);
   font-weight: bold;
 }
 </style>

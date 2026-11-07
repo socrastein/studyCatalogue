@@ -1,8 +1,9 @@
 /**
  * Browser tests for the app shell: the navigation reaches every page, marks the current one, names the tab after it,
- * moves focus to the new page's heading, and every page passes axe.
+ * moves focus to the new page's heading, and every page passes axe. The theme button switches light and dark mode
+ * and the choice survives a reload.
  */
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { expectNoAxeViolations } from "./expectNoAxeViolations";
 
 const PAGES = [
@@ -49,4 +50,28 @@ test("the skip link jumps past the navigation to the page content", async ({
   await expect(skipLink).toBeFocused();
   await skipLink.press("Enter");
   await expect(page).toHaveURL(/#main$/);
+});
+
+/** Whether the page is showing dark mode: the library's `dark` class on the root element. */
+async function isShowingDark(page: Page): Promise<boolean> {
+  return page
+    .locator("html")
+    .evaluate((root) => root.classList.contains("dark"));
+}
+
+test("the theme button switches mode, and the choice survives a reload", async ({
+  page,
+}) => {
+  await page.goto("/");
+  // Playwright's project decides the starting mode (the system's), so the test works from whichever it is
+  const startsDark = await isShowingDark(page);
+  const switchName = startsDark
+    ? "Switch to light mode"
+    : "Switch to dark mode";
+  await page.getByRole("button", { name: switchName }).click();
+
+  await expect.poll(() => isShowingDark(page)).toBe(!startsDark);
+  await page.reload();
+  await expect.poll(() => isShowingDark(page)).toBe(!startsDark);
+  await expectNoAxeViolations(page);
 });

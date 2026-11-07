@@ -237,7 +237,7 @@ function createTag(name: string): void {
   flex-direction: column;
   gap: 1rem;
   padding: 1.25rem;
-  background: var(--secondary-background);
+  background: var(--bgMid);
   border-radius: 0.5rem;
 }
 

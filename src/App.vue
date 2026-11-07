@@ -1,10 +1,12 @@
 <!--
-  The app shell: a skip link, the site header with the main navigation, and the current page. RouterLink marks the
-  link for the current page with aria-current="page", which the styles underline.
+  The app shell: a skip link, the site header with the main navigation and the light/dark switch, and the current
+  page. RouterLink marks the link for the current page with aria-current="page", which the styles underline.
 -->
 <script setup lang="ts">
 import { nextTick, ref, watch } from "vue";
+import ThemeButton from "lifting-school-ui/components/ThemeButton.vue";
 import { useRoute } from "vue-router";
+import { COLOR_SCHEME_STORAGE_KEY } from "./colorSchemeKey";
 import { APP_NAME } from "./router.ts";
 import { useCatalogue } from "./stores/catalogueStore";
 import { advanceNoticeOnNavigation, noticeMessage } from "./stores/notice";
@@ -46,6 +48,7 @@ watch(
         <li><RouterLink to="/settings">Settings</RouterLink></li>
       </ul>
     </nav>
+    <ThemeButton :storage-key="COLOR_SCHEME_STORAGE_KEY" />
   </header>
   <main id="main" ref="mainElement">
     <p
@@ -81,9 +84,9 @@ watch(
   left: 1rem;
   top: -3rem;
   padding: 0.5rem 1rem;
-  background: var(--primary-background);
-  color: var(--primary-color);
-  border: 2px solid var(--color-theme);
+  background: var(--bgBase);
+  color: var(--textFull);
+  border: 2px solid var(--accentFull);
   border-radius: 0.25rem;
 }
 
@@ -99,14 +102,14 @@ watch(
   gap: 0.5rem 1.5rem;
   width: 100%;
   padding: 0.75rem 1rem;
-  background: var(--secondary-background);
-  border-bottom: 1px solid var(--secondary-color);
+  background: var(--bgMid);
+  border-bottom: 1px solid var(--borderMuted);
 }
 
 .siteName {
   font-size: 1.25rem;
   font-weight: bold;
-  color: var(--primary-color);
+  color: var(--textFull);
   text-decoration: none;
 }
 
@@ -119,18 +122,18 @@ watch(
 }
 
 .navList a {
-  color: var(--primary-color);
+  color: var(--textFull);
   text-decoration: none;
   padding: 0.25rem 0;
 }
 
 .navList a:hover {
-  color: var(--color-theme);
+  color: var(--accentFull);
 }
 
 /* The current page: underlined in the accent colour, so it is marked by more than colour alone */
 .navList a[aria-current="page"] {
-  border-bottom: 3px solid var(--color-theme);
+  border-bottom: 3px solid var(--accentFull);
   font-weight: bold;
 }
 
@@ -139,11 +142,11 @@ watch(
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
   border-left: 6px solid;
-  background: var(--secondary-background);
+  background: var(--bgMid);
 }
 
 .noticeBanner {
-  border-color: var(--color-theme);
+  border-color: var(--accentFull);
 }
 
 /* Keeps the status region in the page for screen readers while there is nothing to say */
@@ -152,7 +155,7 @@ watch(
 }
 
 .problemBanner {
-  border-color: var(--error-color);
+  border-color: var(--danger);
   font-weight: bold;
 }
 

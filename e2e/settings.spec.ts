@@ -1,16 +1,11 @@
 /**
- * Browser tests for Settings: switching mode and colour (and remembering them), downloading a backup and restoring
- * it, refusing a file that is not a backup, and recovering from unreadable saved data. Axe runs in both modes.
+ * Browser tests for Settings: downloading a backup and restoring it, refusing a file that is not a backup, and
+ * recovering from unreadable saved data.
  */
 import { expect, test, type Page } from "@playwright/test";
 import { STORAGE_KEY } from "../src/stores/catalogueStore";
 import { expectNoAxeViolations } from "./expectNoAxeViolations";
 import { openWithStudies, studyDetails } from "./seedCatalogue";
-
-/** The mode the page is showing, from the root element. */
-function shownMode(page: Page) {
-  return page.locator("html");
-}
 
 /** The restore file input. Found by id: a file input has no role to find it by, and getByLabel is off limits here. */
 function restoreInput(page: Page) {
@@ -22,21 +17,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto("/settings");
 });
 
-test("mode and colour apply at once and are remembered", async ({ page }) => {
-  await page.getByRole("radio", { name: "Light" }).check();
-  await page.getByRole("radio", { name: "Green" }).check();
-  await expect(shownMode(page)).toHaveAttribute("data-theme", "light");
-  await page.reload();
-  await expect(shownMode(page)).toHaveAttribute("data-theme", "light");
-  await expect(page.getByRole("radio", { name: "Green" })).toBeChecked();
-});
-
-test("Settings has no accessibility violations in light or dark mode", async ({
-  page,
-}) => {
-  await page.getByRole("radio", { name: "Light" }).check();
-  await expectNoAxeViolations(page);
-  await page.getByRole("radio", { name: "Dark" }).check();
+test("Settings has no accessibility violations", async ({ page }) => {
   await expectNoAxeViolations(page);
 });
 

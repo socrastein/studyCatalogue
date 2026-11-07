@@ -80,7 +80,7 @@ const describedBy = computed(() => {
 
 .optionalMark {
   font-weight: normal;
-  color: var(--secondary-color);
+  color: var(--textMuted);
 }
 
 input,

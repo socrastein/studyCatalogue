@@ -79,10 +79,10 @@ defineExpose({ ask });
 .confirmDialog {
   max-width: min(28rem, calc(100% - 2rem));
   padding: 1.5rem;
-  border: 1px solid var(--secondary-color);
+  border: 1px solid var(--borderMuted);
   border-radius: 0.5rem;
-  background: var(--primary-background);
-  color: var(--primary-color);
+  background: var(--bgBase);
+  color: var(--textFull);
 }
 
 .confirmDialog::backdrop {

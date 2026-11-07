@@ -147,17 +147,8 @@ async function copy(
   flex-direction: column;
   gap: 0.75rem;
   padding: 1.25rem;
-  background: var(--secondary-background);
+  background: var(--bgMid);
   border-radius: 0.5rem;
-}
-
-/* Links in the page text colour with an accent underline: some accents are too faint for text on the card's
-   secondary background (purple's dark shade is 4.29:1), and the underline already marks them as links */
-.studyCard a {
-  color: var(--primary-color);
-  text-decoration-color: var(--color-theme);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 0.2em;
 }
 
 h2 {
@@ -166,7 +157,7 @@ h2 {
 }
 
 .byline {
-  color: var(--secondary-color);
+  color: var(--textMuted);
 }
 
 .facts {

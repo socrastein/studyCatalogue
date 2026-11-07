@@ -45,10 +45,7 @@ function usageText(tag: Tag): string {
   <ul v-if="children.length > 0" class="tagTree">
     <li v-for="tag in children" :key="tag.id">
       <div class="tagLine">
-        <RouterLink
-          :to="{ name: 'editTag', params: { id: tag.id } }"
-          class="tagName"
-        >
+        <RouterLink :to="{ name: 'editTag', params: { id: tag.id } }">
           {{ tag.name }}
         </RouterLink>
         <RouterLink :to="{ path: '/', query: { tag: tag.id } }" class="usage">
@@ -82,7 +79,7 @@ function usageText(tag: Tag): string {
 .tagTree .tagTree {
   margin: 0.35rem 0 0 0.6rem;
   padding-left: 1rem;
-  border-left: 2px solid var(--secondary-color);
+  border-left: 2px solid var(--borderMuted);
 }
 
 .tagLine {
@@ -92,21 +89,14 @@ function usageText(tag: Tag): string {
   gap: 0.25rem 0.75rem;
 }
 
-.tagName {
-  font-weight: bold;
-  color: var(--primary-color);
-  text-decoration-color: var(--color-theme);
-  text-decoration-thickness: 2px;
-}
-
 .usage {
   font-size: 0.9rem;
-  color: var(--secondary-color);
+  color: var(--textMuted);
 }
 
 .aliases {
   font-size: 0.9rem;
   font-style: italic;
-  color: var(--secondary-color);
+  color: var(--textMuted);
 }
 </style>

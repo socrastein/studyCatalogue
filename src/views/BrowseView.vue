@@ -163,7 +163,7 @@ function onFilterPanelToggle(event: Event): void {
 
 .filters {
   padding: 1rem 1.25rem;
-  background: var(--secondary-background);
+  background: var(--bgMid);
   border-radius: 0.5rem;
 }
 

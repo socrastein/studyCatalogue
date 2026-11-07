@@ -5,6 +5,23 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Study Catalogue</title>
+    <script>
+      // Applies the saved light/dark choice before anything renders, so the page never flashes light then dark.
+      // Mirrors src/colorSchemeKey.ts and the library's useColorScheme: same key, same values ("light" | "dark" |
+      // "auto"; no value or "auto" follows the system).
+      try {
+        const saved = localStorage.getItem("studyCatalogue.colorScheme");
+        const followsSystem = saved === null || saved === "auto";
+        const systemIsDark = window.matchMedia(
+          "(prefers-color-scheme: dark)",
+        ).matches;
+        if (saved === "dark" || (followsSystem && systemIsDark)) {
+          document.documentElement.classList.add("dark");
+        }
+      } catch {
+        // Storage blocked (private mode, settings): the app falls back to the system choice
+      }
+    </script>
     <script type="module" src="/src/main.ts" defer></script>
   </head>
   <body>

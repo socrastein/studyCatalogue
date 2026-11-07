@@ -1,6 +1,6 @@
 <!--
-  Settings: appearance (mode and colour theme, applied as soon as they are chosen) and the catalogue's backups:
-  download one, or restore one, which replaces everything after a confirmation saying what it holds.
+  Settings: the catalogue's backups: download one, or restore one, which replaces everything after a confirmation
+  saying what it holds. Light and dark mode live in the header's theme button instead.
 
   When the saved catalogue could not be read, a section at the top explains, offers that unreadable data as a file,
   and offers to start over; restoring a backup also resolves it.
@@ -11,40 +11,15 @@ import { useRouter } from "vue-router";
 import { newCatalogue, type Catalogue } from "../catalogue/catalogue";
 import { parseCatalogue, serializeCatalogue } from "../catalogue/serialization";
 import ConfirmDialog from "../components/ConfirmDialog.vue";
-import RadioGroup from "../components/RadioGroup.vue";
 import { backupFileName, downloadTextFile } from "../components/downloadFile";
 import { useCatalogue } from "../stores/catalogueStore";
 import { showNoticeOnNextPage } from "../stores/notice";
-import {
-  COLOR_THEMES,
-  MODE_CHOICES,
-  useSettings,
-  type ColorThemeName,
-  type ModeChoice,
-} from "../stores/settingsStore";
 
 const catalogue = useCatalogue();
-const { settings, setMode, setColorTheme } = useSettings();
 const router = useRouter();
 const confirmDialog = ref<InstanceType<typeof ConfirmDialog> | null>(null);
 const dialogText = reactive({ title: "", message: "", confirmLabel: "" });
 const restoreProblem = ref("");
-
-const THEME_CHOICES = (Object.keys(COLOR_THEMES) as ColorThemeName[]).map(
-  (name) => ({
-    id: name,
-    label: name.charAt(0).toUpperCase() + name.slice(1),
-  }),
-);
-
-const mode = computed({
-  get: () => settings.mode,
-  set: (choice: string) => setMode(choice as ModeChoice),
-});
-const colorTheme = computed({
-  get: () => settings.colorTheme,
-  set: (choice: string) => setColorTheme(choice as ColorThemeName),
-});
 
 const loadProblem = computed(() => catalogue.state.loadProblem);
 
@@ -138,22 +113,6 @@ async function startOver(): Promise<void> {
       </div>
     </section>
 
-    <section class="panel" aria-labelledby="appearance-heading">
-      <h2 id="appearance-heading">Appearance</h2>
-      <RadioGroup
-        id="setting-mode"
-        v-model="mode"
-        legend="Mode"
-        :values="MODE_CHOICES"
-      />
-      <RadioGroup
-        id="setting-theme"
-        v-model="colorTheme"
-        legend="Colour"
-        :values="THEME_CHOICES"
-      />
-    </section>
-
     <section class="panel" aria-labelledby="backup-heading">
       <h2 id="backup-heading">Backups</h2>
       <p>
@@ -209,12 +168,12 @@ async function startOver(): Promise<void> {
   align-items: stretch;
   gap: 1rem;
   padding: 1.25rem;
-  background: var(--secondary-background);
+  background: var(--bgMid);
   border-radius: 0.5rem;
 }
 
 .problemPanel {
-  border-left: 6px solid var(--error-color);
+  border-left: 6px solid var(--danger);
 }
 
 h2 {

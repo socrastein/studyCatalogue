@@ -240,8 +240,8 @@ input {
   margin-top: 0.25rem;
   padding: 0.25rem 0;
   list-style: none;
-  background: var(--secondary-background);
-  border: 1px solid var(--secondary-color);
+  background: var(--bgMid);
+  border: 1px solid var(--borderMuted);
   border-radius: 0.25rem;
 }
 
@@ -252,9 +252,9 @@ input {
 
 /* The highlighted suggestion: reversed colours plus a left bar, so it is marked by more than colour */
 .suggestions li.isActive {
-  background: var(--color-theme);
-  color: var(--primary-background);
-  box-shadow: inset 4px 0 0 var(--primary-color);
+  background: var(--accentFull);
+  color: var(--onAccent);
+  box-shadow: inset 4px 0 0 var(--textFull);
 }
 
 .suggestions li.isCreate {
@@ -275,13 +275,13 @@ input {
   align-items: center;
   gap: 0.25rem;
   padding: 0.15rem 0.25rem 0.15rem 0.75rem;
-  border: 1px solid var(--color-theme);
+  border: 1px solid var(--accentFull);
   border-radius: 1rem;
 }
 
 .chipRemove {
   background: transparent;
-  color: var(--primary-color);
+  color: var(--textFull);
   padding: 0.1rem 0.5rem;
   border-radius: 1rem;
   font-size: 1rem;

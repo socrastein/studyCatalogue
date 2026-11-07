@@ -216,14 +216,8 @@ async function deleteThisTag(): Promise<void> {
   align-items: stretch;
   gap: 0.75rem;
   padding: 1.25rem;
-  background: var(--secondary-background);
+  background: var(--bgMid);
   border-radius: 0.5rem;
-}
-
-.panel a {
-  color: var(--primary-color);
-  text-decoration-color: var(--color-theme);
-  text-decoration-thickness: 2px;
 }
 
 h2 {
@@ -236,9 +230,9 @@ h2 {
 
 select {
   padding: 0.4rem 0.5rem;
-  color: var(--primary-color);
-  background: var(--primary-background);
-  border: 1px solid var(--secondary-color);
+  color: var(--textFull);
+  background: var(--bgBase);
+  border: 1px solid var(--borderMuted);
   border-radius: 0.25rem;
 }
 
