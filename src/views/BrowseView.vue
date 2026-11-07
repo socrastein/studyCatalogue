@@ -106,7 +106,7 @@ function onFilterPanelToggle(event: Event): void {
 <template>
   <h1 tabindex="-1" class="pageTitle h3">Studies</h1>
 
-  <p v-if="allStudies.length === 0" class="emptyCatalogue">
+  <p v-if="allStudies.length === 0" class="center">
     No studies yet. <RouterLink to="/studies/new">Add a study</RouterLink>
   </p>
 

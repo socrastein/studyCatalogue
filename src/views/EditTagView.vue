@@ -194,7 +194,7 @@ async function deleteThisTag(): Promise<void> {
   </template>
   <template v-else>
     <h1 tabindex="-1" class="pageTitle h3">Tag not found</h1>
-    <p>
+    <p class="center">
       There is no tag at this address. It may have been merged or deleted.
       <RouterLink to="/tags">Back to the tags</RouterLink>
     </p>

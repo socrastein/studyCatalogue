@@ -76,7 +76,7 @@ async function deleteStudy(): Promise<void> {
   </template>
   <template v-else>
     <h1 tabindex="-1" class="pageTitle h3">Study not found</h1>
-    <p>
+    <p class="center">
       There is no study at this address. It may have been deleted.
       <RouterLink to="/">Back to the study list</RouterLink>
     </p>
