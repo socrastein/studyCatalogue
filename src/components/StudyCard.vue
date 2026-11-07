@@ -35,10 +35,10 @@ const emit = defineEmits<{
 }>();
 
 const CITATION_FORMATS = [
-  { label: "APA", description: "APA citation", format: formatApa },
-  { label: "MLA", description: "MLA citation", format: formatMla },
-  // "MD" is short so all three buttons fit on one line on a phone; the description is what is announced.
-  { label: "MD", description: "markdown link", format: formatMarkdownLink },
+  { label: "APA", name: "APA", format: formatApa },
+  { label: "MLA", name: "MLA", format: formatMla },
+  // "MD" is short so all three buttons fit on one line on a phone; the name is what is spoken and shown in the toast.
+  { label: "MD", name: "Markdown", format: formatMarkdownLink },
 ] as const;
 
 const headingId = computed(() => `study-${props.study.id}-title`);
@@ -58,15 +58,15 @@ function populationText(
 
 /** Copies the study's citation in one format and reports the outcome. */
 async function copy(
-  description: string,
+  name: string,
   format: (study: Study) => Citation,
 ): Promise<void> {
   const wasCopied = await copyCitation(format(props.study));
   emit(
     "copied",
     wasCopied
-      ? `Copied the ${description}.`
-      : `Could not copy the ${description}.`,
+      ? `${name} citation copied to clipboard.`
+      : `Could not copy the ${name} citation.`,
   );
 }
 </script>
@@ -122,8 +122,8 @@ async function copy(
           :key="citation.label"
           type="button"
           class="btn btnSecondary btnSm"
-          :aria-label="`${citation.label}, copy ${citation.description}`"
-          @click="copy(citation.description, citation.format)"
+          :aria-label="`${citation.label}, copy ${citation.name} citation`"
+          @click="copy(citation.name, citation.format)"
         >
           {{ citation.label }}
         </button>
