@@ -8,6 +8,7 @@
 -->
 <script setup lang="ts">
 import FormField from "lifting-school-ui/components/FormField.vue";
+import chevronIcon from "lifting-school-ui/icons/chevron-down.svg";
 import { computed, onBeforeUnmount, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
@@ -126,11 +127,6 @@ function showInUrl(newFilters: StudyFilters, newOrder: SortOrder): void {
 function clearFilters(): void {
   filters.value = emptyFilters();
 }
-
-/** Records the panel being opened or closed by the person, so it stays as they left it. */
-function onFilterPanelToggle(event: Event): void {
-  isFilterPanelOpen.value = (event.target as HTMLDetailsElement).open;
-}
 </script>
 
 <template>
@@ -141,14 +137,26 @@ function onFilterPanelToggle(event: Event): void {
   </p>
 
   <div v-else class="browseLayout">
-    <details
-      class="filters panel"
-      :open="isFilterPanelOpen"
-      @toggle="onFilterPanelToggle"
-    >
-      <summary><h2 class="h6">Filters</h2></summary>
-      <FilterPanel v-model="filters" :tags="tags" />
-    </details>
+    <section class="filters panel" aria-labelledby="filters-heading">
+      <h2 id="filters-heading" class="h6" :data-open="isFilterPanelOpen">
+        <button
+          type="button"
+          class="disclosure"
+          :aria-expanded="isFilterPanelOpen"
+          aria-controls="filter-panel"
+          @click="isFilterPanelOpen = !isFilterPanelOpen"
+        >
+          Filters
+          <img :src="chevronIcon" class="iconSmall disclosureChevron" alt="" />
+        </button>
+      </h2>
+      <FilterPanel
+        v-show="isFilterPanelOpen"
+        id="filter-panel"
+        v-model="filters"
+        :tags="tags"
+      />
+    </section>
 
     <section class="results" aria-labelledby="results-heading">
       <h2 id="results-heading" class="visuallyHidden">Results</h2>
@@ -204,16 +212,14 @@ function onFilterPanelToggle(event: Event): void {
   padding: var(--space2);
 }
 
-.filters summary {
+.filters .disclosure {
   cursor: pointer;
+  /* Tall enough for the 24px minimum target size (WCAG 2.5.8) */
+  padding: var(--spaceHalf) 0;
 }
 
-/* The heading sits inside the summary so the disclosure triangle and the heading line up */
-.filters summary h2 {
-  display: inline;
-}
-
-.filters[open] summary {
+/* Space between the heading and the filters, only while they are showing */
+.filters h2[data-open="true"] {
   margin-bottom: var(--space2);
 }
 

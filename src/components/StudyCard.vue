@@ -4,7 +4,8 @@
   list filtered by that tag.
 -->
 <script setup lang="ts">
-import { computed } from "vue";
+import chevronIcon from "lifting-school-ui/icons/chevron-down.svg";
+import { computed, ref } from "vue";
 import { formatApa } from "../catalogue/citations/apa";
 import { shortAuthorMention } from "../catalogue/citations/authorNames";
 import { studyLink, type Citation } from "../catalogue/citations/citation";
@@ -40,6 +41,10 @@ const CITATION_FORMATS = [
   // "MD" is short so all three buttons fit on one line on a phone; the name is what is spoken and shown in the toast.
   { label: "MD", name: "Markdown", format: formatMarkdownLink },
 ] as const;
+
+/** Whether the abstract is unfolded; each card starts folded. */
+const isAbstractOpen = ref(false);
+const abstractId = computed(() => `study-${props.study.id}-abstract`);
 
 const headingId = computed(() => `study-${props.study.id}-title`);
 const paperLink = computed(() => studyLink(props.study));
@@ -103,10 +108,19 @@ async function copy(
       </template>
     </dl>
 
-    <details v-if="study.abstract !== ''" class="abstract">
-      <summary>Abstract</summary>
-      <p>{{ study.abstract }}</p>
-    </details>
+    <div v-if="study.abstract !== ''" class="abstract">
+      <button
+        type="button"
+        class="disclosure abstractToggle"
+        :aria-expanded="isAbstractOpen"
+        :aria-controls="abstractId"
+        @click="isAbstractOpen = !isAbstractOpen"
+      >
+        Abstract
+        <img :src="chevronIcon" class="iconSmall disclosureChevron" alt="" />
+      </button>
+      <p v-show="isAbstractOpen" :id="abstractId">{{ study.abstract }}</p>
+    </div>
 
     <div class="actions">
       <div
@@ -169,7 +183,7 @@ dt {
   gap: var(--spaceHalf) var(--space2);
 }
 
-.abstract summary {
+.abstractToggle {
   cursor: pointer;
   font-weight: 700;
   /* Tall enough for the 24px minimum target size (WCAG 2.5.8) */

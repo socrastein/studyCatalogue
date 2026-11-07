@@ -178,6 +178,24 @@ test("the browse page has no accessibility violations, with and without filters"
   await expectNoAxeViolations(page);
 });
 
+test("an abstract unfolds and folds again from its button", async ({
+  page,
+}) => {
+  const toggle = page
+    .getByRole("article")
+    .first()
+    .getByRole("button", { name: "Abstract" });
+  const abstractText = page.getByRole("article").first().locator("p").last();
+
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(abstractText).toBeHidden();
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect(abstractText).toBeVisible();
+  await toggle.click();
+  await expect(abstractText).toBeHidden();
+});
+
 test("on a phone the filters start folded away", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 800 });
   await page.reload();
