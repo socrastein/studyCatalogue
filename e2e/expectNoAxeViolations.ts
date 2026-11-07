@@ -21,12 +21,14 @@ const WCAG_AA_TAGS = [
 /**
  * Fails the test with axe's list of problems if the page as it stands has any WCAG 2.2 AA violation.
  *
- * Specs that call this find elements by role (`getByRole("textbox", { name })`), never `getByLabel`: in Playwright's
- * Firefox build for this machine (v1572, the fallback build for an unsupported distribution), any `getByLabel` on a
- * page with many labels makes the next axe run crash the page ("Page crashed"). Found 2026-11-06. The same crash
- * followed a `getByRole("combobox", { name })` lookup of the tag combobox while FormField's combobox mode named it
- * through `aria-labelledby` (a label span), so the combobox is named by `<label for>`. The exact trigger is unknown: a
- * dialog named through `aria-labelledby` is looked up by name before axe without a crash.
+ * Specs that call this find elements by role (`getByRole("textbox", { name })`), never `getByLabel`, and the app names
+ * controls with `<label for>` rather than `aria-labelledby` where it can. The reason is a Firefox bug: the page crashes
+ * ("Page crashed") when an element's `ariaLabelledByElements` is read both by Playwright's locators, which compute
+ * accessible names in their own isolated script world, and by the page's scripts, here axe (its `aria-prohibited-attr`
+ * and `hidden-content` rules). `getByLabel` reads it on every element with `aria-labelledby`, so any such element on
+ * the page crashes the next axe run; `getByRole` with a name reads it only on elements of that role. It is a
+ * regression in Playwright 1.65.0's Firefox, also seen on Windows, tracked as microsoft/playwright#43967 and Mozilla
+ * bug 2090055. Once Playwright ships a fixed Firefox, `getByLabel` is safe again. Found 2026-11-06.
  *
  * @param page The page to check, in the state to check it in.
  */

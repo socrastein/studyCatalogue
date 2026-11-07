@@ -51,6 +51,7 @@ allows git dependencies for this project's own `package.json` only). `src/main.t
   statuses, sexes (several each; an empty list means "not reported").
 
 Browser specs find elements by role (`getByRole`), never `getByLabel`, and controls are named by `<label for>` rather
-than `aria-labelledby` where possible: see the note in `e2e/expectNoAxeViolations.ts` about a Firefox crash.
+than `aria-labelledby` where possible: see the note in `e2e/expectNoAxeViolations.ts` about a Firefox crash
+(microsoft/playwright#43967).
 
 Abbreviations allowed in names (beyond the global `id`): `doi`, `url`, `apa`, `mla`.
