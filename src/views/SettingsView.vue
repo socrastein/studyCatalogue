@@ -1,6 +1,7 @@
 <!--
-  Settings: the catalogue's backups: download one, or restore one, which replaces everything after a confirmation
-  saying what it holds. Light and dark mode live in the header's theme button instead.
+  Settings: the catalogue's backups: download one, add one to the catalogue (merging catalogues kept in different
+  browsers; see catalogue/backupMerge.ts), or restore one, which replaces everything. Both ask first, saying what will
+  change. Light and dark mode live in the header's theme button instead.
 
   When the saved catalogue could not be read, a section at the top explains, offers that unreadable data as a file,
   and offers to start over; restoring a backup also resolves it.
@@ -9,9 +10,15 @@
 import ConfirmDialog from "lifting-school-ui/components/ConfirmDialog.vue";
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
+import { mergeBackup, type BackupMergeSummary } from "../catalogue/backupMerge";
 import { newCatalogue, type Catalogue } from "../catalogue/catalogue";
 import { parseCatalogue, serializeCatalogue } from "../catalogue/serialization";
 import BackupFileField from "../components/BackupFileField.vue";
+import {
+  changesAnything,
+  mergeConfirmationDetail,
+  mergeNotice,
+} from "../components/backupMergeText";
 import { backupFileName, downloadTextFile } from "../components/downloadFile";
 import { useConfirmation } from "../components/useConfirmation";
 import { useCatalogue } from "../stores/catalogueStore";
@@ -20,6 +27,7 @@ import { showNoticeOnNextPage } from "../stores/notice";
 const catalogue = useCatalogue();
 const router = useRouter();
 const { question: pendingQuestion, ask: confirm, answer } = useConfirmation();
+const addProblem = ref("");
 const restoreProblem = ref("");
 
 const loadProblem = computed(() => catalogue.state.loadProblem);
@@ -44,7 +52,34 @@ function downloadUnreadableData(): void {
   );
 }
 
-/** Reads the chosen backup file and, after confirmation, makes it the catalogue. */
+/** Reads the chosen backup and, after confirmation, adds its studies and tags to the catalogue. */
+async function addBackup(file: File): Promise<void> {
+  const result = parseCatalogue(await file.text());
+  if (result.kind === "invalid") {
+    addProblem.value = `"${file.name}" cannot be added. ${result.problem}`;
+    return;
+  }
+  addProblem.value = "";
+  const merge = mergeBackup(catalogue.state.catalogue, result.catalogue);
+  // A backup with nothing new needs no question: the notice says so
+  if (changesAnything(merge.summary)) {
+    if (!(await confirmAdding(merge.summary))) return;
+    catalogue.replaceCatalogue(merge.catalogue);
+  }
+  showNoticeOnNextPage(mergeNotice(file.name, merge.summary));
+  await router.push("/");
+}
+
+/** Asks whether to add the backup, saying what it will add and update. */
+function confirmAdding(summary: BackupMergeSummary): Promise<boolean> {
+  return confirm({
+    question: "Add this backup to your catalogue?",
+    detail: mergeConfirmationDetail(summary),
+    confirmLabel: "Add backup",
+  });
+}
+
+/** Reads the chosen backup and, after confirmation, makes it the catalogue. */
 async function restoreBackup(file: File): Promise<void> {
   const result = parseCatalogue(await file.text());
   if (result.kind === "invalid") {
@@ -122,9 +157,19 @@ async function startOver(): Promise<void> {
       <button type="button" class="btn btnPrimary" @click="downloadBackup">
         Download a backup
       </button>
+      <!-- Not offered while the saved catalogue cannot be read: what is in memory then is not what was saved, and
+           adding to it would write over the unreadable data -->
+      <BackupFileField
+        v-if="!loadProblem"
+        id="add-backup-file"
+        label="Add a backup to this catalogue"
+        hint="Adds the backup's studies and tags to the ones here; a study in both keeps its latest edit. Nothing is deleted."
+        :error="addProblem"
+        @chosen="addBackup"
+      />
       <BackupFileField
         id="restore-file"
-        label="Restore a backup"
+        label="Replace this catalogue with a backup"
         hint="Replaces the whole catalogue with the backup's contents."
         :error="restoreProblem"
         @chosen="restoreBackup"

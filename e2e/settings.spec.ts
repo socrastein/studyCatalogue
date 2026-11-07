@@ -1,11 +1,16 @@
 /**
- * Browser tests for Settings: downloading a backup and restoring it, refusing a file that is not a backup, and
- * recovering from unreadable saved data.
+ * Browser tests for Settings: downloading a backup, adding one to the catalogue, restoring one in its place, refusing
+ * a file that is not a backup, and recovering from unreadable saved data.
  */
 import { expect, test, type Page } from "@playwright/test";
 import { STORAGE_KEY } from "../src/stores/catalogueStore";
 import { expectNoAxeViolations } from "./expectNoAxeViolations";
 import { openWithStudies, studyDetails } from "./seedCatalogue";
+
+/** The add-a-backup file input, found by id like `restoreInput`. */
+function addInput(page: Page) {
+  return page.locator("#add-backup-file");
+}
 
 /** The restore file input. Found by id: a file input has no role to find it by, and getByLabel is off limits here. */
 function restoreInput(page: Page) {
@@ -31,6 +36,48 @@ async function downloadBackup(page: Page): Promise<string> {
   );
   return download.path();
 }
+
+test("a backup is added to the catalogue after confirming, keeping what was here", async ({
+  page,
+}) => {
+  const backupPath = await downloadBackup(page);
+  // A different study, without the backed-up study's DOI, so the two are not taken for one
+  await openWithStudies(page, [
+    studyDetails({ title: "Already here", doi: null }),
+  ]);
+  await page.goto("/settings");
+  await addInput(page).setInputFiles(backupPath);
+  const dialog = page.getByRole("alertdialog");
+  await expect(dialog).toContainText("It adds 1 new study.");
+  await dialog.getByRole("button", { name: "Add backup" }).click();
+
+  await expect(page).toHaveURL("/");
+  await expect(page.getByRole("status").first()).toContainText("1 new study");
+  for (const title of ["Already here", "Backed-up study"]) {
+    await expect(page.getByRole("heading", { name: title })).toBeVisible();
+  }
+});
+
+test("a backup with nothing new changes nothing and says so, without asking", async ({
+  page,
+}) => {
+  const backupPath = await downloadBackup(page);
+  await addInput(page).setInputFiles(backupPath);
+
+  await expect(page).toHaveURL("/");
+  await expect(page.getByRole("status").first()).toContainText(
+    "everything in it is already here",
+  );
+});
+
+test("adding is not offered while the saved catalogue cannot be read", async ({
+  page,
+}) => {
+  await breakSavedData(page);
+  await page.goto("/settings");
+  await expect(addInput(page)).toHaveCount(0);
+  await expect(restoreInput(page)).toBeVisible();
+});
 
 test("a downloaded backup restores the catalogue after confirming", async ({
   page,
