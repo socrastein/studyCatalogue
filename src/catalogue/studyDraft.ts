@@ -11,7 +11,8 @@ import type {
   SubjectsId,
   TrainingStatusId,
 } from "./facets";
-import type { Author, StudyDetails } from "./study";
+import { formatAuthorList, hasEtAl, parseAuthorList } from "./authorList";
+import type { StudyDetails } from "./study";
 
 /** The year the first scientific journal (Philosophical Transactions) was published; no study can be older. */
 export const EARLIEST_STUDY_YEAR = 1665;
@@ -21,7 +22,8 @@ const YEARS_AHEAD_ALLOWED = 1;
 
 export type StudyDraft = {
   title: string;
-  authors: Author[];
+  /** The author list as typed or pasted; see authorList.ts for the forms it reads. */
+  authors: string;
   year: string;
   journal: string;
   volume: string;
@@ -40,7 +42,7 @@ export type StudyDraft = {
 };
 
 /**
- * What is wrong with each field, by field name; author rows use "authors.0.family" and the like. A field with no
+ * What is wrong with each field, by field name. A field with no
  * entry is fine.
  */
 export type DraftErrors = Record<string, string>;
@@ -56,7 +58,7 @@ export type DraftResult =
 export function emptyDraft(): StudyDraft {
   return {
     title: "",
-    authors: [{ family: "", given: "" }],
+    authors: "",
     year: "",
     journal: "",
     volume: "",
@@ -82,7 +84,7 @@ export function emptyDraft(): StudyDraft {
 export function draftFromDetails(details: StudyDetails): StudyDraft {
   return {
     ...details,
-    authors: details.authors.map((author) => ({ ...author })),
+    authors: formatAuthorList(details.authors),
     year: String(details.year),
     volume: details.volume ?? "",
     issue: details.issue ?? "",
@@ -98,7 +100,7 @@ export function draftFromDetails(details: StudyDetails): StudyDraft {
 
 /**
  * Checks a draft and, if everything is filled in correctly, turns it into study details: text trimmed, blank
- * optional fields as null, the DOI reduced to its bare form, and blank author rows dropped.
+ * optional fields as null, the DOI reduced to its bare form, and the author list read into names.
  *
  * @param draft The form's current contents.
  * @param currentYear The year to check the study's year against; this year unless a test fixes it.
@@ -119,13 +121,6 @@ export function validateDraft(
   return { kind: "valid", details: detailsFromValidDraft(draft) };
 }
 
-/** The author rows that have anything typed in them; rows left completely blank are ignored. */
-function filledAuthorRows(authors: readonly Author[]): Author[] {
-  return authors.filter(
-    (author) => !isBlank(author.family) || !isBlank(author.given),
-  );
-}
-
 /** Messages for the required text fields left blank. */
 function requiredTextErrors(draft: StudyDraft): DraftErrors {
   const errors: DraftErrors = {};
@@ -136,22 +131,20 @@ function requiredTextErrors(draft: StudyDraft): DraftErrors {
 }
 
 /**
- * Messages for the authors: at least one is needed, and each row with anything typed in it needs a family name.
- * Messages are keyed by row ("authors.2.family") so each appears beside its own row.
+ * A message when the author list is empty, or cut short with "et al.": a reference needs every author (APA lists up
+ * to 20), so the full list has to be entered.
  */
-function authorErrors(authors: readonly Author[]): DraftErrors {
-  if (filledAuthorRows(authors).length === 0) {
-    return { "authors.0.family": "Enter at least one author's family name." };
+function authorErrors(authorList: string): DraftErrors {
+  if (hasEtAl(authorList)) {
+    return {
+      authors:
+        'Enter every author instead of "et al.": references list them all. Paste the list from the paper or PubMed.',
+    };
   }
-  const errors: DraftErrors = {};
-  for (const [index, author] of authors.entries()) {
-    const isFilledWithoutFamily =
-      !isBlank(author.given) && isBlank(author.family);
-    if (isFilledWithoutFamily) {
-      errors[`authors.${index}.family`] = "Enter this author's family name.";
-    }
+  if (parseAuthorList(authorList).length === 0) {
+    return { authors: "Enter the authors." };
   }
-  return errors;
+  return {};
 }
 
 /** A message when the year is missing, not a whole number, or outside the years a study can have. */
@@ -194,7 +187,7 @@ function detailsFromValidDraft(draft: StudyDraft): StudyDetails {
   return {
     ...draft,
     title: draft.title.trim(),
-    authors: filledAuthorRows(draft.authors).map(trimmedAuthor),
+    authors: parseAuthorList(draft.authors),
     year: Number(draft.year),
     journal: draft.journal.trim(),
     volume: textOrNull(draft.volume),
@@ -218,11 +211,6 @@ function isBlank(text: string): boolean {
 function textOrNull(text: string): string | null {
   const trimmed = text.trim();
   return trimmed === "" ? null : trimmed;
-}
-
-/** An author with both names trimmed. */
-function trimmedAuthor(author: Author): Author {
-  return { family: author.family.trim(), given: author.given.trim() };
 }
 
 /** Whether text is an absolute http or https address. */

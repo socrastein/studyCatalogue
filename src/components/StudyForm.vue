@@ -19,7 +19,7 @@ import {
   type StudyDraft,
 } from "../catalogue/studyDraft";
 import { useCatalogue } from "../stores/catalogueStore";
-import AuthorsFieldset from "./AuthorsFieldset.vue";
+import AuthorListField from "./AuthorListField.vue";
 import ErrorSummary from "./ErrorSummary.vue";
 import CheckboxGroup from "./CheckboxGroup.vue";
 import RadioGroup from "./RadioGroup.vue";
@@ -80,7 +80,7 @@ function createTag(name: string): void {
         is-multiline
         :rows="2"
       />
-      <AuthorsFieldset v-model="draft.authors" :errors="errors" />
+      <AuthorListField v-model="draft.authors" :error="errors.authors" />
       <div class="fieldRow">
         <TextField
           id="study-year"

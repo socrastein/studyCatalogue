@@ -35,9 +35,9 @@ function detailsFor(draft: StudyDraft) {
 }
 
 describe("emptyDraft", () => {
-  it("has one blank author row and subjects preset to humans", () => {
+  it("is blank, with subjects preset to humans", () => {
     const draft = emptyDraft();
-    expect(draft.authors).toEqual([{ family: "", given: "" }]);
+    expect(draft.authors).toBe("");
     expect(draft.subjects).toBe("humans");
     expect(draft.design).toBe("");
   });
@@ -80,14 +80,11 @@ describe("validateDraft turns a valid draft into details", () => {
     expect(details.doi).toBe("10.1000/abc");
   });
 
-  it("dropping blank author rows", () => {
-    const authors = [
-      { family: "", given: "" },
-      { family: " Smith ", given: " Jane " },
-      { family: "", given: "" },
-    ];
-    expect(detailsFor(exampleDraft({ authors })).authors).toEqual([
-      { family: "Smith", given: "Jane" },
+  it("reading a pasted author list into names", () => {
+    const draft = exampleDraft({ authors: "Smith J, Lee AB." });
+    expect(detailsFor(draft).authors).toEqual([
+      { family: "Smith", given: "J" },
+      { family: "Lee", given: "AB" },
     ]);
   });
 
@@ -103,23 +100,14 @@ describe("validateDraft rejects", () => {
     expect(errors.journal).toBe("Enter the journal it was published in.");
   });
 
-  it("a draft with no authors, on the first row", () => {
-    const errors = errorsFor(
-      exampleDraft({ authors: [{ family: "", given: "" }] }),
-    );
-    expect(errors["authors.0.family"]).toBe(
-      "Enter at least one author's family name.",
-    );
+  it("a draft with no authors", () => {
+    const errors = errorsFor(exampleDraft({ authors: "  " }));
+    expect(errors.authors).toBe("Enter the authors.");
   });
 
-  it("an author row with a given name but no family name, on that row", () => {
-    const authors = [
-      { family: "Smith", given: "Jane" },
-      { family: "", given: "Ann" },
-    ];
-    expect(errorsFor(exampleDraft({ authors }))["authors.1.family"]).toBe(
-      "Enter this author's family name.",
-    );
+  it('an author list cut short with "et al.", since a reference lists every author', () => {
+    const errors = errorsFor(exampleDraft({ authors: "Johnson et al." }));
+    expect(errors.authors).toContain('Enter every author instead of "et al."');
   });
 
   it.each([

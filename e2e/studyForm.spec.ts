@@ -11,23 +11,10 @@ function textField(page: Page, label: string | RegExp) {
   return page.getByRole("textbox", { name: label });
 }
 
-/** An author row's name field; its label ends in a hidden ", author N" so each row's fields have distinct names. */
-function authorField(
-  page: Page,
-  field: "Family name" | "Given names",
-  row: number,
-) {
-  return textField(page, new RegExp(`^${field} ?, author ${row}$`));
-}
-
-/** Fills in the publication details: title, two authors (the second added with the button), year, journal, DOI. */
+/** Fills in the publication details: title, two authors pasted PubMed-style, year, journal, DOI. */
 async function fillInPublication(page: Page, title: string): Promise<void> {
   await textField(page, /^Title$/).fill(title);
-  await authorField(page, "Family name", 1).fill("Schoenfeld");
-  await authorField(page, "Given names", 1).fill("Brad Jon");
-  await page.getByRole("button", { name: "Add another author" }).click();
-  await expect(authorField(page, "Family name", 2)).toBeFocused();
-  await page.keyboard.type("Ogborn");
+  await textField(page, /^Authors$/).fill("Schoenfeld BJ, Ogborn D");
   await textField(page, /^Year$/).fill("2017");
   await textField(page, /^Journal$/).fill("Journal of Sports Sciences");
   await textField(page, /^DOI/).fill(
@@ -91,6 +78,17 @@ test("a new study is saved and listed, with a confirmation", async ({
   await expect(page.getByText("Schoenfeld & Ogborn (2017)")).toBeVisible();
 });
 
+test("the authors box shows how it read the pasted names", async ({ page }) => {
+  await textField(page, /^Authors$/).fill(
+    "Brad Jon Schoenfeld, Dan Ogborn and James W. Krieger",
+  );
+  await expect(
+    page
+      .getByRole("list", { name: "Read as 3 authors:" })
+      .getByRole("listitem"),
+  ).toHaveText(["Schoenfeld, B. J.", "Ogborn, D.", "Krieger, J. W."]);
+});
+
 test("the tag combobox adds an existing tag, creates a new one, and removes one", async ({
   page,
 }) => {
@@ -114,7 +112,7 @@ test("submitting an empty form lists every problem in a focused summary", async 
   await expect(errorSummary(page)).toBeFocused();
   await expect(errorSummary(page).getByRole("link")).toHaveText([
     "Enter the study's title.",
-    "Enter at least one author's family name.",
+    "Enter the authors.",
     "Enter the year it was published.",
     "Enter the journal it was published in.",
     "Choose the study design.",

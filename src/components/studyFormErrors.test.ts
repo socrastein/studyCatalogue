@@ -7,7 +7,7 @@ import { errorSummaryItems, fieldElementId } from "./studyFormErrors";
 describe("fieldElementId", () => {
   it.each([
     ["title", "study-title"],
-    ["authors.2.family", "author-2-family"],
+    ["authors", "study-authors"],
     ["design", "study-design-meta-analysis"],
     ["subjects", "study-subjects-humans"],
   ])("points %j at #%s", (field, elementId) => {
@@ -19,15 +19,13 @@ describe("errorSummaryItems", () => {
   it("lists messages in the order the fields appear on the page", () => {
     const items = errorSummaryItems({
       design: "Choose the study design.",
-      "authors.3.family": "Third row",
       title: "Enter the study's title.",
-      "authors.1.family": "First row",
+      authors: "Enter the authors.",
       year: "Enter the year it was published.",
     });
     expect(items.map((item) => item.message)).toEqual([
       "Enter the study's title.",
-      "First row",
-      "Third row",
+      "Enter the authors.",
       "Enter the year it was published.",
       "Choose the study design.",
     ]);

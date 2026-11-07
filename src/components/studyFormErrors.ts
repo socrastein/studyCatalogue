@@ -33,20 +33,17 @@ export function errorSummaryItems(errors: DraftErrors): SummaryItem[] {
 }
 
 /**
- * The id of the element to focus for a field's message: the input itself, an author row's family name input, or
- * the first radio of a radio group.
+ * The id of the element to focus for a field's message: the input itself, or the first radio of a radio group.
  *
- * @param field A field name as `validateDraft` keys it, e.g. "title" or "authors.2.family".
+ * @param field A field name as `validateDraft` keys it, e.g. "title".
  */
 export function fieldElementId(field: string): string {
-  const authorRow = /^authors\.(\d+)\.family$/.exec(field);
-  if (authorRow) return `author-${authorRow[1]}-family`;
   if (field === "design") return "study-design-meta-analysis";
   if (field === "subjects") return "study-subjects-humans";
   return `study-${field}`;
 }
 
-/** Sort order for [field, message] pairs: by the field's place on the page, then author rows top to bottom. */
+/** Sort order for [field, message] pairs: by the field's place on the page. */
 function byFieldPosition(
   [first]: [string, string],
   [second]: [string, string],
@@ -54,9 +51,7 @@ function byFieldPosition(
   return fieldPosition(first) - fieldPosition(second);
 }
 
-/** A number that sorts fields into page order; author rows sort among themselves by row. */
+/** The field's place on the page, counting from the top. */
 function fieldPosition(field: string): number {
-  const [baseField = field, row = "0"] = field.split(".");
-  const ROWS_PER_FIELD = 1000;
-  return FIELD_ORDER.indexOf(baseField) * ROWS_PER_FIELD + Number(row);
+  return FIELD_ORDER.indexOf(field);
 }
