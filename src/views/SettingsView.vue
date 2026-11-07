@@ -11,6 +11,7 @@ import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { newCatalogue, type Catalogue } from "../catalogue/catalogue";
 import { parseCatalogue, serializeCatalogue } from "../catalogue/serialization";
+import BackupFileField from "../components/BackupFileField.vue";
 import { backupFileName, downloadTextFile } from "../components/downloadFile";
 import { useConfirmation } from "../components/useConfirmation";
 import { useCatalogue } from "../stores/catalogueStore";
@@ -44,11 +45,7 @@ function downloadUnreadableData(): void {
 }
 
 /** Reads the chosen backup file and, after confirmation, makes it the catalogue. */
-async function restoreBackup(event: Event): Promise<void> {
-  const input = event.target as HTMLInputElement;
-  const file = input.files?.[0];
-  input.value = "";
-  if (file === undefined) return;
+async function restoreBackup(file: File): Promise<void> {
   const result = parseCatalogue(await file.text());
   if (result.kind === "invalid") {
     restoreProblem.value = `"${file.name}" cannot be restored. ${result.problem}`;
@@ -125,33 +122,13 @@ async function startOver(): Promise<void> {
       <button type="button" class="btn btnPrimary" @click="downloadBackup">
         Download a backup
       </button>
-      <!-- Written out instead of FormField: the error must be announced (role="alert") the moment a chosen file is
-           refused, and FormField's error is not a live region -->
-      <div class="field">
-        <label for="restore-file" class="fieldLabel">Restore a backup</label>
-        <input
-          id="restore-file"
-          class="input"
-          type="file"
-          accept="application/json,.json"
-          :aria-describedby="
-            restoreProblem ? 'restore-hint restore-error' : 'restore-hint'
-          "
-          :aria-invalid="restoreProblem ? 'true' : undefined"
-          @change="restoreBackup"
-        />
-        <span id="restore-hint" class="fieldNote">
-          Replaces the whole catalogue with the backup's contents.
-        </span>
-        <span
-          v-if="restoreProblem"
-          id="restore-error"
-          class="fieldError"
-          role="alert"
-        >
-          {{ restoreProblem }}
-        </span>
-      </div>
+      <BackupFileField
+        id="restore-file"
+        label="Restore a backup"
+        hint="Replaces the whole catalogue with the backup's contents."
+        :error="restoreProblem"
+        @chosen="restoreBackup"
+      />
     </section>
   </div>
   <ConfirmDialog
