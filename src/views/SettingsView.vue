@@ -86,14 +86,16 @@ async function startOver(): Promise<void> {
 </script>
 
 <template>
-  <h1 tabindex="-1">Settings</h1>
+  <h1 tabindex="-1" class="pageTitle h3">Settings</h1>
   <div class="settingsPage">
     <section
       v-if="loadProblem"
       class="panel problemPanel"
       aria-labelledby="unreadable-heading"
     >
-      <h2 id="unreadable-heading">Your saved catalogue could not be read</h2>
+      <h2 id="unreadable-heading" class="sectionTitle">
+        Your saved catalogue could not be read
+      </h2>
       <p>{{ loadProblem.message }}</p>
       <p>
         It has not been changed, and nothing will be saved over it until you
@@ -102,24 +104,24 @@ async function startOver(): Promise<void> {
       <div class="actions">
         <button
           type="button"
-          class="secondaryButton"
+          class="btn btnSecondary"
           @click="downloadUnreadableData"
         >
           Download the unreadable data
         </button>
-        <button type="button" class="dangerButton" @click="startOver">
+        <button type="button" class="btn btnDangerSubtle" @click="startOver">
           Start a new catalogue
         </button>
       </div>
     </section>
 
     <section class="panel" aria-labelledby="backup-heading">
-      <h2 id="backup-heading">Backups</h2>
+      <h2 id="backup-heading" class="sectionTitle">Backups</h2>
       <p>
         Your catalogue is saved only in this browser. Clearing the browser's
         site data deletes it, so download a backup now and then.
       </p>
-      <button type="button" class="backupButton" @click="downloadBackup">
+      <button type="button" class="btn btnPrimary" @click="downloadBackup">
         Download a backup
       </button>
       <label for="restore-file" class="fieldLabel">Restore a backup</label>
@@ -159,43 +161,30 @@ async function startOver(): Promise<void> {
   width: min(100%, 44rem);
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--space3);
 }
 
 .panel {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 1rem;
-  padding: 1.25rem;
-  background: var(--bgMid);
-  border-radius: 0.5rem;
+  gap: var(--space2);
+  padding: var(--space2) var(--space3) var(--space3);
 }
 
+/* The panel's gap already spaces the title from what follows */
+.sectionTitle {
+  margin-bottom: 0;
+}
+
+/* The unreadable-data warning: an edge in the danger colour, beside a heading that says what is wrong */
 .problemPanel {
-  border-left: 6px solid var(--danger);
-}
-
-h2 {
-  font-size: 1.2rem;
-}
-
-.fieldLabel {
-  font-weight: bold;
+  border-color: var(--danger);
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-button {
-  align-self: flex-start;
-  padding: 0.5rem 1rem;
-}
-
-input[type="file"] {
-  padding: 0.4rem;
+  gap: var(--space1);
 }
 </style>

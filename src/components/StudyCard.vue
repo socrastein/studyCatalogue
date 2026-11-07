@@ -71,9 +71,9 @@ async function copy(
 </script>
 
 <template>
-  <article class="studyCard" :aria-labelledby="headingId">
-    <h2 :id="headingId">{{ study.title }}</h2>
-    <p class="byline">
+  <article class="studyCard card" :aria-labelledby="headingId">
+    <h2 :id="headingId" class="h6">{{ study.title }}</h2>
+    <p class="byline textMuted">
       {{ shortAuthorMention(study.authors) }} ({{ study.year }}).
       <i>{{ study.journal }}</i>
     </p>
@@ -93,7 +93,7 @@ async function copy(
       <template v-if="studyTags.length > 0">
         <dt>Topics</dt>
         <dd>
-          <ul class="tagLinks">
+          <ul class="tagLinks plainList">
             <li v-for="tag in studyTags" :key="tag.id">
               <RouterLink :to="{ path: '/', query: { tag: tag.id } }">
                 {{ tag.name }}
@@ -120,7 +120,7 @@ async function copy(
           v-for="citation in CITATION_FORMATS"
           :key="citation.label"
           type="button"
-          class="secondaryButton"
+          class="btn btnSecondary btnSm"
           @click="copy(citation.label, citation.format)"
         >
           {{ citation.label }}
@@ -145,75 +145,56 @@ async function copy(
 .studyCard {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 1.25rem;
-  background: var(--bgMid);
-  border-radius: 0.5rem;
+  gap: var(--space2);
+  padding: var(--space2) var(--space3);
 }
 
-h2 {
-  font-size: 1.15rem;
-  line-height: 1.35;
-}
-
-.byline {
-  color: var(--textMuted);
+.studyCard h2 {
+  font-weight: 700;
 }
 
 .facts {
   display: grid;
   grid-template-columns: max-content 1fr;
-  gap: 0.25rem 1rem;
-  font-size: 0.95rem;
+  gap: var(--spaceHalf) var(--space2);
 }
 
 dt {
-  font-weight: bold;
-}
-
-dd {
-  margin: 0;
+  font-weight: 700;
 }
 
 .tagLinks {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem 0.75rem;
-  padding: 0;
-  list-style: none;
+  gap: var(--spaceHalf) var(--space2);
 }
 
 .abstract summary {
   cursor: pointer;
-  font-weight: bold;
-  /* Tall enough for the 24px minimum target size */
-  padding: 0.2rem 0;
+  font-weight: 700;
+  /* Tall enough for the 24px minimum target size (WCAG 2.5.8) */
+  padding: var(--spaceHalf) 0;
 }
 
 .abstract p {
-  margin-top: 0.5rem;
-  line-height: 1.5;
+  margin-top: var(--space1);
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.75rem 1.5rem;
+  gap: var(--space1) var(--space3);
 }
 
 .copyButtons {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space1);
 }
 
 .copyLabel {
-  font-weight: bold;
-}
-
-.copyButtons button {
-  padding: 0.3rem 0.75rem;
+  font-weight: 700;
 }
 </style>

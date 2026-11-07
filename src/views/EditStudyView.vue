@@ -50,7 +50,7 @@ async function deleteStudy(): Promise<void> {
 
 <template>
   <template v-if="study">
-    <h1 tabindex="-1">Edit study</h1>
+    <h1 tabindex="-1" class="pageTitle h3">Edit study</h1>
     <StudyForm
       :key="study.id"
       :initial-draft="draftFromDetails(study)"
@@ -60,7 +60,7 @@ async function deleteStudy(): Promise<void> {
       <template #extraActions>
         <button
           type="button"
-          class="dangerButton deleteButton"
+          class="btn btnDangerSubtle deleteButton"
           @click="deleteStudy"
         >
           Delete study
@@ -75,7 +75,7 @@ async function deleteStudy(): Promise<void> {
     />
   </template>
   <template v-else>
-    <h1 tabindex="-1">Study not found</h1>
+    <h1 tabindex="-1" class="pageTitle h3">Study not found</h1>
     <p>
       There is no study at this address. It may have been deleted.
       <RouterLink to="/">Back to the study list</RouterLink>
@@ -84,8 +84,8 @@ async function deleteStudy(): Promise<void> {
 </template>
 
 <style scoped>
+/* At the far end of the form's actions, away from Save */
 .deleteButton {
   margin-left: auto;
-  padding: 0.6rem 1rem;
 }
 </style>

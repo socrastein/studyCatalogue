@@ -77,8 +77,8 @@ function createTag(name: string): void {
       :items="summaryItems"
     />
 
-    <section class="formSection" aria-labelledby="publication-heading">
-      <h2 id="publication-heading">Publication</h2>
+    <section class="formSection panel" aria-labelledby="publication-heading">
+      <h2 id="publication-heading" class="sectionTitle">Publication</h2>
       <!-- First, because filling it in can fill in everything else in this section -->
       <DoiField
         v-model="draft.doi"
@@ -147,8 +147,8 @@ function createTag(name: string): void {
       />
     </section>
 
-    <section class="formSection" aria-labelledby="abstract-heading">
-      <h2 id="abstract-heading">Abstract</h2>
+    <section class="formSection panel" aria-labelledby="abstract-heading">
+      <h2 id="abstract-heading" class="sectionTitle">Abstract</h2>
       <TextField
         id="study-abstract"
         v-model="draft.abstract"
@@ -159,8 +159,8 @@ function createTag(name: string): void {
       />
     </section>
 
-    <section class="formSection" aria-labelledby="topics-heading">
-      <h2 id="topics-heading">Topics</h2>
+    <section class="formSection panel" aria-labelledby="topics-heading">
+      <h2 id="topics-heading" class="sectionTitle">Topics</h2>
       <TagCombobox
         id="study-tags"
         v-model="draft.tagIds"
@@ -172,8 +172,8 @@ function createTag(name: string): void {
       />
     </section>
 
-    <section class="formSection" aria-labelledby="design-heading">
-      <h2 id="design-heading">Design</h2>
+    <section class="formSection panel" aria-labelledby="design-heading">
+      <h2 id="design-heading" class="sectionTitle">Design</h2>
       <RadioGroup
         id="study-design"
         v-model="draft.design"
@@ -190,8 +190,8 @@ function createTag(name: string): void {
       />
     </section>
 
-    <section class="formSection" aria-labelledby="participants-heading">
-      <h2 id="participants-heading">Participants</h2>
+    <section class="formSection panel" aria-labelledby="participants-heading">
+      <h2 id="participants-heading" class="sectionTitle">Participants</h2>
       <p class="fieldHint">
         Check every group the study included. Leave a question unchecked if the
         study does not report it.
@@ -217,7 +217,7 @@ function createTag(name: string): void {
     </section>
 
     <div class="formActions">
-      <button type="submit" class="submitButton">{{ submitLabel }}</button>
+      <button type="submit" class="btn btnPrimary">{{ submitLabel }}</button>
       <RouterLink to="/">Cancel</RouterLink>
       <slot name="extraActions"></slot>
     </div>
@@ -229,26 +229,25 @@ function createTag(name: string): void {
   width: min(100%, 44rem);
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--space3);
 }
 
 .formSection {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 1.25rem;
-  background: var(--bgMid);
-  border-radius: 0.5rem;
+  gap: var(--space2);
+  padding: var(--space2) var(--space3) var(--space3);
 }
 
-h2 {
-  font-size: 1.25rem;
+/* The section's gap already spaces the title from the fields */
+.sectionTitle {
+  margin-bottom: 0;
 }
 
 .fieldRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: var(--space2);
 }
 
 .shortField {
@@ -263,11 +262,6 @@ h2 {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 1.5rem;
-}
-
-.submitButton {
-  font-size: 1rem;
-  padding: 0.75rem 1.5rem;
+  gap: var(--space3);
 }
 </style>

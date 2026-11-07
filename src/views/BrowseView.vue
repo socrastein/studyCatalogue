@@ -104,7 +104,7 @@ function onFilterPanelToggle(event: Event): void {
 </script>
 
 <template>
-  <h1 tabindex="-1">Studies</h1>
+  <h1 tabindex="-1" class="pageTitle h3">Studies</h1>
 
   <p v-if="allStudies.length === 0" class="emptyCatalogue">
     No studies yet. <RouterLink to="/studies/new">Add a study</RouterLink>
@@ -112,11 +112,11 @@ function onFilterPanelToggle(event: Event): void {
 
   <div v-else class="browseLayout">
     <details
-      class="filters"
+      class="filters panel"
       :open="isFilterPanelOpen"
       @toggle="onFilterPanelToggle"
     >
-      <summary><h2>Filters</h2></summary>
+      <summary><h2 class="h6">Filters</h2></summary>
       <FilterPanel v-model="filters" :tags="tags" />
     </details>
 
@@ -128,11 +128,11 @@ function onFilterPanelToggle(event: Event): void {
       </p>
       <p v-if="sortedMatches.length === 0" class="noMatches">
         No studies match these filters.
-        <button type="button" class="secondaryButton" @click="clearFilters">
+        <button type="button" class="btn btnSubtle" @click="clearFilters">
           Clear all filters
         </button>
       </p>
-      <ol class="studyList">
+      <ol class="studyList plainList">
         <li v-for="study in sortedMatches" :key="study.id">
           <StudyCard
             :study="study"
@@ -151,7 +151,7 @@ function onFilterPanelToggle(event: Event): void {
   width: min(100%, 72rem);
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.5rem;
+  gap: var(--space3);
   align-items: start;
 }
 
@@ -162,9 +162,7 @@ function onFilterPanelToggle(event: Event): void {
 }
 
 .filters {
-  padding: 1rem 1.25rem;
-  background: var(--bgMid);
-  border-radius: 0.5rem;
+  padding: var(--space2);
 }
 
 .filters summary {
@@ -174,39 +172,32 @@ function onFilterPanelToggle(event: Event): void {
 /* The heading sits inside the summary so the disclosure triangle and the heading line up */
 .filters summary h2 {
   display: inline;
-  font-size: 1.2rem;
 }
 
 .filters[open] summary {
-  margin-bottom: 1rem;
+  margin-bottom: var(--space2);
 }
 
 .results {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space1);
 }
 
 .resultCount {
-  font-weight: bold;
+  font-weight: 700;
 }
 
 .noMatches {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.75rem;
-}
-
-.noMatches button {
-  padding: 0.4rem 0.9rem;
+  gap: var(--space1) var(--space2);
 }
 
 .studyList {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 0;
-  list-style: none;
+  gap: var(--space2);
 }
 </style>

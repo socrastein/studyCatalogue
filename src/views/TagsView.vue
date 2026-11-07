@@ -37,7 +37,7 @@ function addTag(): void {
 </script>
 
 <template>
-  <h1 tabindex="-1">Tags</h1>
+  <h1 tabindex="-1" class="pageTitle h3">Tags</h1>
   <div class="tagsPage">
     <p class="intro">
       Topics form a hierarchy: filtering by a topic also finds studies tagged
@@ -51,12 +51,12 @@ function addTag(): void {
         label="New tag"
         :error="newTagError || undefined"
       />
-      <button type="submit">Add tag</button>
+      <button type="submit" class="btn btnPrimary">Add tag</button>
     </form>
     <p class="visuallyHidden" role="status">{{ announcement }}</p>
 
     <section aria-labelledby="all-tags-heading">
-      <h2 id="all-tags-heading">All tags</h2>
+      <h2 id="all-tags-heading" class="sectionTitle">All tags</h2>
       <TagTree
         :tags="tags"
         :studies="studies"
@@ -72,26 +72,17 @@ function addTag(): void {
   width: min(100%, 44rem);
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--space3);
 }
 
 .addTag {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 0.75rem;
+  gap: var(--space2);
 }
 
 .addTag > :first-child {
   flex: 1 1 16rem;
-}
-
-.addTag button {
-  padding: 0.45rem 1rem;
-}
-
-h2 {
-  font-size: 1.25rem;
-  margin-bottom: 0.75rem;
 }
 </style>

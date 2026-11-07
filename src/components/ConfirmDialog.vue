@@ -62,13 +62,13 @@ defineExpose({ ask });
     <div class="actions">
       <button
         type="button"
-        class="secondaryButton"
+        class="btn btnSecondary"
         autofocus
         @click="close(false)"
       >
         Cancel
       </button>
-      <button type="button" class="dangerButton" @click="close(true)">
+      <button type="button" class="btn btnDanger" @click="close(true)">
         {{ confirmLabel }}
       </button>
     </div>
@@ -99,9 +99,5 @@ h2 {
   justify-content: flex-end;
   gap: 0.75rem;
   margin-top: 1.25rem;
-}
-
-.actions button {
-  padding: 0.5rem 1rem;
 }
 </style>

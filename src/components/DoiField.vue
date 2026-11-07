@@ -81,7 +81,7 @@ function filledAnnouncement(names: string[]): string {
     <div class="lookupRow">
       <button
         type="button"
-        class="secondaryButton"
+        class="btn btnSecondary"
         :disabled="isLookingUp"
         :aria-busy="isLookingUp ? 'true' : undefined"
         @click="fillFromDoi"
@@ -105,10 +105,6 @@ function filledAnnouncement(names: string[]): string {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem 1rem;
-}
-
-.lookupRow button {
-  padding: 0.4rem 0.9rem;
 }
 
 .lookupStatus {

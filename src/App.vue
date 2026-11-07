@@ -41,7 +41,7 @@ watch(
   <header class="siteHeader">
     <RouterLink to="/" class="siteName">{{ APP_NAME }}</RouterLink>
     <nav aria-label="Main">
-      <ul class="navList">
+      <ul class="navList plainList">
         <li><RouterLink to="/">Studies</RouterLink></li>
         <li><RouterLink to="/studies/new">Add a study</RouterLink></li>
         <li><RouterLink to="/tags">Tags</RouterLink></li>
@@ -53,21 +53,21 @@ watch(
   <main id="main" ref="mainElement">
     <p
       v-if="catalogue.state.saveProblem"
-      class="banner problemBanner"
+      class="banner alert alertDanger"
       role="alert"
     >
       {{ catalogue.state.saveProblem }}
     </p>
     <p
       v-if="catalogue.state.loadProblem && route.path !== '/settings'"
-      class="banner problemBanner"
+      class="banner alert alertDanger"
     >
       Your saved catalogue could not be read, so changes are not being saved.
       <RouterLink to="/settings">Recover it in Settings</RouterLink>
     </p>
     <!-- Always present, so screen readers notice when a message appears in it -->
     <p
-      class="banner noticeBanner"
+      class="banner panel noticeBanner"
       :class="{ isEmpty: noticeMessage === '' }"
       role="status"
     >
@@ -79,19 +79,19 @@ watch(
 </template>
 
 <style scoped>
+/* Off screen until it takes keyboard focus, then over the top-left corner */
 .skipLink {
   position: absolute;
-  left: 1rem;
-  top: -3rem;
-  padding: 0.5rem 1rem;
-  background: var(--bgBase);
-  color: var(--textFull);
+  left: var(--space2);
+  top: calc(-1 * var(--space4));
+  padding: var(--space1) var(--space2);
+  background: var(--bgTop);
   border: 2px solid var(--accentFull);
-  border-radius: 0.25rem;
+  border-radius: var(--radius);
 }
 
 .skipLink:focus {
-  top: 0.5rem;
+  top: var(--space1);
 }
 
 .siteHeader {
@@ -99,54 +99,55 @@ watch(
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem 1.5rem;
+  gap: var(--space1) var(--space3);
   width: 100%;
-  padding: 0.75rem 1rem;
-  background: var(--bgMid);
-  border-bottom: 1px solid var(--borderMuted);
+  padding: var(--space1) var(--space2);
+  background: var(--bgTop);
+  border-bottom: 1px solid var(--borderSubtle);
+}
+
+/* The name and the nav links keep the text colour; the global link colour is the accent */
+.siteName:link,
+.siteName:visited,
+.navList a:link,
+.navList a:visited {
+  color: var(--textFull);
 }
 
 .siteName {
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: var(--textFull);
-  text-decoration: none;
+  font-family: var(--fontHeading);
+  font-size: var(--fontSizeXl);
 }
 
 .navList {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem 1.25rem;
-  list-style: none;
-  padding: 0;
+  gap: var(--spaceHalf) var(--space2);
+  font-size: var(--fontSizeLg);
 }
 
+/* Tall enough for the 24px minimum target size (WCAG 2.5.8) */
 .navList a {
-  color: var(--textFull);
-  text-decoration: none;
-  padding: 0.25rem 0;
-}
-
-.navList a:hover {
-  color: var(--accentFull);
+  display: inline-block;
+  padding: var(--spaceHalf) 0;
 }
 
 /* The current page: underlined in the accent colour, so it is marked by more than colour alone */
 .navList a[aria-current="page"] {
-  border-bottom: 3px solid var(--accentFull);
-  font-weight: bold;
+  text-decoration: underline;
+  text-decoration-color: var(--accentFull);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.3em;
 }
 
 .banner {
   width: min(100%, 44rem);
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  border-left: 6px solid;
-  background: var(--bgMid);
+  margin-bottom: 0;
+  padding: var(--space1) var(--space2);
 }
 
 .noticeBanner {
-  border-color: var(--accentFull);
+  font-weight: 600;
 }
 
 /* Keeps the status region in the page for screen readers while there is nothing to say */
@@ -154,17 +155,12 @@ watch(
   display: contents;
 }
 
-.problemBanner {
-  border-color: var(--danger);
-  font-weight: bold;
-}
-
 main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space2);
   width: 100%;
-  padding: 2rem 1rem;
+  padding: var(--space3) var(--space2);
 }
 </style>

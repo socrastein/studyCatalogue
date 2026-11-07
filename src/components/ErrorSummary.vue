@@ -32,11 +32,11 @@ defineExpose({ focus });
 <template>
   <div
     ref="summaryElement"
-    class="errorSummary"
+    class="errorSummary alert alertDanger"
     tabindex="-1"
     aria-labelledby="error-summary-title"
   >
-    <h2 id="error-summary-title">There is a problem</h2>
+    <h2 id="error-summary-title" class="h6">There is a problem</h2>
     <ul>
       <li v-for="item in items" :key="item.fieldId">
         <a :href="`#${item.fieldId}`" @click.prevent="focusField(item.fieldId)">
@@ -49,33 +49,33 @@ defineExpose({ focus });
 
 <style scoped>
 .errorSummary {
-  border: 3px solid var(--danger);
-  border-radius: 0.5rem;
-  padding: 1rem 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space1);
+  margin-bottom: 0;
 }
 
-.errorSummary:focus-visible,
+/* It takes focus from code when the form is submitted, which :focus-visible does not always mark, so the ring is drawn
+   on any focus */
 .errorSummary:focus {
-  outline: 3px solid var(--accentFull);
+  outline: 2px solid var(--accentFull);
   outline-offset: 2px;
 }
 
-h2 {
-  font-size: 1.2rem;
+.errorSummary h2 {
+  color: inherit;
 }
 
 ul {
-  padding-left: 1.25rem;
+  margin-top: 0;
 }
 
 /* Padded to at least 24px tall, the minimum target size (WCAG 2.5.8), since the links sit right above each other */
-a {
+a,
+a:link,
+a:visited {
   display: inline-block;
-  padding: 0.25rem 0;
-  color: var(--danger);
-  font-weight: bold;
+  padding: var(--spaceHalf) 0;
+  color: inherit;
 }
 </style>

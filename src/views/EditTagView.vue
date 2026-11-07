@@ -113,7 +113,7 @@ async function deleteThisTag(): Promise<void> {
 
 <template>
   <template v-if="tag">
-    <h1 tabindex="-1">Edit tag: {{ tag.name }}</h1>
+    <h1 tabindex="-1" class="pageTitle h3">Edit tag: {{ tag.name }}</h1>
     <div class="editTagPage">
       <p>
         Used by
@@ -144,13 +144,13 @@ async function deleteThisTag(): Promise<void> {
           :allow-create="false"
         />
         <div class="actions">
-          <button type="submit" class="primaryAction">Save tag</button>
+          <button type="submit" class="btn btnPrimary">Save tag</button>
           <RouterLink to="/tags">Cancel</RouterLink>
         </div>
       </form>
 
       <section class="panel" aria-labelledby="merge-heading">
-        <h2 id="merge-heading">Merge into another tag</h2>
+        <h2 id="merge-heading" class="sectionTitle">Merge into another tag</h2>
         <p class="fieldHint">
           For duplicates. Studies move to the tag you choose, and this tag's
           names become other names for it.
@@ -161,6 +161,7 @@ async function deleteThisTag(): Promise<void> {
         </p>
         <select
           id="merge-target"
+          class="input"
           v-model="mergeTargetId"
           :aria-invalid="mergeProblem ? 'true' : undefined"
           :aria-describedby="mergeProblem ? 'merge-target-error' : undefined"
@@ -174,14 +175,18 @@ async function deleteThisTag(): Promise<void> {
             {{ target.label }}
           </option>
         </select>
-        <button type="button" class="dangerButton" @click="merge">
+        <button type="button" class="btn btnDangerSubtle" @click="merge">
           Merge tags
         </button>
       </section>
 
       <section class="panel" aria-labelledby="delete-heading">
-        <h2 id="delete-heading">Delete this tag</h2>
-        <button type="button" class="dangerButton" @click="deleteThisTag">
+        <h2 id="delete-heading" class="sectionTitle">Delete this tag</h2>
+        <button
+          type="button"
+          class="btn btnDangerSubtle"
+          @click="deleteThisTag"
+        >
           Delete tag
         </button>
       </section>
@@ -194,7 +199,7 @@ async function deleteThisTag(): Promise<void> {
     />
   </template>
   <template v-else>
-    <h1 tabindex="-1">Tag not found</h1>
+    <h1 tabindex="-1" class="pageTitle h3">Tag not found</h1>
     <p>
       There is no tag at this address. It may have been merged or deleted.
       <RouterLink to="/tags">Back to the tags</RouterLink>
@@ -207,43 +212,29 @@ async function deleteThisTag(): Promise<void> {
   width: min(100%, 44rem);
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--space3);
 }
 
 .panel {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 0.75rem;
-  padding: 1.25rem;
-  background: var(--bgMid);
-  border-radius: 0.5rem;
+  gap: var(--space1);
+  padding: var(--space2) var(--space3) var(--space3);
 }
 
-h2 {
-  font-size: 1.2rem;
-}
-
-.fieldLabel {
-  font-weight: bold;
-}
-
-select {
-  padding: 0.4rem 0.5rem;
-  color: var(--textFull);
-  background: var(--bgBase);
-  border: 1px solid var(--borderMuted);
-  border-radius: 0.25rem;
+/* The panel's gap already spaces the title from what follows */
+.sectionTitle {
+  margin-bottom: 0;
 }
 
 .panel button {
   align-self: flex-start;
-  padding: 0.5rem 1rem;
 }
 
 .actions {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: var(--space3);
 }
 </style>

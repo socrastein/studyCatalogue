@@ -29,11 +29,10 @@ textarea {
   caret-color: var(--textFull);
 }
 
-/* Form controls use the page font size; browsers otherwise give buttons and inputs their own */
+/* Form controls use the page font size; browsers otherwise give inputs their own */
 input,
 textarea,
-select,
-button {
+select {
   font-size: inherit;
 }
 
@@ -48,19 +47,6 @@ textarea[aria-invalid="true"] {
   border: 2px solid var(--danger);
 }
 
-button {
-  background-color: var(--accentFull);
-  color: var(--onAccent);
-  padding: 0.25rem 0.75rem;
-  border-radius: 0.25rem;
-  font-weight: bold;
-}
-
-/* A ring instead of a border, so hovering does not change the button's size and shift what is around it */
-button:hover {
-  box-shadow: 0 0 0 2px var(--textFull);
-}
-
 /* Headings take focus only from code, after a page change, so they show no ring */
 h1:focus {
   outline: none;
@@ -72,15 +58,11 @@ h1:focus {
   font-size: 0.9rem;
 }
 
-/* A secondary action: outlined instead of filled, so the main action stays the obvious one */
-button.secondaryButton {
-  background: transparent;
-  color: var(--textFull);
-  border: 1px solid var(--accentFull);
-}
-
-/* A destructive action */
-button.dangerButton {
-  background: var(--danger);
-  color: var(--onAccent);
+/* A list used for layout (navigation, cards, links in a row) rather than for reading: no bullets, and none of the
+   library's reading-list spacing */
+.plainList,
+.plainList > li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }

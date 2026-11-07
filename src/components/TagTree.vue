@@ -42,17 +42,20 @@ function usageText(tag: Tag): string {
 </script>
 
 <template>
-  <ul v-if="children.length > 0" class="tagTree">
+  <ul v-if="children.length > 0" class="tagTree plainList">
     <li v-for="tag in children" :key="tag.id">
       <div class="tagLine">
         <RouterLink :to="{ name: 'editTag', params: { id: tag.id } }">
           {{ tag.name }}
         </RouterLink>
-        <RouterLink :to="{ path: '/', query: { tag: tag.id } }" class="usage">
+        <RouterLink
+          :to="{ path: '/', query: { tag: tag.id } }"
+          class="usage textMuted"
+        >
           {{ usageText(tag)
           }}<span class="visuallyHidden"> tagged {{ tag.name }}</span>
         </RouterLink>
-        <span v-if="tag.aliases.length > 0" class="aliases">
+        <span v-if="tag.aliases.length > 0" class="aliases textMuted">
           also: {{ tag.aliases.join(", ") }}
         </span>
       </div>
@@ -68,35 +71,37 @@ function usageText(tag: Tag): string {
 
 <style scoped>
 .tagTree {
-  list-style: none;
-  padding-left: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: var(--space1);
 }
 
 /* Nested levels are indented, with a guide line showing what they sit under */
 .tagTree .tagTree {
-  margin: 0.35rem 0 0 0.6rem;
-  padding-left: 1rem;
-  border-left: 2px solid var(--borderMuted);
+  margin: var(--space1) 0 0 var(--space1);
+  padding-left: var(--space2);
+  border-left: 2px solid var(--borderSubtle);
 }
 
 .tagLine {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.25rem 0.75rem;
+  gap: var(--spaceHalf) var(--space2);
 }
 
-.usage {
-  font-size: 0.9rem;
+.usage,
+.aliases {
+  font-size: var(--fontSizeSm);
+}
+
+/* The usage link is muted like the aliases, so the tag's own name stands out; weight still marks it as a link */
+.usage:link,
+.usage:visited {
   color: var(--textMuted);
 }
 
 .aliases {
-  font-size: 0.9rem;
   font-style: italic;
-  color: var(--textMuted);
 }
 </style>

@@ -119,7 +119,7 @@ function clearFilters(): void {
     <button
       v-if="isFiltered"
       type="button"
-      class="secondaryButton"
+      class="btn btnSubtle"
       @click="clearFilters"
     >
       Clear all filters
@@ -157,6 +157,5 @@ input[type="search"] {
 
 button {
   align-self: flex-start;
-  padding: 0.4rem 0.9rem;
 }
 </style>
