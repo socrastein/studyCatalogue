@@ -32,10 +32,24 @@ function textField(page: Page, label: RegExp) {
   return page.getByRole("textbox", { name: label });
 }
 
+/** The record's authors as the form shows them under the author box, in APA's form. */
+const RECORD_AUTHORS_AS_READ = [
+  "Schoenfeld, B. J.",
+  "Ogborn, D.",
+  "Krieger, J. W.",
+];
+
 /** Types a DOI and presses the fill button. */
 async function fillFromDoi(page: Page, doi: string): Promise<void> {
   await textField(page, /^DOI/).fill(doi);
   await page.getByRole("button", { name: "Fill in from DOI" }).click();
+}
+
+/** The names under the author box, as the form read them from what was filled in. */
+function readAuthors(page: Page, count: number) {
+  return page
+    .getByRole("list", { name: `Read as ${count} authors:` })
+    .getByRole("listitem");
 }
 
 test.beforeEach(async ({ page }) => {
@@ -58,11 +72,7 @@ test("a DOI fills in the publication details, with the print year", async ({
   );
   await expect(textField(page, /^Year$/)).toHaveValue("2017");
   await expect(textField(page, /^Pages/)).toHaveValue("1073-1082");
-  await expect(
-    page
-      .getByRole("list", { name: "Read as 3 authors:" })
-      .getByRole("listitem"),
-  ).toHaveText(["Schoenfeld, B. J.", "Ogborn, D.", "Krieger, J. W."]);
+  await expect(readAuthors(page, 3)).toHaveText(RECORD_AUTHORS_AS_READ);
 });
 
 test("the filled-in form has no accessibility violations", async ({ page }) => {
