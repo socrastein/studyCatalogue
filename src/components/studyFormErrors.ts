@@ -9,11 +9,11 @@ export type SummaryItem = { fieldId: string; message: string };
 
 /** The fields that can have a message, top to bottom as the form shows them. */
 const FIELD_ORDER = [
+  "doi",
   "title",
   "authors",
   "year",
   "journal",
-  "doi",
   "url",
   "design",
   "subjects",

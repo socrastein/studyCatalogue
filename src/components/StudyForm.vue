@@ -12,6 +12,7 @@ import {
   SUBJECTS,
   TRAINING_STATUSES,
 } from "../catalogue/facets";
+import type { CrossrefFields } from "../catalogue/crossref";
 import type { StudyDetails } from "../catalogue/study";
 import {
   validateDraft,
@@ -20,6 +21,7 @@ import {
 } from "../catalogue/studyDraft";
 import { useCatalogue } from "../stores/catalogueStore";
 import AuthorListField from "./AuthorListField.vue";
+import DoiField from "./DoiField.vue";
 import ErrorSummary from "./ErrorSummary.vue";
 import CheckboxGroup from "./CheckboxGroup.vue";
 import RadioGroup from "./RadioGroup.vue";
@@ -55,6 +57,11 @@ async function submit(): Promise<void> {
   summary.value?.focus();
 }
 
+/** Puts the details found for the DOI into the form, replacing what was there: the person asked for the lookup. */
+function fillFromLookup(fields: CrossrefFields): void {
+  Object.assign(draft, fields);
+}
+
 /** Creates a tag typed in the tag box (or finds one by that name) and adds it to the study. */
 function createTag(name: string): void {
   const tag = catalogue.findOrCreateTag(name);
@@ -72,6 +79,12 @@ function createTag(name: string): void {
 
     <section class="formSection" aria-labelledby="publication-heading">
       <h2 id="publication-heading">Publication</h2>
+      <!-- First, because filling it in can fill in everything else in this section -->
+      <DoiField
+        v-model="draft.doi"
+        :error="errors.doi"
+        @found="fillFromLookup"
+      />
       <TextField
         id="study-title"
         v-model="draft.title"
@@ -122,14 +135,6 @@ function createTag(name: string): void {
           is-optional
         />
       </div>
-      <TextField
-        id="study-doi"
-        v-model="draft.doi"
-        label="DOI"
-        hint="e.g. 10.1080/02640414.2016.1210197, or paste the doi.org link"
-        :error="errors.doi"
-        is-optional
-      />
       <TextField
         id="study-url"
         v-model="draft.url"
