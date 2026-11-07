@@ -146,7 +146,7 @@ test("copying a citation announces it", async ({ page }) => {
   const card = page
     .getByRole("article")
     .filter({ hasText: "Hypertrophy in beginners" });
-  await card.getByRole("button", { name: "APA" }).click();
+  await card.getByRole("button", { name: "APA, copy APA citation" }).click();
   await expect(page.getByText("Copied the APA citation.")).toBeAttached();
 });
 

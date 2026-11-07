@@ -1,6 +1,6 @@
 <!--
   One study in the list: title, authors and year, journal, its design, participants and topics, the abstract on
-  request, and its actions: copy a citation (APA, MLA or a Reddit link), open the paper, edit. Topic tags link to the
+  request, and its actions: copy a citation (APA, MLA or a markdown link for Reddit), open the paper, edit. Topic tags link to the
   list filtered by that tag.
 -->
 <script setup lang="ts">
@@ -35,9 +35,10 @@ const emit = defineEmits<{
 }>();
 
 const CITATION_FORMATS = [
-  { label: "APA", format: formatApa },
-  { label: "MLA", format: formatMla },
-  { label: "Reddit link", format: formatRedditLink },
+  { label: "APA", description: "APA citation", format: formatApa },
+  { label: "MLA", description: "MLA citation", format: formatMla },
+  // "MD" is short so all three buttons fit on one line on a phone; the description is what is announced.
+  { label: "MD", description: "markdown link", format: formatRedditLink },
 ] as const;
 
 const headingId = computed(() => `study-${props.study.id}-title`);
@@ -57,15 +58,15 @@ function populationText(
 
 /** Copies the study's citation in one format and reports the outcome. */
 async function copy(
-  label: string,
+  description: string,
   format: (study: Study) => Citation,
 ): Promise<void> {
   const wasCopied = await copyCitation(format(props.study));
   emit(
     "copied",
     wasCopied
-      ? `Copied the ${label} citation.`
-      : `Could not copy the ${label} citation.`,
+      ? `Copied the ${description}.`
+      : `Could not copy the ${description}.`,
   );
 }
 </script>
@@ -121,7 +122,8 @@ async function copy(
           :key="citation.label"
           type="button"
           class="btn btnSecondary btnSm"
-          @click="copy(citation.label, citation.format)"
+          :aria-label="`${citation.label}, copy ${citation.description}`"
+          @click="copy(citation.description, citation.format)"
         >
           {{ citation.label }}
         </button>
