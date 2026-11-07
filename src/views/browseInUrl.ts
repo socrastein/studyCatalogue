@@ -1,8 +1,10 @@
 /**
- * The browse filters as URL query parameters and back, so a search can be bookmarked or shared, and returning from
- * a study's edit page restores it. Example: "/?q=volume&tag=exercise-science%2Fhypertrophy&training=trained".
+ * The browse page's state as URL query parameters and back: its filters and its sort order, so a search can be
+ * bookmarked or shared, and returning from a study's edit page restores it. Example:
+ * "/?q=volume&tag=exercise-science%2Fhypertrophy&training=trained&sort=author".
  *
- * Reading never trusts the URL: facet values not in their vocabulary are dropped rather than passed on.
+ * Reading never trusts the URL: facet values not in their vocabulary, and unknown sort orders, are dropped rather
+ * than passed on.
  */
 import type { LocationQuery, LocationQueryRaw } from "vue-router";
 import {
@@ -15,6 +17,14 @@ import {
   type FacetValue,
 } from "../catalogue/facets";
 import type { StudyFilters } from "../catalogue/filterStudies";
+import {
+  DEFAULT_SORT_ORDER,
+  isSortOrder,
+  type SortOrder,
+} from "../catalogue/sortStudies";
+
+/** The query parameter for the sort order. */
+const SORT_PARAMETER = "sort";
 
 /** The query parameter for each filter: short, readable names, as they appear in the address bar. */
 const PARAMETERS = {
@@ -70,6 +80,32 @@ export function queryFromFilters(filters: StudyFilters): LocationQueryRaw {
   for (const key of LIST_FILTERS) {
     if (filters[key].length > 0) query[PARAMETERS[key]] = [...filters[key]];
   }
+  return query;
+}
+
+/**
+ * The sort order a URL's query asks for; the default when it names none, or one that does not exist.
+ *
+ * @param query The route's query, as vue-router parses it.
+ */
+export function sortOrderFromQuery(query: LocationQuery): SortOrder {
+  const named = parameterValues(query, SORT_PARAMETER)[0] ?? "";
+  return isSortOrder(named) ? named : DEFAULT_SORT_ORDER;
+}
+
+/**
+ * The browse page's whole query: its filters and its sort order. The default order is left out, so an unsorted,
+ * unfiltered list is a clean "/".
+ *
+ * @param filters The filters to put in the URL.
+ * @param sortOrder The chosen sort order.
+ */
+export function browseQuery(
+  filters: StudyFilters,
+  sortOrder: SortOrder,
+): LocationQueryRaw {
+  const query = queryFromFilters(filters);
+  if (sortOrder !== DEFAULT_SORT_ORDER) query[SORT_PARAMETER] = sortOrder;
   return query;
 }
 

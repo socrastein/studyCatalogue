@@ -1,7 +1,7 @@
 /**
  * Browser tests for the browse page: the searches the catalogue exists for ("hypertrophy in trained lifters,
  * meta-analyses only"; "joint pain in older adults"), filters kept in the URL, tag links, the note about studies that
- * do not report a facet, copying a citation, and axe.
+ * do not report a facet, copying a citation, sorting, and axe.
  */
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoAxeViolations } from "./expectNoAxeViolations";
@@ -169,4 +169,39 @@ test("on a phone the filters start folded away", async ({ page }) => {
   await expect(page.getByRole("searchbox", { name: "Search" })).toBeHidden();
   await page.getByText("Filters").click();
   await expect(page.getByRole("searchbox", { name: "Search" })).toBeVisible();
+});
+
+/** A study known by its first author and year, e.g. "Krieger 2010", for checking the sort orders. */
+function studyByAuthor(family: string, year: number) {
+  return studyDetails({
+    title: `${family} ${year}`,
+    year,
+    authors: [{ family, given: "J." }],
+  });
+}
+
+const SORTABLE_STUDIES = [
+  studyByAuthor("Krieger", 2010),
+  studyByAuthor("Schoenfeld", 2017),
+  studyByAuthor("Androulakis", 2021),
+];
+
+test("the list can be sorted, and the order stays in the URL alongside the filters", async ({
+  page,
+}) => {
+  await openWithStudies(page, SORTABLE_STUDIES);
+  const titles = page.getByRole("article").getByRole("heading");
+  const newestFirst = ["Androulakis 2021", "Schoenfeld 2017", "Krieger 2010"];
+  await expect(titles).toHaveText(newestFirst);
+
+  await page
+    .getByRole("combobox", { name: "Sort by" })
+    .selectOption({ label: "First author, A to Z" });
+  await expect(page).toHaveURL("/?sort=author");
+  const byAuthor = ["Androulakis 2021", "Krieger 2010", "Schoenfeld 2017"];
+  await expect(titles).toHaveText(byAuthor);
+
+  await page.getByRole("searchbox", { name: "Search" }).fill("2");
+  await expect(page).toHaveURL("/?q=2&sort=author");
+  await expectNoAxeViolations(page);
 });

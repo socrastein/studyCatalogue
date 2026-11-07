@@ -1,9 +1,15 @@
 /**
- * Tests for putting browse filters in the URL and reading them back, including URLs edited by hand.
+ * Tests for putting the browse page's filters and sort order in the URL and reading them back, including URLs edited
+ * by hand.
  */
 import { describe, expect, it } from "vitest";
 import { emptyFilters, type StudyFilters } from "../catalogue/filterStudies";
-import { filtersFromQuery, queryFromFilters } from "./browseInUrl";
+import {
+  browseQuery,
+  filtersFromQuery,
+  queryFromFilters,
+  sortOrderFromQuery,
+} from "./browseInUrl";
 
 describe("queryFromFilters", () => {
   it("is empty for unset filters, so the unfiltered list is a clean address", () => {
@@ -55,5 +61,23 @@ describe("filtersFromQuery", () => {
     expect(filtersFromQuery({ q: null, tag: ["", null] })).toEqual(
       emptyFilters(),
     );
+  });
+});
+
+describe("browseQuery and sortOrderFromQuery", () => {
+  it("leave the default order out of the URL", () => {
+    expect(browseQuery(emptyFilters(), "newest")).toEqual({});
+  });
+
+  it("add a chosen order to the filters, and read it back", () => {
+    const filters = { ...emptyFilters(), query: "volume" };
+    const query = browseQuery(filters, "author");
+    expect(query).toEqual({ q: "volume", sort: "author" });
+    expect(sortOrderFromQuery({ sort: "author" })).toBe("author");
+  });
+
+  it("fall back to the default for a missing or unknown order", () => {
+    expect(sortOrderFromQuery({})).toBe("newest");
+    expect(sortOrderFromQuery({ sort: "random" })).toBe("newest");
   });
 });

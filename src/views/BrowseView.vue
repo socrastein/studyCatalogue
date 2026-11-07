@@ -1,12 +1,13 @@
 <!--
   The home page: find studies by search, topic and facets, and copy their citations. The filters live in the URL
-  (see browseInUrl.ts), so a search survives a trip to an edit page and can be bookmarked. Results are sorted by
-  publication year, newest first, and the count is announced as filters change.
+  (see browseInUrl.ts) with the chosen sort order, so a search survives a trip to an edit page and can be bookmarked.
+  Results start newest published first, and the count is announced as filters change.
 
   On wide screens the filters sit beside the results; on narrow ones they fold into a "Filters" disclosure, open
   when filters are set so the person can see why the list is short.
 -->
 <script setup lang="ts">
+import FormField from "lifting-school-ui/components/FormField.vue";
 import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
@@ -16,11 +17,19 @@ import {
   type PopulationFacet,
   type StudyFilters,
 } from "../catalogue/filterStudies";
-import type { Study } from "../catalogue/study";
+import {
+  SORT_ORDERS,
+  sortStudies,
+  type SortOrder,
+} from "../catalogue/sortStudies";
 import FilterPanel from "../components/FilterPanel.vue";
 import StudyCard from "../components/StudyCard.vue";
 import { useCatalogue } from "../stores/catalogueStore";
-import { filtersFromQuery, queryFromFilters } from "./browseInUrl";
+import {
+  browseQuery,
+  filtersFromQuery,
+  sortOrderFromQuery,
+} from "./browseInUrl";
 
 /** Wide enough for the filters to sit beside the results rather than above them; matches the layout's breakpoint. */
 const WIDE_LAYOUT_QUERY = "(min-width: 60rem)";
@@ -42,16 +51,18 @@ const allStudies = computed(() => catalogue.state.catalogue.studies);
 
 const filters = computed<StudyFilters>({
   get: () => filtersFromQuery(route.query),
-  // replace, not push: each keystroke in the search box would otherwise become a Back step
-  set: (newFilters) =>
-    void router.replace({ query: queryFromFilters(newFilters) }),
+  set: (newFilters) => showInUrl(newFilters, sortOrder.value),
+});
+const sortOrder = computed<SortOrder>({
+  get: () => sortOrderFromQuery(route.query),
+  set: (newOrder) => showInUrl(filters.value, newOrder),
 });
 
 const result = computed(() =>
   filterStudies(allStudies.value, tags.value, filters.value),
 );
 const sortedMatches = computed(() =>
-  [...result.value.matches].sort(newestFirst),
+  sortStudies(result.value.matches, sortOrder.value),
 );
 
 const isFilterPanelOpen = ref(
@@ -88,9 +99,12 @@ function studyCount(count: number): string {
   return `${count} ${count === 1 ? "study" : "studies"}`;
 }
 
-/** Publication year, newest first; studies from the same year by title. */
-function newestFirst(first: Study, second: Study): number {
-  return second.year - first.year || first.title.localeCompare(second.title);
+/**
+ * Puts the filters and sort order in the URL, which the page reads them back from. Replaces the history entry
+ * rather than adding one: each keystroke in the search box would otherwise become a Back step.
+ */
+function showInUrl(newFilters: StudyFilters, newOrder: SortOrder): void {
+  void router.replace({ query: browseQuery(newFilters, newOrder) });
 }
 
 function clearFilters(): void {
@@ -122,7 +136,20 @@ function onFilterPanelToggle(event: Event): void {
 
     <section class="results" aria-labelledby="results-heading">
       <h2 id="results-heading" class="visuallyHidden">Results</h2>
-      <p class="resultCount" role="status">{{ countText }}</p>
+      <div class="resultsBar">
+        <p class="resultCount" role="status">{{ countText }}</p>
+        <FormField id="browse-sort" v-slot="field" label="Sort by">
+          <select v-bind="field" v-model="sortOrder" class="input">
+            <option
+              v-for="order in SORT_ORDERS"
+              :key="order.id"
+              :value="order.id"
+            >
+              {{ order.label }}
+            </option>
+          </select>
+        </FormField>
+      </div>
       <p v-for="note in unreportedNotes" :key="note" class="textMuted">
         {{ note }}
       </p>
@@ -184,7 +211,17 @@ function onFilterPanelToggle(event: Event): void {
   gap: var(--space1);
 }
 
+/* The count and the sort order on one line, wrapping on a narrow screen */
+.resultsBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space1) var(--space2);
+}
+
 .resultCount {
+  width: auto;
   font-weight: 700;
 }
 
