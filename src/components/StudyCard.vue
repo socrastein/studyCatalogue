@@ -9,7 +9,7 @@ import { formatApa } from "../catalogue/citations/apa";
 import { shortAuthorMention } from "../catalogue/citations/authorNames";
 import { studyLink, type Citation } from "../catalogue/citations/citation";
 import { formatMla } from "../catalogue/citations/mla";
-import { formatRedditLink } from "../catalogue/citations/redditLink";
+import { formatMarkdownLink } from "../catalogue/citations/markdownLink";
 import {
   AGE_GROUPS,
   facetLabel,
@@ -38,7 +38,7 @@ const CITATION_FORMATS = [
   { label: "APA", description: "APA citation", format: formatApa },
   { label: "MLA", description: "MLA citation", format: formatMla },
   // "MD" is short so all three buttons fit on one line on a phone; the description is what is announced.
-  { label: "MD", description: "markdown link", format: formatRedditLink },
+  { label: "MD", description: "markdown link", format: formatMarkdownLink },
 ] as const;
 
 const headingId = computed(() => `study-${props.study.id}-title`);

@@ -1,5 +1,5 @@
 /**
- * The shared shape of a formatted citation, and how one is put together. A formatter (apa.ts, mla.ts, redditLink.ts)
+ * The shared shape of a formatted citation, and how one is put together. A formatter (apa.ts, mla.ts, markdownLink.ts)
  * describes a citation as a list of segments, some italic; `renderCitation` turns that into plain text, for pasting
  * into Reddit or anywhere that ignores formatting, and HTML, which keeps the italics when pasted into Word or Google
  * Docs.

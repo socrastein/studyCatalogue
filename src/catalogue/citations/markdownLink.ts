@@ -13,7 +13,7 @@ import { escapeHtml, studyLink, type Citation } from "./citation";
  * @param study The study to cite.
  * @returns plainText is the markdown to paste into Reddit; html is the same link as an HTML anchor.
  */
-export function formatRedditLink(study: Study): Citation {
+export function formatMarkdownLink(study: Study): Citation {
   const mention = `${shortAuthorMention(study.authors)} (${study.year})`;
   const link = studyLink(study);
   if (link === null) return { plainText: mention, html: escapeHtml(mention) };
