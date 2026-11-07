@@ -7,6 +7,7 @@ import { nextTick, ref, watch } from "vue";
 import ThemeButton from "lifting-school-ui/components/ThemeButton.vue";
 import { useRoute } from "vue-router";
 import { COLOR_SCHEME_STORAGE_KEY } from "./colorSchemeKey";
+import { NAV_LINKS } from "./navigation";
 import { APP_NAME } from "./router.ts";
 import { useCatalogue } from "./stores/catalogueStore";
 import { advanceNoticeOnNavigation, noticeMessage } from "./stores/notice";
@@ -42,10 +43,9 @@ watch(
     <RouterLink to="/" class="siteName">{{ APP_NAME }}</RouterLink>
     <nav aria-label="Main">
       <ul class="navList plainList">
-        <li><RouterLink to="/">Studies</RouterLink></li>
-        <li><RouterLink to="/studies/new">Add a study</RouterLink></li>
-        <li><RouterLink to="/tags">Tags</RouterLink></li>
-        <li><RouterLink to="/settings">Settings</RouterLink></li>
+        <li v-for="link in NAV_LINKS" :key="link.path">
+          <RouterLink :to="link.path">{{ link.name }}</RouterLink>
+        </li>
       </ul>
     </nav>
     <ThemeButton :storage-key="COLOR_SCHEME_STORAGE_KEY" />
