@@ -3,7 +3,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { emptyFilters, type StudyFilters } from "../catalogue/filterStudies";
-import { filtersFromQuery, queryFromFilters } from "./filtersInUrl";
+import { filtersFromQuery, queryFromFilters } from "./browseInUrl";
 
 describe("queryFromFilters", () => {
   it("is empty for unset filters, so the unfiltered list is a clean address", () => {

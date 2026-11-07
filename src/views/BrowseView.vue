@@ -1,6 +1,6 @@
 <!--
   The home page: find studies by search, topic and facets, and copy their citations. The filters live in the URL
-  (see filtersInUrl.ts), so a search survives a trip to an edit page and can be bookmarked. Results are sorted by
+  (see browseInUrl.ts), so a search survives a trip to an edit page and can be bookmarked. Results are sorted by
   publication year, newest first, and the count is announced as filters change.
 
   On wide screens the filters sit beside the results; on narrow ones they fold into a "Filters" disclosure, open
@@ -20,7 +20,7 @@ import type { Study } from "../catalogue/study";
 import FilterPanel from "../components/FilterPanel.vue";
 import StudyCard from "../components/StudyCard.vue";
 import { useCatalogue } from "../stores/catalogueStore";
-import { filtersFromQuery, queryFromFilters } from "./filtersInUrl";
+import { filtersFromQuery, queryFromFilters } from "./browseInUrl";
 
 /** Wide enough for the filters to sit beside the results rather than above them; matches the layout's breakpoint. */
 const WIDE_LAYOUT_QUERY = "(min-width: 60rem)";
