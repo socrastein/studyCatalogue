@@ -31,7 +31,7 @@ const readNames = computed(() =>
       id="study-authors"
       v-model="authorList"
       label="Authors"
-      hint="Paste every author, in the paper's order: e.g. Schoenfeld BJ, Ogborn D, Krieger JW. Put an organization in braces: {World Health Organization}."
+      hint="Paste every author, in the paper's order: e.g. Schoenfeld BJ, Ogborn D, Krieger JW. Organizations are usually recognized; if one isn't, put it in braces: {Cochrane}."
       :error="error"
       is-multiline
       :rows="2"

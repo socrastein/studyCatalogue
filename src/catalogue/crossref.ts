@@ -81,8 +81,8 @@ function crossrefTitle(record: Record<string, unknown>): string | undefined {
 }
 
 /**
- * The authors in the form the Authors box reads ("Schoenfeld, Brad J.; Ogborn, Dan"). An organization listed as
- * an author has only a name, which becomes the family name.
+ * The authors in the form the Authors box reads ("Schoenfeld, Brad J.; Ogborn, Dan"). An organization listed as an
+ * author has only a name, and is written in braces so the box reads it as one: "{World Health Organization}".
  */
 function crossrefAuthors(value: unknown): string | undefined {
   if (!Array.isArray(value)) return undefined;
@@ -96,9 +96,11 @@ function crossrefAuthors(value: unknown): string | undefined {
 function crossrefAuthor(entry: unknown): Author | undefined {
   if (typeof entry !== "object" || entry === null) return undefined;
   const fields = entry as Record<string, unknown>;
-  const family = plainText(fields.family) ?? plainText(fields.name);
-  if (family === undefined) return undefined;
-  return { kind: "person", family, given: plainText(fields.given) ?? "" };
+  const family = plainText(fields.family);
+  if (family !== undefined)
+    return { kind: "person", family, given: plainText(fields.given) ?? "" };
+  const name = plainText(fields.name);
+  return name === undefined ? undefined : { kind: "organization", name };
 }
 
 /** The year as text: the print issue's when known, otherwise the online publication's, otherwise the issue date's. */

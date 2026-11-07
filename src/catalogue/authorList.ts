@@ -8,6 +8,11 @@
  *   One per line, or separated by semicolons, each "Family, Given" or any form above
  *   An organization in braces, anywhere in any form: "{American College of Sports Medicine}; Smith J"
  *
+ * An organization is also recognized without braces when its name has two or more words, does not end in initials,
+ * and contains a word organizations use ("American College of Sports Medicine", "WHO Study Group"). Braces cover
+ * the rest ("{Cochrane}"), and one whose name contains "and" in a comma-separated list, where "and" would otherwise
+ * end an author.
+ *
  * Reading is a best guess, so the form shows the result back to the person before they save.
  */
 import type { Author, OrganizationAuthor, PersonAuthor } from "./study";
@@ -30,6 +35,38 @@ const FAMILY_PARTICLES = new Set([
 
 /** Initials written on their own: "B.", "B. J.", "BJ", "J.-P.", "JW". At most four letters, all capitals. */
 const INITIALS = /^(?:[A-Z]\.?(?:-[A-Z]\.?)?\s*){1,4}$/;
+
+/**
+ * Words that mark a name as an organization's. Whole words only, any case. Kept to words that are rare as
+ * surnames; a name ending in initials ("Center J") is still read as a person.
+ */
+const ORGANIZATION_WORDS = new Set([
+  "academy",
+  "agency",
+  "alliance",
+  "association",
+  "centre",
+  "center",
+  "coalition",
+  "collaboration",
+  "college",
+  "commission",
+  "committee",
+  "consortium",
+  "council",
+  "department",
+  "federation",
+  "foundation",
+  "group",
+  "institute",
+  "investigators",
+  "ministry",
+  "network",
+  "organisation",
+  "organization",
+  "society",
+  "university",
+]);
 
 /** "et al." in any common spelling, which means the list is not complete. */
 const ET_AL = /\bet\.?\s*al\b\.?/i;
@@ -59,7 +96,7 @@ export function parseAuthorList(text: string): Author[] {
   const hasOneAuthorPerPart = /[;\n]/.test(cleaned);
   const authors = splitAtOrganizations(cleaned).flatMap<Author>((stretch) =>
     typeof stretch === "string"
-      ? peopleIn(stretch, hasOneAuthorPerPart)
+      ? authorsIn(stretch, hasOneAuthorPerPart)
       : [stretch],
   );
   return authors.filter(hasName);
@@ -104,10 +141,30 @@ function withoutBraces(text: string): string {
   return text.replace(/[{}]/g, "");
 }
 
-/** The people named in a stretch of the list, read one per part or separated by commas (see the file's header). */
-function peopleIn(text: string, hasOneAuthorPerPart: boolean): PersonAuthor[] {
+/** The authors named in a stretch of the list, read one per part or separated by commas (see the file's header). */
+function authorsIn(text: string, hasOneAuthorPerPart: boolean): Author[] {
   if (!hasOneAuthorPerPart) return commaSeparatedNames(text);
-  return text.split(/[;\n]/).map(withoutConjunction).map(invertedOrPlainName);
+  const parts = text.split(/[;\n]/).map(withoutConjunction);
+  return parts.map((part) =>
+    looksLikeOrganization(part)
+      ? organization(part)
+      : invertedOrPlainName(part),
+  );
+}
+
+/** Whether a name reads as an organization's: two or more words, no initials at the end, an organization word. */
+function looksLikeOrganization(name: string): boolean {
+  const words = name.trim().split(/\s+/);
+  const endsWithInitials = INITIALS.test(words.at(-1) ?? "");
+  if (words.length < 2 || endsWithInitials) return false;
+  return words.some((word) =>
+    ORGANIZATION_WORDS.has(word.toLowerCase().replace(/[^a-z]/g, "")),
+  );
+}
+
+/** An organization author with this name. */
+function organization(name: string): OrganizationAuthor {
+  return { kind: "organization", name: name.trim() };
 }
 
 /** Whether an author has a name at all; empty parts between separators read as nameless authors. */
@@ -121,26 +178,37 @@ function hasName(author: Author): boolean {
  * Names separated only by commas, where a comma can also sit between a family name and its initials (the
  * reference-list form). A part that is only initials belongs to the name before it.
  */
-function commaSeparatedNames(text: string): PersonAuthor[] {
-  // "A, B and C" and "A, B, & C" separate their last name with a conjunction instead of (or as well as) a comma
-  const commasOnly = text.replace(/,?\s+(?:and|&)\s+/gi, ", ");
-  const parts = commasOnly
-    .split(",")
-    .map(withoutConjunction)
-    .filter((part) => part !== "");
-  const authors: PersonAuthor[] = [];
-  for (const part of parts) {
-    // The previous author, if it is still waiting for the initials that follow it in a reference list
+function commaSeparatedNames(text: string): Author[] {
+  const authors: Author[] = [];
+  for (const part of commaSeparatedParts(text)) {
+    // The previous author, if it is a person still waiting for the initials that follow it in a reference list
     const previous = authors.at(-1);
-    const isInitialsOfPrevious =
-      INITIALS.test(part) && previous !== undefined && previous.given === "";
-    if (isInitialsOfPrevious) {
+    if (INITIALS.test(part) && isWaitingForInitials(previous)) {
       previous.given = part;
     } else {
-      authors.push(plainName(part));
+      authors.push(
+        looksLikeOrganization(part) ? organization(part) : plainName(part),
+      );
     }
   }
   return authors;
+}
+
+/** The non-empty parts between commas, with "and" and "&" before the last name counted as commas. */
+function commaSeparatedParts(text: string): string[] {
+  // "A, B and C" and "A, B, & C" separate their last name with a conjunction instead of (or as well as) a comma
+  const commasOnly = text.replace(/,?\s+(?:and|&)\s+/gi, ", ");
+  return commasOnly
+    .split(",")
+    .map(withoutConjunction)
+    .filter((part) => part !== "");
+}
+
+/** Whether the author is a person read so far with a family name only, like "Krieger" in "Krieger, J. W.". */
+function isWaitingForInitials(
+  author: Author | undefined,
+): author is PersonAuthor {
+  return author?.kind === "person" && author.given === "";
 }
 
 /** One name that may be inverted ("Schoenfeld, Brad Jon") or written in any form `plainName` reads. */

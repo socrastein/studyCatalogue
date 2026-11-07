@@ -52,12 +52,12 @@ describe("crossrefFields", () => {
     expect(crossrefFields(record).year).toBe("2016");
   });
 
-  it("uses an organization's name as its family name", () => {
+  it("writes an organization author in braces, so the Authors box reads it as one", () => {
     const record = {
       ...SCHOENFELD_2017,
       author: [{ name: "WHO", sequence: "first" }],
     };
-    expect(crossrefFields(record).authors).toBe("WHO");
+    expect(crossrefFields(record).authors).toBe("{WHO}");
   });
 
   it("joins a separate subtitle and removes markup and entities from the title", () => {

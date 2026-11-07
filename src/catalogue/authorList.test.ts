@@ -137,3 +137,32 @@ describe("parseAuthorList: organizations in braces", () => {
     expect(read("{Jane Doe; Smith J; {}")).toEqual(["Doe | Jane", "Smith | J"]);
   });
 });
+
+describe("parseAuthorList: organizations recognized without braces", () => {
+  it("reads a name with an organization word as an organization, in a semicolon list", () => {
+    expect(read("American College of Sports Medicine; Smith, J.")).toEqual([
+      "{American College of Sports Medicine}",
+      "Smith | J.",
+    ]);
+  });
+
+  it("recognizes one in a comma-separated list, without giving it the next author's initials", () => {
+    expect(read("WHO Study Group, Smith J")).toEqual([
+      "{WHO Study Group}",
+      "Smith | J",
+    ]);
+  });
+
+  it("reads a surname that is an organization word, followed by initials, as a person", () => {
+    expect(read("Center J, Board AB")).toEqual(["Center | J", "Board | AB"]);
+    expect(read("Center, J., & Board, A. B.")).toEqual([
+      "Center | J.",
+      "Board | A. B.",
+    ]);
+  });
+
+  it("leaves a name without an organization word to braces", () => {
+    expect(read("Cochrane")).toEqual(["Cochrane | "]);
+    expect(read("{Cochrane}")).toEqual(["{Cochrane}"]);
+  });
+});
