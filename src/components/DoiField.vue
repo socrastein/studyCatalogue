@@ -97,17 +97,17 @@ function filledAnnouncement(names: string[]): string {
 .doiField {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space1);
 }
 
 .lookupRow {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 1rem;
+  gap: var(--space1) var(--space2);
 }
 
 .lookupStatus {
-  font-weight: bold;
+  font-weight: 700;
 }
 </style>

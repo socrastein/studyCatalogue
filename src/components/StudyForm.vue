@@ -192,7 +192,7 @@ function createTag(name: string): void {
 
     <section class="formSection panel" aria-labelledby="participants-heading">
       <h2 id="participants-heading" class="sectionTitle">Participants</h2>
-      <p class="fieldHint">
+      <p class="textMuted">
         Check every group the study included. Leave a question unchecked if the
         study does not report it.
       </p>

@@ -123,7 +123,7 @@ function onFilterPanelToggle(event: Event): void {
     <section class="results" aria-labelledby="results-heading">
       <h2 id="results-heading" class="visuallyHidden">Results</h2>
       <p class="resultCount" role="status">{{ countText }}</p>
-      <p v-for="note in unreportedNotes" :key="note" class="fieldHint">
+      <p v-for="note in unreportedNotes" :key="note" class="textMuted">
         {{ note }}
       </p>
       <p v-if="sortedMatches.length === 0" class="noMatches">

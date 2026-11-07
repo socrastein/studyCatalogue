@@ -5,6 +5,7 @@
   with a confirmation.
 -->
 <script setup lang="ts">
+import FormField from "lifting-school-ui/components/FormField.vue";
 import { computed, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { studyCountForTag } from "../catalogue/tagEdits";
@@ -124,7 +125,7 @@ async function deleteThisTag(): Promise<void> {
       </p>
 
       <form class="panel" novalidate @submit.prevent="save">
-        <p v-if="saveProblem" class="fieldError" role="alert">
+        <p v-if="saveProblem" class="alert alertDanger" role="alert">
           {{ saveProblem }}
         </p>
         <TextField id="tag-name" v-model="form.name" label="Name" />
@@ -151,30 +152,27 @@ async function deleteThisTag(): Promise<void> {
 
       <section class="panel" aria-labelledby="merge-heading">
         <h2 id="merge-heading" class="sectionTitle">Merge into another tag</h2>
-        <p class="fieldHint">
+        <p class="textMuted">
           For duplicates. Studies move to the tag you choose, and this tag's
           names become other names for it.
         </p>
-        <label for="merge-target" class="fieldLabel">Merge into</label>
-        <p v-if="mergeProblem" id="merge-target-error" class="fieldError">
-          {{ mergeProblem }}
-        </p>
-        <select
+        <FormField
           id="merge-target"
-          class="input"
-          v-model="mergeTargetId"
-          :aria-invalid="mergeProblem ? 'true' : undefined"
-          :aria-describedby="mergeProblem ? 'merge-target-error' : undefined"
+          v-slot="field"
+          label="Merge into"
+          :error="mergeProblem"
         >
-          <option value="">Choose a tag</option>
-          <option
-            v-for="target in mergeTargets"
-            :key="target.id"
-            :value="target.id"
-          >
-            {{ target.label }}
-          </option>
-        </select>
+          <select v-bind="field" v-model="mergeTargetId" class="input">
+            <option value="">Choose a tag</option>
+            <option
+              v-for="target in mergeTargets"
+              :key="target.id"
+              :value="target.id"
+            >
+              {{ target.label }}
+            </option>
+          </select>
+        </FormField>
         <button type="button" class="btn btnDangerSubtle" @click="merge">
           Merge tags
         </button>

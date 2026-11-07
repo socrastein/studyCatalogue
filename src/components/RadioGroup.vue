@@ -1,9 +1,10 @@
 <!--
-  One choice from a short list, as a group of radio buttons in a fieldset whose legend names the question: a facet
-  that takes one value (study design, subjects) or a setting (mode, colour theme).
-  A validation message sits under the legend and is tied to the group with aria-describedby.
+  One choice from a short list, as a group of radio buttons in the library's FormFieldGroup (a fieldset whose legend
+  names the question): a facet that takes one value (study design, subjects). A validation message sits under the
+  options and is tied to the group with aria-describedby.
 -->
 <script setup lang="ts">
+import FormFieldGroup from "lifting-school-ui/components/FormFieldGroup.vue";
 import type { FacetValue } from "../catalogue/facets";
 
 const props = defineProps<{
@@ -23,17 +24,13 @@ function radioId(valueId: string): string {
 </script>
 
 <template>
-  <fieldset
-    class="facetGroup"
-    :aria-describedby="error ? `${id}-error` : undefined"
-  >
-    <legend>{{ legend }}</legend>
-    <p v-if="error" :id="`${id}-error`" class="fieldError">{{ error }}</p>
+  <FormFieldGroup :legend="legend" :error="error">
     <div class="options">
-      <label v-for="value in values" :key="value.id" class="option">
+      <label v-for="value in values" :key="value.id" class="choice">
         <input
           :id="radioId(value.id)"
           v-model="model"
+          class="radio"
           type="radio"
           :name="id"
           :value="value.id"
@@ -42,34 +39,12 @@ function radioId(valueId: string): string {
         {{ value.label }}
       </label>
     </div>
-  </fieldset>
+  </FormFieldGroup>
 </template>
 
 <style scoped>
-.facetGroup {
-  border: none;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-legend {
-  font-weight: bold;
-  margin-bottom: 0.25rem;
-}
-
 .options {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
-  gap: 0.25rem 1rem;
-}
-
-.option {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.2rem 0;
-  cursor: pointer;
 }
 </style>

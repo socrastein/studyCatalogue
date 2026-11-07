@@ -34,7 +34,7 @@ const readNames = computed(() =>
       :rows="2"
     />
     <div v-if="readNames.length > 0" class="readAs">
-      <p id="study-authors-read-as" class="fieldHint">
+      <p id="study-authors-read-as" class="fieldNote">
         Read as {{ readNames.length }}
         {{ readNames.length === 1 ? "author" : "authors" }}:
       </p>
@@ -49,15 +49,20 @@ const readNames = computed(() =>
 .authorListField {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space1);
 }
 
 /* Row by row, so the numbers read left to right like the pasted list */
 .readAs ol {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
-  gap: 0.25rem 1.5rem;
-  margin-top: 0.25rem;
-  padding-left: 1.75rem;
+  gap: 0 var(--space3);
+  margin-top: 0;
+  padding-left: var(--space3);
+  font-size: var(--fontSizeMd);
+}
+
+.readAs li {
+  margin: 0;
 }
 </style>

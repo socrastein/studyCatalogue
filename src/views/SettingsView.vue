@@ -124,28 +124,33 @@ async function startOver(): Promise<void> {
       <button type="button" class="btn btnPrimary" @click="downloadBackup">
         Download a backup
       </button>
-      <label for="restore-file" class="fieldLabel">Restore a backup</label>
-      <p id="restore-hint" class="fieldHint">
-        Replaces the whole catalogue with the backup's contents.
-      </p>
-      <p
-        v-if="restoreProblem"
-        id="restore-error"
-        class="fieldError"
-        role="alert"
-      >
-        {{ restoreProblem }}
-      </p>
-      <input
-        id="restore-file"
-        type="file"
-        accept="application/json,.json"
-        :aria-describedby="
-          restoreProblem ? 'restore-hint restore-error' : 'restore-hint'
-        "
-        :aria-invalid="restoreProblem ? 'true' : undefined"
-        @change="restoreBackup"
-      />
+      <!-- Written out instead of FormField: the error must be announced (role="alert") the moment a chosen file is
+           refused, and FormField's error is not a live region -->
+      <div class="field">
+        <label for="restore-file" class="fieldLabel">Restore a backup</label>
+        <input
+          id="restore-file"
+          class="input"
+          type="file"
+          accept="application/json,.json"
+          :aria-describedby="
+            restoreProblem ? 'restore-hint restore-error' : 'restore-hint'
+          "
+          :aria-invalid="restoreProblem ? 'true' : undefined"
+          @change="restoreBackup"
+        />
+        <span id="restore-hint" class="fieldNote">
+          Replaces the whole catalogue with the backup's contents.
+        </span>
+        <span
+          v-if="restoreProblem"
+          id="restore-error"
+          class="fieldError"
+          role="alert"
+        >
+          {{ restoreProblem }}
+        </span>
+      </div>
     </section>
   </div>
   <ConfirmDialog

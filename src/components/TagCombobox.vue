@@ -6,8 +6,13 @@
   the highlighted one, Escape closes the list or clears what was typed. With `allowCreate`, the last suggestion
   offers to create a tag when nothing has exactly the typed name; the parent creates it and adds its id.
   Additions and removals are announced in a status region.
+
+  The library's FormField draws the label and hint. Its combobox mode (a label named by id, for a custom drop-down) is
+  not used: this combobox is a native input, so `<label for>` names it, and the suggestion list takes the label's
+  words as its aria-label.
 -->
 <script setup lang="ts">
+import FormField from "lifting-school-ui/components/FormField.vue";
 import { computed, ref, watch } from "vue";
 import {
   findTagByName,
@@ -149,57 +154,57 @@ function remove(tag: Tag): void {
 
 <template>
   <div class="tagCombobox">
-    <label :id="`${id}-label`" :for="id" class="fieldLabel">{{ label }}</label>
-    <p v-if="hint" :id="`${id}-hint`" class="fieldHint">{{ hint }}</p>
-    <div class="inputArea">
-      <input
-        :id="id"
-        ref="inputElement"
-        v-model="query"
-        type="text"
-        role="combobox"
-        autocomplete="off"
-        aria-autocomplete="list"
-        :aria-expanded="isOpen && options.length > 0 ? 'true' : 'false'"
-        :aria-controls="listboxId"
-        :aria-activedescendant="activeOptionId"
-        :aria-describedby="hint ? `${id}-hint` : undefined"
-        @input="onInput"
-        @keydown.down.prevent="moveHighlight(1)"
-        @keydown.up.prevent="moveHighlight(-1)"
-        @keydown.enter="onEnter"
-        @keydown.esc="onEscape"
-        @blur="isOpen = false"
-      />
-      <ul
-        v-show="isOpen && options.length > 0"
-        :id="listboxId"
-        role="listbox"
-        :aria-labelledby="`${id}-label`"
-        class="suggestions"
-      >
-        <li
-          v-for="(option, index) in options"
-          :id="optionId(index)"
-          :key="option.kind === 'tag' ? option.tag.id : 'create'"
-          role="option"
-          :aria-selected="index === activeIndex ? 'true' : 'false'"
-          :class="{
-            isActive: index === activeIndex,
-            isCreate: option.kind === 'create',
-          }"
-          @mousedown.prevent="choose(option)"
+    <FormField :id="id" v-slot="field" :label="label" :hint="hint">
+      <div class="inputArea">
+        <input
+          v-bind="field"
+          ref="inputElement"
+          v-model="query"
+          class="input"
+          type="text"
+          role="combobox"
+          autocomplete="off"
+          aria-autocomplete="list"
+          :aria-expanded="isOpen && options.length > 0 ? 'true' : 'false'"
+          :aria-controls="listboxId"
+          :aria-activedescendant="activeOptionId"
+          @input="onInput"
+          @keydown.down.prevent="moveHighlight(1)"
+          @keydown.up.prevent="moveHighlight(-1)"
+          @keydown.enter="onEnter"
+          @keydown.esc="onEscape"
+          @blur="isOpen = false"
+        />
+        <ul
+          v-show="isOpen && options.length > 0"
+          :id="listboxId"
+          role="listbox"
+          :aria-label="label"
+          class="suggestions menu plainList"
         >
-          {{ optionText(option) }}
-        </li>
-      </ul>
-    </div>
+          <li
+            v-for="(option, index) in options"
+            :id="optionId(index)"
+            :key="option.kind === 'tag' ? option.tag.id : 'create'"
+            role="option"
+            :aria-selected="index === activeIndex ? 'true' : 'false'"
+            :class="{
+              isActive: index === activeIndex,
+              isCreate: option.kind === 'create',
+            }"
+            @mousedown.prevent="choose(option)"
+          >
+            {{ optionText(option) }}
+          </li>
+        </ul>
+      </div>
+    </FormField>
     <ul
       v-if="selectedTags.length > 0"
-      class="chips"
+      class="chips plainList"
       :aria-label="`Chosen ${label.toLowerCase()}`"
     >
-      <li v-for="tag in selectedTags" :key="tag.id" class="chip">
+      <li v-for="tag in selectedTags" :key="tag.id" class="chip badge">
         {{ tag.name }}
         <button type="button" class="chipRemove" @click="remove(tag)">
           <span aria-hidden="true">×</span>
@@ -215,46 +220,37 @@ function remove(tag: Tag): void {
 .tagCombobox {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-}
-
-.fieldLabel {
-  font-weight: bold;
+  gap: var(--space1);
 }
 
 .inputArea {
   position: relative;
 }
 
-input {
+.input {
   width: 100%;
-  padding: 0.4rem 0.5rem;
 }
 
+/* The list floats over what follows, on the library's menu surface */
 .suggestions {
   position: absolute;
   z-index: 1;
   top: 100%;
   left: 0;
   right: 0;
-  margin-top: 0.25rem;
-  padding: 0.25rem 0;
-  list-style: none;
-  background: var(--bgMid);
-  border: 1px solid var(--borderMuted);
-  border-radius: 0.25rem;
+  margin-top: var(--spaceHalf);
 }
 
 .suggestions li {
-  padding: 0.35rem 0.75rem;
+  padding: var(--space1);
+  border-radius: var(--radius);
   cursor: pointer;
 }
 
-/* The highlighted suggestion: reversed colours plus a left bar, so it is marked by more than colour */
+/* The highlighted suggestion: the accent wash plus a bar at its start, so it is marked by more than colour */
 .suggestions li.isActive {
-  background: var(--accentFull);
-  color: var(--onAccent);
-  box-shadow: inset 4px 0 0 var(--textFull);
+  background: var(--accentSubtle);
+  box-shadow: inset 4px 0 0 var(--accentFull);
 }
 
 .suggestions li.isCreate {
@@ -264,27 +260,25 @@ input {
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  padding: 0;
-  margin-top: 0.25rem;
-  list-style: none;
+  gap: var(--space1);
 }
 
 .chip {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.15rem 0.25rem 0.15rem 0.75rem;
-  border: 1px solid var(--accentFull);
-  border-radius: 1rem;
+  gap: var(--spaceHalf);
+  padding-right: 0;
 }
 
+/* At least 24px square, the minimum target size (WCAG 2.5.8) */
 .chipRemove {
-  background: transparent;
-  color: var(--textFull);
-  padding: 0.1rem 0.5rem;
-  border-radius: 1rem;
-  font-size: 1rem;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+  border-radius: var(--radiusFull);
   line-height: 1;
+}
+
+.chipRemove:hover {
+  background: var(--accentSubtle);
 }
 </style>

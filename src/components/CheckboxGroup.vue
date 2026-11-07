@@ -1,16 +1,16 @@
 <!--
-  Any number of choices from a short list, as a group of checkboxes in a fieldset whose legend names the question,
-  such as a facet that takes several values (age group, training status, sex).
+  Any number of choices from a short list, as a group of checkboxes in the library's FormFieldGroup (a fieldset whose
+  legend names the question), such as a facet that takes several values (age group, training status, sex).
   Used in the study form and in the browse filters.
 -->
 <script setup lang="ts">
+import FormFieldGroup from "lifting-school-ui/components/FormFieldGroup.vue";
 import type { FacetValue } from "../catalogue/facets";
 
 const props = defineProps<{
   /** Prefix for the checkboxes' ids: "study-sexes" gives "study-sexes-male". */
   id: string;
   legend: string;
-  hint?: string;
   values: readonly FacetValue[];
 }>();
 
@@ -23,51 +23,25 @@ function checkboxId(valueId: string): string {
 </script>
 
 <template>
-  <fieldset
-    class="facetGroup"
-    :aria-describedby="hint ? `${id}-hint` : undefined"
-  >
-    <legend>{{ legend }}</legend>
-    <p v-if="hint" :id="`${id}-hint`" class="fieldHint">{{ hint }}</p>
+  <FormFieldGroup :legend="legend">
     <div class="options">
-      <label v-for="value in values" :key="value.id" class="option">
+      <label v-for="value in values" :key="value.id" class="choice">
         <input
           :id="checkboxId(value.id)"
           v-model="model"
+          class="checkbox"
           type="checkbox"
           :value="value.id"
         />
         {{ value.label }}
       </label>
     </div>
-  </fieldset>
+  </FormFieldGroup>
 </template>
 
 <style scoped>
-.facetGroup {
-  border: none;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-legend {
-  font-weight: bold;
-  margin-bottom: 0.25rem;
-}
-
 .options {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
-  gap: 0.25rem 1rem;
-}
-
-.option {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.2rem 0;
-  cursor: pointer;
 }
 </style>

@@ -19,43 +19,14 @@ body {
   width: 100%;
 }
 
-input,
-textarea {
-  padding: 0.25rem;
-  color: var(--textFull);
-  background-color: var(--bgBase);
-  border: 1px solid var(--borderMuted);
-  border-radius: 0.25rem;
-  caret-color: var(--textFull);
-}
-
-/* Form controls use the page font size; browsers otherwise give inputs their own */
-input,
-textarea,
-select {
-  font-size: inherit;
-}
-
-/* The focus ring itself comes from the library's :focus-visible; the border also takes the accent while typing */
-input:focus,
-textarea:focus {
-  border-color: var(--accentFull);
-}
-
-input[aria-invalid="true"],
-textarea[aria-invalid="true"] {
-  border: 2px solid var(--danger);
+/* Every container in this app spaces its fields with a flex gap, so the library's room below each field would double it */
+.field {
+  margin-bottom: 0;
 }
 
 /* Headings take focus only from code, after a page change, so they show no ring */
 h1:focus {
   outline: none;
-}
-
-/* Text that explains a field, shown under its label */
-.fieldHint {
-  color: var(--textMuted);
-  font-size: 0.9rem;
 }
 
 /* A list used for layout (navigation, cards, links in a row) rather than for reading: no bullets, and none of the

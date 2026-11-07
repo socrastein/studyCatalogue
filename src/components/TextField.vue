@@ -1,18 +1,18 @@
 <!--
-  One labelled text input or textarea, with an optional hint and a validation message. The hint and the message are
-  tied to the input with aria-describedby, and the input is marked aria-invalid while it has a message, so screen
-  readers hear both on focus.
+  One labelled text input or textarea, with an optional hint and a validation message. The library's FormField draws
+  the label, hint, error and "Optional" note and ties them to the control (aria-describedby, aria-invalid), so screen
+  readers hear them on focus; this component picks the control and its text-entry attributes.
 -->
 <script setup lang="ts">
-import { computed } from "vue";
+import FormField from "lifting-school-ui/components/FormField.vue";
 
-const props = withDefaults(
+withDefaults(
   defineProps<{
     id: string;
     label: string;
     hint?: string;
     error?: string;
-    /** Labels the field "(optional)"; required fields are the unmarked default. */
+    /** Shows the library's "Optional" note under the field; required fields are the unmarked default. */
     isOptional?: boolean;
     isMultiline?: boolean;
     rows?: number;
@@ -24,72 +24,43 @@ const props = withDefaults(
 );
 
 const model = defineModel<string>({ required: true });
-
-const hintId = computed(() => `${props.id}-hint`);
-const errorId = computed(() => `${props.id}-error`);
-
-/** The ids of whatever describes the input right now: its hint, its error, both or neither. */
-const describedBy = computed(() => {
-  const ids = [
-    props.hint ? hintId.value : "",
-    props.error ? errorId.value : "",
-  ];
-  const present = ids.filter((describerId) => describerId !== "");
-  return present.length > 0 ? present.join(" ") : undefined;
-});
 </script>
 
 <template>
-  <div class="textField">
-    <label :for="id" class="fieldLabel">
-      {{ label }}<span v-if="isOptional" class="optionalMark"> (optional)</span>
-    </label>
-    <p v-if="hint" :id="hintId" class="fieldHint">{{ hint }}</p>
-    <p v-if="error" :id="errorId" class="fieldError">{{ error }}</p>
+  <FormField
+    :id="id"
+    v-slot="field"
+    :label="label"
+    :hint="hint"
+    :error="error"
+    :optional="isOptional"
+  >
     <textarea
       v-if="isMultiline"
-      :id="id"
+      v-bind="field"
       v-model="model"
+      class="input"
       :rows="rows"
-      :aria-describedby="describedBy"
-      :aria-invalid="error ? 'true' : undefined"
     ></textarea>
     <input
       v-else
-      :id="id"
+      v-bind="field"
       v-model="model"
+      class="input"
       :type="type"
       :autocomplete="autocomplete"
       :inputmode="inputmode"
-      :aria-describedby="describedBy"
-      :aria-invalid="error ? 'true' : undefined"
     />
-  </div>
+  </FormField>
 </template>
 
 <style scoped>
-.textField {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.fieldLabel {
-  font-weight: bold;
-}
-
-.optionalMark {
-  font-weight: normal;
-  color: var(--textMuted);
-}
-
-input,
-textarea {
+.input {
   width: 100%;
-  padding: 0.4rem 0.5rem;
 }
 
-textarea {
-  resize: vertical;
+/* The library's textarea is tall enough for a paragraph; `rows` sets the height here instead */
+textarea.input {
+  min-height: auto;
 }
 </style>

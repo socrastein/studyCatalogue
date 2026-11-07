@@ -6,7 +6,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoAxeViolations } from "./expectNoAxeViolations";
 
-/** A text field by its label. Optional fields' names end in " (optional)", so this matches the start of the name. */
+/** A text field by its label. */
 function textField(page: Page, label: string | RegExp) {
   return page.getByRole("textbox", { name: label });
 }

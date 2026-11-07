@@ -27,7 +27,7 @@ const RECORD = {
   },
 };
 
-/** A text field by the start of its label (optional fields' labels end in "(optional)"). */
+/** A text field by its label. */
 function textField(page: Page, label: RegExp) {
   return page.getByRole("textbox", { name: label });
 }

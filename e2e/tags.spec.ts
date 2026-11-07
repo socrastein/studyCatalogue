@@ -23,9 +23,7 @@ async function fillTagForm(page: Page, input: TagFormInput): Promise<void> {
   await page
     .getByRole("textbox", { name: "Name", exact: true })
     .fill(input.name);
-  await page
-    .getByRole("textbox", { name: "Other names (optional)" })
-    .fill(input.aliases);
+  await page.getByRole("textbox", { name: "Other names" }).fill(input.aliases);
   const parents = page.getByRole("combobox", { name: "Sits under" });
   await parents.fill(input.parent);
   await parents.press("Enter");

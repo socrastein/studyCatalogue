@@ -3,6 +3,7 @@
   edits a whole StudyFilters object through v-model, so the page decides where filters live (the URL).
 -->
 <script setup lang="ts">
+import FormField from "lifting-school-ui/components/FormField.vue";
 import { computed } from "vue";
 import {
   AGE_GROUPS,
@@ -65,19 +66,20 @@ function clearFilters(): void {
 
 <template>
   <div class="filterPanel">
-    <div class="searchField">
-      <label for="browse-search" class="fieldLabel">Search</label>
-      <p id="browse-search-hint" class="fieldHint">
-        Title, authors, journal, abstract or topic
-      </p>
+    <FormField
+      id="browse-search"
+      v-slot="field"
+      label="Search"
+      hint="Title, authors, journal, abstract or topic"
+    >
       <input
-        id="browse-search"
+        v-bind="field"
         v-model="query"
+        class="input searchInput"
         type="search"
         autocomplete="off"
-        aria-describedby="browse-search-hint"
       />
-    </div>
+    </FormField>
     <TagCombobox
       id="browse-tags"
       v-model="tagIds"
@@ -132,22 +134,11 @@ function clearFilters(): void {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 1.25rem;
+  gap: var(--space2);
 }
 
-.searchField {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.fieldLabel {
-  font-weight: bold;
-}
-
-input[type="search"] {
+.searchInput {
   width: 100%;
-  padding: 0.4rem 0.5rem;
 }
 
 /* One option per line: the panel is narrow */
