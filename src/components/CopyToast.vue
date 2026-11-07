@@ -5,7 +5,7 @@
 -->
 <script setup lang="ts">
 defineProps<{
-  /** What to say, e.g. "APA citation copied to clipboard."; empty hides the toast. */
+  /** What to say, e.g. "APA copied to clipboard."; empty hides the toast. */
   message: string;
 }>();
 </script>

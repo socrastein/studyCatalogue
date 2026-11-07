@@ -64,9 +64,7 @@ async function copy(
   const wasCopied = await copyCitation(format(props.study));
   emit(
     "copied",
-    wasCopied
-      ? `${name} citation copied to clipboard.`
-      : `Could not copy the ${name} citation.`,
+    wasCopied ? `${name} copied to clipboard.` : `Could not copy ${name}.`,
   );
 }
 </script>
@@ -116,7 +114,7 @@ async function copy(
         role="group"
         :aria-label="`Copy citation for ${study.title}`"
       >
-        <span aria-hidden="true" class="copyLabel">Copy:</span>
+        <span aria-hidden="true" class="copyLabel">Citation:</span>
         <button
           v-for="citation in CITATION_FORMATS"
           :key="citation.label"
@@ -196,7 +194,9 @@ dt {
   gap: var(--space1);
 }
 
+/* A full-width basis puts the label on its own row above the buttons */
 .copyLabel {
+  flex-basis: 100%;
   font-weight: 700;
 }
 </style>

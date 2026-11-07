@@ -148,25 +148,21 @@ test("copying a citation shows a confirmation that goes away by itself", async (
   const card = page
     .getByRole("article")
     .filter({ hasText: "Hypertrophy in beginners" });
-  const confirmation = page.getByText("APA citation copied to clipboard.");
+  const confirmation = page.getByText("APA copied to clipboard.");
 
   await card.getByRole("button", { name: "APA, copy APA citation" }).click();
   await expect(confirmation).toBeVisible();
   await expect(confirmation).toBeHidden({ timeout: 6000 });
 });
 
-test("the MD button names the markdown citation in its confirmation", async ({
-  page,
-}) => {
+test("the MD button names Markdown in its confirmation", async ({ page }) => {
   const card = page
     .getByRole("article")
     .filter({ hasText: "Hypertrophy in beginners" });
   await card
     .getByRole("button", { name: "MD, copy Markdown citation" })
     .click();
-  await expect(
-    page.getByText("Markdown citation copied to clipboard."),
-  ).toBeVisible();
+  await expect(page.getByText("Markdown copied to clipboard.")).toBeVisible();
 });
 
 test("the browse page has no accessibility violations, with and without filters", async ({
