@@ -1,13 +1,16 @@
 <!--
   The app shell: a skip link, the site header with the main navigation and the light/dark switch, and the current
-  page. RouterLink marks the link for the current page with aria-current="page", which the styles underline.
+  page. On wider screens the links sit in a row, and RouterLink marks the current page's with aria-current="page",
+  which the styles underline; on phone-width screens the phone menu holds the links and the switch instead.
 -->
 <script setup lang="ts">
-import { nextTick, ref, watch } from "vue";
+import { useMediaQuery } from "@vueuse/core";
 import ThemeButton from "lifting-school-ui/components/ThemeButton.vue";
+import { nextTick, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { COLOR_SCHEME_STORAGE_KEY } from "./colorSchemeKey";
-import { NAV_LINKS } from "./navigation";
+import PhoneMenu from "./components/PhoneMenu.vue";
+import { NAV_LINKS, PHONE_WIDTH_QUERY } from "./navigation";
 import { APP_NAME } from "./router.ts";
 import { useCatalogue } from "./stores/catalogueStore";
 import { advanceNoticeOnNavigation, noticeMessage } from "./stores/notice";
@@ -15,6 +18,7 @@ import { advanceNoticeOnNavigation, noticeMessage } from "./stores/notice";
 const route = useRoute();
 const catalogue = useCatalogue();
 const mainElement = ref<HTMLElement | null>(null);
+const isPhoneWidth = useMediaQuery(PHONE_WIDTH_QUERY);
 
 /**
  * Moves keyboard and screen reader focus to the new page's heading, so a page change is announced and Tab continues
@@ -41,14 +45,17 @@ watch(
   <a class="skipLink" href="#main">Skip to main content</a>
   <header class="siteHeader">
     <RouterLink to="/" class="siteName">{{ APP_NAME }}</RouterLink>
-    <nav aria-label="Main">
-      <ul class="navList plainList">
-        <li v-for="link in NAV_LINKS" :key="link.path">
-          <RouterLink :to="link.path">{{ link.name }}</RouterLink>
-        </li>
-      </ul>
-    </nav>
-    <ThemeButton :storage-key="COLOR_SCHEME_STORAGE_KEY" />
+    <PhoneMenu v-if="isPhoneWidth" />
+    <template v-else>
+      <nav aria-label="Main">
+        <ul class="navList plainList">
+          <li v-for="link in NAV_LINKS" :key="link.path">
+            <RouterLink :to="link.path">{{ link.name }}</RouterLink>
+          </li>
+        </ul>
+      </nav>
+      <ThemeButton :storage-key="COLOR_SCHEME_STORAGE_KEY" />
+    </template>
   </header>
   <main id="main" ref="mainElement">
     <p

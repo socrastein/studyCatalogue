@@ -1,7 +1,7 @@
 /**
  * Browser tests for the app shell: the navigation reaches every page, marks the current one, names the tab after it,
  * moves focus to the new page's heading, and every page passes axe. The theme button switches light and dark mode
- * and the choice survives a reload.
+ * and the choice survives a reload. At phone width the links move into a menu that opens from a button.
  */
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoAxeViolations } from "./expectNoAxeViolations";
@@ -74,4 +74,46 @@ test("the theme button switches mode, and the choice survives a reload", async (
   await page.reload();
   await expect.poll(() => isShowingDark(page)).toBe(!startsDark);
   await expectNoAxeViolations(page);
+});
+
+test.describe("at phone width", () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test("the menu lists the pages, marks the current one, and closes when one is chosen", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const menuButton = page.getByRole("button", { name: "Menu" });
+    await expect(menuButton).toHaveAttribute("aria-expanded", "false");
+    await menuButton.click();
+    await expect(menuButton).toHaveAttribute("aria-expanded", "true");
+    const navigation = page.getByRole("navigation", { name: "Main" });
+    await expect(
+      navigation.getByRole("link", { name: "Studies" }),
+    ).toHaveAttribute("aria-current", "page");
+
+    await navigation.getByRole("link", { name: "Tags" }).click();
+    await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
+    await expect(menuButton).toHaveAttribute("aria-expanded", "false");
+    await expect(navigation.getByRole("link", { name: "Tags" })).toBeHidden();
+  });
+
+  test("Escape closes the menu and returns focus to its button", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const menuButton = page.getByRole("button", { name: "Menu" });
+    await menuButton.click();
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Escape");
+    await expect(menuButton).toHaveAttribute("aria-expanded", "false");
+    await expect(menuButton).toBeFocused();
+  });
+
+  test("the open menu has no accessibility violations", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Menu" }).click();
+    await expect(page.locator("#phone-menu-panel")).toBeVisible();
+    await expectNoAxeViolations(page);
+  });
 });
