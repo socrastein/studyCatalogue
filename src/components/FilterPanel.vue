@@ -70,7 +70,7 @@ function clearFilters(): void {
       id="browse-search"
       v-slot="field"
       label="Search"
-      hint="Title, authors, journal, abstract or topic"
+      hint="Title, authors, year, journal, abstract or topic"
     >
       <input
         v-bind="field"

@@ -186,14 +186,15 @@ function hasTagIn(study: Study, accepted: Set<string>): boolean {
 }
 
 /**
- * Everything a search looks in, folded for matching: title, authors, journal, abstract, and the names and aliases of
- * the study's tags.
+ * Everything a search looks in, folded for matching: title, authors, year, journal, abstract, and the names and
+ * aliases of the study's tags. The year is searched as text, so "howe 2021" finds Howe's 2021 paper.
  */
 function searchableText(study: Study, tags: readonly Tag[]): string {
   const studyTags = tags.filter((tag) => study.tagIds.includes(tag.id));
   const parts = [
     study.title,
     ...study.authors.map(fullName),
+    String(study.year),
     study.journal,
     study.abstract,
     ...studyTags.flatMap((tag) => [tag.name, ...tag.aliases]),

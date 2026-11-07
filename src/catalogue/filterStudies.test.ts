@@ -106,6 +106,18 @@ describe("filterStudies", () => {
     ]);
   });
 
+  it("searches the publication year, so an author and year narrow to one paper", () => {
+    const papers = [
+      study("Spine loading", { year: 2021 }),
+      study("Spine posture", { year: 2018 }),
+    ];
+    const filters = { ...emptyFilters(), query: "spine 2021" };
+    const titles = filterStudies(papers, TAGS, filters).matches.map(
+      (match) => match.title,
+    );
+    expect(titles).toEqual(["Spine loading"]);
+  });
+
   it("leaves out studies that do not report a filtered population facet, and counts them", () => {
     const filters = {
       ...emptyFilters(),
