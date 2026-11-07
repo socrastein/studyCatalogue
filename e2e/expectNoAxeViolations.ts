@@ -24,8 +24,9 @@ const WCAG_AA_TAGS = [
  * Specs that call this find elements by role (`getByRole("textbox", { name })`), never `getByLabel`: in Playwright's
  * Firefox build for this machine (v1572, the fallback build for an unsupported distribution), any `getByLabel` on a
  * page with many labels makes the next axe run crash the page ("Page crashed"). Found 2026-11-06. The same crash
- * follows a `getByRole(..., { name })` lookup of an element named through `aria-labelledby` (found with the tag
- * combobox), so controls here are named by `<label for>`.
+ * followed a `getByRole("combobox", { name })` lookup of the tag combobox while FormField's combobox mode named it
+ * through `aria-labelledby` (a label span), so the combobox is named by `<label for>`. The exact trigger is unknown: a
+ * dialog named through `aria-labelledby` is looked up by name before axe without a crash.
  *
  * @param page The page to check, in the state to check it in.
  */

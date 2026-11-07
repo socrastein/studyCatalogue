@@ -157,7 +157,7 @@ test("an edited study is saved with its changes", async ({ page }) => {
 test("a study is deleted after confirming in the dialog", async ({ page }) => {
   await addStudyAndOpenIt(page, "Delete me");
   await page.getByRole("button", { name: "Delete study" }).click();
-  const dialog = page.getByRole("dialog", { name: "Delete this study?" });
+  const dialog = page.getByRole("alertdialog", { name: "Delete this study?" });
   await expect(dialog.getByRole("button", { name: "Cancel" })).toBeFocused();
   await expectNoAxeViolations(page);
   await dialog.getByRole("button", { name: "Delete study" }).click();

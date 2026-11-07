@@ -36,7 +36,7 @@ async function mergeInto(page: Page, targetLabel: string): Promise<void> {
     .selectOption({ label: targetLabel });
   await page.getByRole("button", { name: "Merge tags" }).click();
   await page
-    .getByRole("dialog")
+    .getByRole("alertdialog")
     .getByRole("button", { name: "Merge tags" })
     .click();
 }
@@ -136,7 +136,7 @@ test("merging moves the studies to the kept tag after confirming", async ({
 test("deleting a tag after confirming removes it", async ({ page }) => {
   await openTag(page, "Hypertrophy");
   await page.getByRole("button", { name: "Delete tag" }).click();
-  const dialog = page.getByRole("dialog", {
+  const dialog = page.getByRole("alertdialog", {
     name: 'Delete the tag "Hypertrophy"?',
   });
   await expect(dialog).toContainText("It will be removed from 1 study");

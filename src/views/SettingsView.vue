@@ -6,19 +6,19 @@
   and offers to start over; restoring a backup also resolves it.
 -->
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import ConfirmDialog from "lifting-school-ui/components/ConfirmDialog.vue";
+import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { newCatalogue, type Catalogue } from "../catalogue/catalogue";
 import { parseCatalogue, serializeCatalogue } from "../catalogue/serialization";
-import ConfirmDialog from "../components/ConfirmDialog.vue";
 import { backupFileName, downloadTextFile } from "../components/downloadFile";
+import { useConfirmation } from "../components/useConfirmation";
 import { useCatalogue } from "../stores/catalogueStore";
 import { showNoticeOnNextPage } from "../stores/notice";
 
 const catalogue = useCatalogue();
 const router = useRouter();
-const confirmDialog = ref<InstanceType<typeof ConfirmDialog> | null>(null);
-const dialogText = reactive({ title: "", message: "", confirmLabel: "" });
+const { question: pendingQuestion, ask: confirm, answer } = useConfirmation();
 const restoreProblem = ref("");
 
 const loadProblem = computed(() => catalogue.state.loadProblem);
@@ -28,16 +28,6 @@ function contentsText(contents: Catalogue): string {
   const studies = contents.studies.length;
   const tags = contents.tags.length;
   return `${studies} ${studies === 1 ? "study" : "studies"} and ${tags} ${tags === 1 ? "tag" : "tags"}`;
-}
-
-/** Shows the confirmation dialog with the given wording and waits for the answer. */
-async function confirm(
-  title: string,
-  message: string,
-  confirmLabel: string,
-): Promise<boolean> {
-  Object.assign(dialogText, { title, message, confirmLabel });
-  return (await confirmDialog.value?.ask()) ?? false;
 }
 
 function downloadBackup(): void {
@@ -65,20 +55,31 @@ async function restoreBackup(event: Event): Promise<void> {
     return;
   }
   restoreProblem.value = "";
-  const current = contentsText(catalogue.state.catalogue);
-  const message = `The backup holds ${contentsText(result.catalogue)}. It will replace the current ${current}. This cannot be undone.`;
-  if (!(await confirm("Restore this backup?", message, "Replace catalogue")))
-    return;
+  if (!(await confirmReplacingWith(result.catalogue))) return;
   catalogue.replaceCatalogue(result.catalogue);
   showNoticeOnNextPage(`Restored the backup "${file.name}".`);
   await router.push("/");
 }
 
+/** Asks whether the backup may replace the current catalogue, saying what each holds. */
+function confirmReplacingWith(backup: Catalogue): Promise<boolean> {
+  const current = contentsText(catalogue.state.catalogue);
+  return confirm({
+    question: "Restore this backup?",
+    detail: `The backup holds ${contentsText(backup)}. It will replace the current ${current}. This cannot be undone.`,
+    confirmLabel: "Replace catalogue",
+  });
+}
+
 /** After confirmation, discards the unreadable data and starts a new, empty catalogue. */
 async function startOver(): Promise<void> {
-  const message =
-    "The unreadable data will be replaced by an empty catalogue. Download it first if you may want it.";
-  if (!(await confirm("Start a new catalogue?", message, "Start over"))) return;
+  const isConfirmed = await confirm({
+    question: "Start a new catalogue?",
+    detail:
+      "The unreadable data will be replaced by an empty catalogue. Download it first if you may want it.",
+    confirmLabel: "Start over",
+  });
+  if (!isConfirmed) return;
   catalogue.replaceCatalogue(newCatalogue());
   showNoticeOnNextPage("Started a new catalogue.");
   await router.push("/");
@@ -154,10 +155,10 @@ async function startOver(): Promise<void> {
     </section>
   </div>
   <ConfirmDialog
-    ref="confirmDialog"
-    :title="dialogText.title"
-    :message="dialogText.message"
-    :confirm-label="dialogText.confirmLabel"
+    v-if="pendingQuestion"
+    v-bind="pendingQuestion"
+    @confirm="answer(true)"
+    @cancel="answer(false)"
   />
 </template>
 

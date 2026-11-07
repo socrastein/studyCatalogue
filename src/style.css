@@ -3,7 +3,9 @@
  * base styles and component classes. Only what the library leaves to each app belongs here.
  */
 
-* {
+/* No browser margins, except on a dialog, which the browser centres with margin: auto. :where keeps this at zero
+   specificity, so any library rule that sets a margin still wins. */
+:where(*:not(dialog)) {
   margin: 0;
 }
 

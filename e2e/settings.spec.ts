@@ -39,7 +39,9 @@ test("a downloaded backup restores the catalogue after confirming", async ({
   await openWithStudies(page, []);
   await page.goto("/settings");
   await restoreInput(page).setInputFiles(backupPath);
-  const dialog = page.getByRole("dialog", { name: "Restore this backup?" });
+  const dialog = page.getByRole("alertdialog", {
+    name: "Restore this backup?",
+  });
   await expect(dialog).toContainText("The backup holds 1 study");
   await dialog.getByRole("button", { name: "Replace catalogue" }).click();
 
@@ -96,7 +98,7 @@ test("unreadable saved data is kept until the person starts over", async ({
   ).toBe("{broken");
   await page.getByRole("button", { name: "Start a new catalogue" }).click();
   await page
-    .getByRole("dialog")
+    .getByRole("alertdialog")
     .getByRole("button", { name: "Start over" })
     .click();
 

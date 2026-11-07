@@ -5,14 +5,15 @@
   with a confirmation.
 -->
 <script setup lang="ts">
+import ConfirmDialog from "lifting-school-ui/components/ConfirmDialog.vue";
 import FormField from "lifting-school-ui/components/FormField.vue";
 import { computed, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { studyCountForTag } from "../catalogue/tagEdits";
 import { descendantIds, tagNameWithParents } from "../catalogue/tags";
-import ConfirmDialog from "../components/ConfirmDialog.vue";
 import TagCombobox from "../components/TagCombobox.vue";
 import TextField from "../components/TextField.vue";
+import { useConfirmation } from "../components/useConfirmation";
 import { useCatalogue } from "../stores/catalogueStore";
 import { showNoticeOnNextPage } from "../stores/notice";
 
@@ -20,8 +21,7 @@ const props = defineProps<{ id: string }>();
 
 const catalogue = useCatalogue();
 const router = useRouter();
-const confirmDialog = ref<InstanceType<typeof ConfirmDialog> | null>(null);
-const dialogText = reactive({ title: "", message: "", confirmLabel: "" });
+const { question: pendingQuestion, ask: confirm, answer } = useConfirmation();
 
 const tags = computed(() => catalogue.state.catalogue.tags);
 const tag = computed(() =>
@@ -72,16 +72,6 @@ async function save(): Promise<void> {
   await router.push("/tags");
 }
 
-/** Shows the confirmation dialog with the given wording and waits for the answer. */
-async function confirm(
-  title: string,
-  message: string,
-  confirmLabel: string,
-): Promise<boolean> {
-  Object.assign(dialogText, { title, message, confirmLabel });
-  return (await confirmDialog.value?.ask()) ?? false;
-}
-
 /** After confirmation, merges this tag into the chosen one. */
 async function merge(): Promise<void> {
   const target = mergeTargets.value.find(
@@ -92,9 +82,12 @@ async function merge(): Promise<void> {
     return;
   }
   const name = tag.value?.name ?? "";
-  const message = `The ${usageText.value} tagged "${name}" will be tagged "${target.label}" instead, and "${name}" will become another name for it.`;
-  if (!(await confirm(`Merge into "${target.label}"?`, message, "Merge tags")))
-    return;
+  const isConfirmed = await confirm({
+    question: `Merge into "${target.label}"?`,
+    detail: `The ${usageText.value} tagged "${name}" will be tagged "${target.label}" instead, and "${name}" will become another name for it.`,
+    confirmLabel: "Merge tags",
+  });
+  if (!isConfirmed) return;
   catalogue.mergeTags(props.id, target.id);
   showNoticeOnNextPage(`Merged "${name}" into "${target.label}".`);
   await router.push("/tags");
@@ -103,9 +96,12 @@ async function merge(): Promise<void> {
 /** After confirmation, deletes this tag. */
 async function deleteThisTag(): Promise<void> {
   const name = tag.value?.name ?? "";
-  const message = `It will be removed from ${usageText.value}, and any subtopics will move up a level. This cannot be undone.`;
-  if (!(await confirm(`Delete the tag "${name}"?`, message, "Delete tag")))
-    return;
+  const isConfirmed = await confirm({
+    question: `Delete the tag "${name}"?`,
+    detail: `It will be removed from ${usageText.value}, and any subtopics will move up a level. This cannot be undone.`,
+    confirmLabel: "Delete tag",
+  });
+  if (!isConfirmed) return;
   catalogue.deleteTag(props.id);
   showNoticeOnNextPage(`Deleted the tag "${name}".`);
   await router.push("/tags");
@@ -190,10 +186,10 @@ async function deleteThisTag(): Promise<void> {
       </section>
     </div>
     <ConfirmDialog
-      ref="confirmDialog"
-      :title="dialogText.title"
-      :message="dialogText.message"
-      :confirm-label="dialogText.confirmLabel"
+      v-if="pendingQuestion"
+      v-bind="pendingQuestion"
+      @confirm="answer(true)"
+      @cancel="answer(false)"
     />
   </template>
   <template v-else>

@@ -4,12 +4,13 @@
   matches no study (deleted, or a mistyped link) gets a short page saying so, with a way back.
 -->
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import ConfirmDialog from "lifting-school-ui/components/ConfirmDialog.vue";
+import { computed } from "vue";
 import { useRouter } from "vue-router";
 import type { StudyDetails } from "../catalogue/study";
 import { draftFromDetails } from "../catalogue/studyDraft";
-import ConfirmDialog from "../components/ConfirmDialog.vue";
 import StudyForm from "../components/StudyForm.vue";
+import { useConfirmation } from "../components/useConfirmation";
 import { useCatalogue } from "../stores/catalogueStore";
 import { showNoticeOnNextPage } from "../stores/notice";
 
@@ -17,17 +18,12 @@ const props = defineProps<{ id: string }>();
 
 const catalogue = useCatalogue();
 const router = useRouter();
-const confirmDelete = ref<InstanceType<typeof ConfirmDialog> | null>(null);
+const { question: pendingQuestion, ask: confirm, answer } = useConfirmation();
 
 const study = computed(() =>
   catalogue.state.catalogue.studies.find(
     (candidate) => candidate.id === props.id,
   ),
-);
-
-const deleteMessage = computed(
-  () =>
-    `"${study.value?.title}" will be removed from the catalogue. This cannot be undone.`,
 );
 
 /** Saves the edited details, then shows the list with a confirmation. */
@@ -40,7 +36,11 @@ async function saveStudy(details: StudyDetails): Promise<void> {
 /** Asks for confirmation, then deletes the study and shows the list with a confirmation. */
 async function deleteStudy(): Promise<void> {
   const title = study.value?.title ?? "";
-  const isConfirmed = (await confirmDelete.value?.ask()) ?? false;
+  const isConfirmed = await confirm({
+    question: "Delete this study?",
+    detail: `"${title}" will be removed from the catalogue. This cannot be undone.`,
+    confirmLabel: "Delete study",
+  });
   if (!isConfirmed) return;
   catalogue.deleteStudy(props.id);
   showNoticeOnNextPage(`Deleted "${title}".`);
@@ -68,10 +68,10 @@ async function deleteStudy(): Promise<void> {
       </template>
     </StudyForm>
     <ConfirmDialog
-      ref="confirmDelete"
-      title="Delete this study?"
-      :message="deleteMessage"
-      confirm-label="Delete study"
+      v-if="pendingQuestion"
+      v-bind="pendingQuestion"
+      @confirm="answer(true)"
+      @cancel="answer(false)"
     />
   </template>
   <template v-else>
