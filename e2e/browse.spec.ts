@@ -5,6 +5,7 @@
  */
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoAxeViolations } from "./expectNoAxeViolations";
+import { chooseDropdownOption } from "./chooseDropdownOption";
 import { openWithStudies, studyDetails } from "./seedCatalogue";
 
 const STUDIES = [
@@ -227,9 +228,7 @@ test("the list can be sorted, and the order stays in the URL alongside the filte
   const newestFirst = ["Androulakis 2021", "Schoenfeld 2017", "Krieger 2010"];
   await expect(titles).toHaveText(newestFirst);
 
-  await page
-    .getByRole("combobox", { name: "Sort by" })
-    .selectOption({ label: "First author, A to Z" });
+  await chooseDropdownOption(page, "Sort by", "First author, A to Z");
   await expect(page).toHaveURL("/?sort=author");
   const byAuthor = ["Androulakis 2021", "Krieger 2010", "Schoenfeld 2017"];
   await expect(titles).toHaveText(byAuthor);

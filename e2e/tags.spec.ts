@@ -3,6 +3,7 @@
  * merging duplicates and deleting, with axe on both pages.
  */
 import { expect, test, type Page } from "@playwright/test";
+import { chooseDropdownOption } from "./chooseDropdownOption";
 import { expectNoAxeViolations } from "./expectNoAxeViolations";
 import { openWithStudies, studyDetails } from "./seedCatalogue";
 
@@ -31,9 +32,7 @@ async function fillTagForm(page: Page, input: TagFormInput): Promise<void> {
 
 /** Merges the open tag into the one with this label, confirming in the dialog. */
 async function mergeInto(page: Page, targetLabel: string): Promise<void> {
-  await page
-    .getByRole("combobox", { name: "Merge into" })
-    .selectOption({ label: targetLabel });
+  await chooseDropdownOption(page, "Merge into", targetLabel);
   await page.getByRole("button", { name: "Merge tags" }).click();
   await page
     .getByRole("alertdialog")

@@ -30,14 +30,37 @@ const WCAG_AA_TAGS = [
  * regression in Playwright 1.65.0's Firefox, also seen on Windows, tracked as microsoft/playwright#43967 and Mozilla
  * bug 2090055. Once Playwright ships a fixed Firefox, `getByLabel` is safe again. Found 2026-11-06.
  *
+ * It first waits for any running transition or entrance animation (a dialog fading in) to finish: axe reads the colours as
+ * they are drawn, and a half-transparent button reads lighter than it is, which fails the contrast rule at random.
+ *
  * @param page The page to check, in the state to check it in.
  */
 export async function expectNoAxeViolations(page: Page): Promise<void> {
+  await waitForAnimationsToFinish(page);
   const results = await new AxeBuilder({ page })
     .withTags(WCAG_AA_TAGS)
     .analyze();
   const problems = results.violations.flatMap(describeViolation);
   expect(problems).toEqual([]);
+}
+
+/**
+ * Resolves once every finite animation and transition on the page has ended or been cancelled. Endless ones (a spinner) are skipped, or
+ * the wait would never finish.
+ */
+async function waitForAnimationsToFinish(page: Page): Promise<void> {
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter(
+          (animation) =>
+            animation.effect?.getComputedTiming().iterations !== Infinity,
+        )
+        // A cancelled animation rejects `finished`; it is over all the same
+        .map((animation) => animation.finished.catch(() => undefined)),
+    ),
+  );
 }
 
 /**

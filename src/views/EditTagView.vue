@@ -6,7 +6,9 @@
 -->
 <script setup lang="ts">
 import ConfirmDialog from "lifting-school-ui/components/ConfirmDialog.vue";
+import DropdownSelect from "lifting-school-ui/components/DropdownSelect.vue";
 import FormField from "lifting-school-ui/components/FormField.vue";
+import type { DropdownOption } from "lifting-school-ui/dropdownOption";
 import { computed, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { studyCountForTag } from "../catalogue/tagEdits";
@@ -60,6 +62,15 @@ const mergeTargets = computed(() =>
     }))
     .sort((first, second) => first.label.localeCompare(second.label)),
 );
+
+/** The merge drop-down's options: a prompt that stands for "nothing chosen yet" (empty value), then every target. */
+const mergeOptions = computed<DropdownOption<string>[]>(() => [
+  { value: "", label: "Choose a tag" },
+  ...mergeTargets.value.map((target) => ({
+    value: target.id,
+    label: target.label,
+  })),
+]);
 
 /** Saves name, aliases and parents together, or shows why they were refused. */
 async function save(): Promise<void> {
@@ -157,17 +168,18 @@ async function deleteThisTag(): Promise<void> {
           v-slot="field"
           label="Merge into"
           :error="mergeProblem"
+          is-combobox
         >
-          <select v-bind="field" v-model="mergeTargetId" class="input">
-            <option value="">Choose a tag</option>
-            <option
-              v-for="target in mergeTargets"
-              :key="target.id"
-              :value="target.id"
-            >
-              {{ target.label }}
-            </option>
-          </select>
+          <DropdownSelect
+            v-bind="field"
+            :labelled-by="undefined"
+            label="Merge into"
+            :combo-id="field.id"
+            :options="mergeOptions"
+            :value="mergeTargetId"
+            size="regular"
+            @change="(targetId) => (mergeTargetId = targetId)"
+          />
         </FormField>
         <button type="button" class="btn btnDangerSubtle" @click="merge">
           Merge tags

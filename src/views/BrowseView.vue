@@ -7,7 +7,9 @@
   when filters are set so the person can see why the list is short.
 -->
 <script setup lang="ts">
+import DropdownSelect from "lifting-school-ui/components/DropdownSelect.vue";
 import FormField from "lifting-school-ui/components/FormField.vue";
+import type { DropdownOption } from "lifting-school-ui/dropdownOption";
 import chevronIcon from "lifting-school-ui/icons/chevron-down.svg";
 import { computed, onBeforeUnmount, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -34,6 +36,12 @@ import {
 } from "./browseInUrl";
 
 /** Wide enough for the filters to sit beside the results rather than above them; matches the layout's breakpoint. */
+/** The sort orders as drop-down options: the order's id is the value, its label what is shown. */
+const SORT_OPTIONS: DropdownOption<SortOrder>[] = SORT_ORDERS.map((order) => ({
+  value: order.id,
+  label: order.label,
+}));
+
 const WIDE_LAYOUT_QUERY = "(min-width: 60rem)";
 
 /** How each population facet is named in the "don't report" note. */
@@ -162,16 +170,17 @@ function clearFilters(): void {
       <h2 id="results-heading" class="visuallyHidden">Results</h2>
       <div class="resultsBar">
         <p class="resultCount" role="status">{{ countText }}</p>
-        <FormField id="browse-sort" v-slot="field" label="Sort by">
-          <select v-bind="field" v-model="sortOrder" class="input">
-            <option
-              v-for="order in SORT_ORDERS"
-              :key="order.id"
-              :value="order.id"
-            >
-              {{ order.label }}
-            </option>
-          </select>
+        <FormField id="browse-sort" v-slot="field" label="Sort by" is-combobox>
+          <DropdownSelect
+            v-bind="field"
+            :labelled-by="undefined"
+            label="Sort by"
+            :combo-id="field.id"
+            :options="SORT_OPTIONS"
+            :value="sortOrder"
+            size="regular"
+            @change="(order) => (sortOrder = order)"
+          />
         </FormField>
       </div>
       <p v-for="note in unreportedNotes" :key="note" class="textMuted">
