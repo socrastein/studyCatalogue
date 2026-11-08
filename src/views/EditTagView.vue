@@ -170,6 +170,7 @@ async function deleteThisTag(): Promise<void> {
           :error="mergeProblem"
           is-combobox
         >
+          <!-- Named by aria-label, not aria-labelledby: a named getByRole on aria-labelledby crashes Firefox under axe (microsoft/playwright#43967). Drop the two lines when Playwright ships a fixed Firefox. -->
           <DropdownSelect
             v-bind="field"
             :labelled-by="undefined"

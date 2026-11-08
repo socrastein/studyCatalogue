@@ -171,6 +171,7 @@ function clearFilters(): void {
       <div class="resultsBar">
         <p class="resultCount" role="status">{{ countText }}</p>
         <FormField id="browse-sort" v-slot="field" label="Sort by" is-combobox>
+          <!-- Named by aria-label, not aria-labelledby: a named getByRole on aria-labelledby crashes Firefox under axe (microsoft/playwright#43967). Drop the two lines when Playwright ships a fixed Firefox. -->
           <DropdownSelect
             v-bind="field"
             :labelled-by="undefined"
