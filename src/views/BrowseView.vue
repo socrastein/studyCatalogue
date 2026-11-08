@@ -35,13 +35,13 @@ import {
   sortOrderFromQuery,
 } from "./browseInUrl";
 
-/** Wide enough for the filters to sit beside the results rather than above them; matches the layout's breakpoint. */
 /** The sort orders as drop-down options: the order's id is the value, its label what is shown. */
 const SORT_OPTIONS: DropdownOption<SortOrder>[] = SORT_ORDERS.map((order) => ({
   value: order.id,
   label: order.label,
 }));
 
+/** Wide enough for the filters to sit beside the results rather than above them; matches the layout's breakpoint. */
 const WIDE_LAYOUT_QUERY = "(min-width: 60rem)";
 
 /** How each population facet is named in the "don't report" note. */
