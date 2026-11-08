@@ -9,9 +9,10 @@
 <script setup lang="ts">
 import DropdownSelect from "lifting-school-ui/components/DropdownSelect.vue";
 import FormField from "lifting-school-ui/components/FormField.vue";
+import StatusToast from "lifting-school-ui/components/StatusToast.vue";
 import type { DropdownOption } from "lifting-school-ui/dropdownOption";
 import chevronIcon from "lifting-school-ui/icons/chevron-down.svg";
-import { computed, onBeforeUnmount, ref } from "vue";
+import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
   emptyFilters,
@@ -26,7 +27,6 @@ import {
   type SortOrder,
 } from "../catalogue/sortStudies";
 import FilterPanel from "../components/FilterPanel.vue";
-import CopyToast from "../components/CopyToast.vue";
 import StudyCard from "../components/StudyCard.vue";
 import { useCatalogue } from "../stores/catalogueStore";
 import {
@@ -54,22 +54,8 @@ const FACET_NAMES: Record<PopulationFacet, string> = {
 const catalogue = useCatalogue();
 const route = useRoute();
 const router = useRouter();
-const copyMessage = ref("");
-
-/** How long the copy confirmation stays up: long enough to read, short enough not to linger over the list. */
-const COPY_MESSAGE_SECONDS = 4;
-let copyMessageTimer: ReturnType<typeof setTimeout> | undefined;
-
-/** Shows what a copy button did, replacing any earlier message, and clears it after a few seconds. */
-function showCopyMessage(message: string): void {
-  clearTimeout(copyMessageTimer);
-  copyMessage.value = message;
-  copyMessageTimer = setTimeout(() => {
-    copyMessage.value = "";
-  }, COPY_MESSAGE_SECONDS * 1000);
-}
-
-onBeforeUnmount(() => clearTimeout(copyMessageTimer));
+/** The confirmation at the bottom of the window, so a copy button visibly does something even far down the list. */
+const toast = ref<InstanceType<typeof StatusToast> | null>(null);
 
 const tags = computed(() => catalogue.state.catalogue.tags);
 const allStudies = computed(() => catalogue.state.catalogue.studies);
@@ -195,10 +181,14 @@ function clearFilters(): void {
       </p>
       <ol class="studyList plainList">
         <li v-for="study in sortedMatches" :key="study.id">
-          <StudyCard :study="study" :tags="tags" @copied="showCopyMessage" />
+          <StudyCard
+            :study="study"
+            :tags="tags"
+            @copied="toast?.show($event)"
+          />
         </li>
       </ol>
-      <CopyToast :message="copyMessage" />
+      <StatusToast ref="toast" />
     </section>
   </div>
 </template>
