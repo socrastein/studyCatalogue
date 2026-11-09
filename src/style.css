@@ -30,12 +30,3 @@ body {
 h1:focus {
   outline: none;
 }
-
-/* A list used for layout (navigation, cards, links in a row) rather than for reading: no bullets, and none of the
-   library's reading-list spacing */
-.plainList,
-.plainList > li {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
