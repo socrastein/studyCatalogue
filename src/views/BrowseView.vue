@@ -7,11 +7,11 @@
   when filters are set so the person can see why the list is short.
 -->
 <script setup lang="ts">
+import DisclosureSection from "lifting-school-ui/components/DisclosureSection.vue";
 import DropdownSelect from "lifting-school-ui/components/DropdownSelect.vue";
 import FormField from "lifting-school-ui/components/FormField.vue";
 import StatusToast from "lifting-school-ui/components/StatusToast.vue";
 import type { DropdownOption } from "lifting-school-ui/dropdownOption";
-import chevronIcon from "lifting-school-ui/icons/chevron-down.svg";
 import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
@@ -131,25 +131,17 @@ function clearFilters(): void {
   </p>
 
   <div v-else class="browseLayout">
-    <section class="filters panel" aria-labelledby="filters-heading">
-      <h2 id="filters-heading" class="h6" :data-open="isFilterPanelOpen">
-        <button
-          type="button"
-          class="disclosure"
-          :aria-expanded="isFilterPanelOpen"
-          aria-controls="filter-panel"
-          @click="isFilterPanelOpen = !isFilterPanelOpen"
-        >
-          Filters
-          <img :src="chevronIcon" class="iconSmall disclosureChevron" alt="" />
-        </button>
-      </h2>
-      <FilterPanel
-        v-show="isFilterPanelOpen"
-        id="filter-panel"
-        v-model="filters"
-        :tags="tags"
-      />
+    <section class="filters panel" aria-label="Filters">
+      <DisclosureSection
+        v-model:open="isFilterPanelOpen"
+        :level="2"
+        look="part"
+        title="Filters"
+      >
+        <div class="filterBody">
+          <FilterPanel v-model="filters" :tags="tags" />
+        </div>
+      </DisclosureSection>
     </section>
 
     <section class="results" aria-labelledby="results-heading">
@@ -212,15 +204,15 @@ function clearFilters(): void {
   padding: var(--space2);
 }
 
-.filters .disclosure {
+.filters :deep(.disclosure) {
   cursor: pointer;
   /* Tall enough for the 24px minimum target size (WCAG 2.5.8) */
   padding: var(--spaceHalf) 0;
 }
 
-/* Space between the heading and the filters, only while they are showing */
-.filters h2[data-open="true"] {
-  margin-bottom: var(--space2);
+/* Space between the title and the filters */
+.filterBody {
+  padding-top: var(--space2);
 }
 
 .results {

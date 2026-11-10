@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@vueuse/core": "^15.0.0",
-    "lifting-school-ui": "git+https://github.com/socrastein/liftingSchoolUI.git#v0.5.7",
+    "lifting-school-ui": "git+https://github.com/socrastein/liftingSchoolUI.git#v0.6.0",
     "vue": "^3.5.45",
     "vue-router": "^5.4.0"
   }
