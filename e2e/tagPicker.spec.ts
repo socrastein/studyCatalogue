@@ -71,7 +71,9 @@ test("choosing a tag adds a chip and empties the control for the next one", asyn
   await expect(chips(page)).toHaveText([/Hypertrophy/]);
   await expect(tagDropdown(page)).toHaveValue("");
   await expect(tagDropdown(page)).toBeFocused();
-  await expect(page.getByRole("status").last()).toHaveText("Added Hypertrophy");
+  await expect(
+    page.getByRole("status").filter({ hasText: /^Added Hypertrophy$/ }),
+  ).toHaveCount(1);
 });
 
 test("a chosen tag is not offered again until its chip is removed", async ({

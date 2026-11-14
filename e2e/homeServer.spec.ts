@@ -238,3 +238,110 @@ test("a home server that stops answering is warned about, and Try Again checks i
   await expect(page.getByText("Stored in:")).toContainText("This Home Server");
   await expect(warning).toHaveCount(0);
 });
+
+/** Opens the Add a Study form through the nav link (no page load, so the page keeps the copy it has) and chooses a tag. */
+async function openFormWithTag(page: Page, tagName: string): Promise<void> {
+  await page
+    .getByRole("navigation", { name: "Main" })
+    .getByRole("link", { name: "Add a Study" })
+    .click();
+  const tags = page.getByRole("combobox", { name: "Add to Tags" });
+  await tags.fill(tagName);
+  await tags.press("Enter");
+}
+
+/** The chips of the tags chosen on the open form. */
+function chosenTags(page: Page) {
+  return page.getByRole("list", { name: "Chosen tags" }).getByRole("listitem");
+}
+
+test("a tag another device deleted is taken off the open form, and the form says so", async ({
+  page,
+  browser,
+  homeServer,
+  colorScheme,
+}) => {
+  await page.goto("/");
+  const laptop = await openSecondDevice(browser, homeServer.url, colorScheme);
+  await openFormWithTag(laptop, "Hypertrophy");
+  await expect(chosenTags(laptop)).toHaveText([/Hypertrophy/]);
+
+  // The PC deletes the tag the laptop's form has chosen
+  await page.getByRole("link", { name: "Tags", exact: true }).click();
+  await page.getByRole("link", { name: "Hypertrophy", exact: true }).click();
+  await page.getByRole("button", { name: "Delete Tag" }).click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "Delete Tag" })
+    .click();
+  await expect
+    .poll(async () => {
+      const response = await page.request.get(`${homeServer.url}api/catalogue`);
+      return JSON.stringify(await response.json());
+    })
+    .not.toContain('"name":"Hypertrophy"');
+
+  await returnToTab(laptop);
+  await expect(
+    laptop.getByText(
+      'Removed "Hypertrophy" from this study because that tag no longer exists.',
+    ),
+  ).toBeVisible();
+  await expect(chosenTags(laptop)).toHaveCount(0);
+  await expectNoAxeViolations(laptop);
+  await laptop.context().close();
+});
+
+test("two devices that made the same tag leave the open form with one chip, not a dangling tag", async ({
+  page,
+  browser,
+  homeServer,
+  colorScheme,
+}) => {
+  await page.goto("/");
+  const laptop = await openSecondDevice(browser, homeServer.url, colorScheme);
+
+  // The PC makes "Shared name" first and it reaches the server
+  await page
+    .getByRole("navigation", { name: "Main" })
+    .getByRole("link", { name: "Add a Study" })
+    .click();
+  await textField(page, "New Tag").fill("Shared name");
+  await page.getByRole("button", { name: "Add New Tag" }).click();
+  await expect(chosenTags(page)).toHaveText([/Shared name/]);
+  await expect
+    .poll(() => serverSharedTagId(page, homeServer.url))
+    .toBeDefined();
+  const pcTagId = await serverSharedTagId(page, homeServer.url);
+
+  // The laptop, which has not seen that, makes its own: its save is refused and merged, and the server ends up with the
+  // laptop's tag instead of the PC's
+  await laptop
+    .getByRole("navigation", { name: "Main" })
+    .getByRole("link", { name: "Add a Study" })
+    .click();
+  await textField(laptop, "New Tag").fill("Shared name");
+  await laptop.getByRole("button", { name: "Add New Tag" }).click();
+  await expect(chosenTags(laptop)).toHaveText([/Shared name/]);
+  await expect
+    .poll(() => serverSharedTagId(page, homeServer.url))
+    .not.toBe(pcTagId);
+
+  // The PC picks up the merged catalogue, where its own tag's id is gone: its form moves to the surviving one
+  await returnToTab(page);
+  await expect(chosenTags(page)).toHaveText([/Shared name/]);
+  await expect(page.getByText(/no longer exists/)).toHaveCount(0);
+  await laptop.context().close();
+});
+
+/** The id of the tag named "Shared name" in the server's copy; undefined while it holds none. */
+async function serverSharedTagId(
+  page: Page,
+  url: string,
+): Promise<string | undefined> {
+  const response = await page.request.get(`${url}api/catalogue`);
+  const copy = (await response.json()) as {
+    catalogue: { tags: { id: string; name: string }[] };
+  };
+  return copy.catalogue.tags.find((tag) => tag.name === "Shared name")?.id;
+}

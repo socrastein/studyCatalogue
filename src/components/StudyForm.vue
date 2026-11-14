@@ -4,7 +4,7 @@
   field and in a summary at the top, which takes focus. A valid submit emits the study details for the page to save.
 -->
 <script setup lang="ts">
-import { computed, nextTick, reactive, ref, toRaw } from "vue";
+import { computed, nextTick, reactive, ref, toRaw, watch } from "vue";
 import {
   AGE_GROUPS,
   SEXES,
@@ -13,6 +13,10 @@ import {
   TRAINING_STATUSES,
 } from "../catalogue/facets";
 import type { CrossrefFields } from "../catalogue/crossref";
+import {
+  droppedTagsMessage,
+  reconcileDraftTagIds,
+} from "../catalogue/draftTags";
 import type { StudyDetails } from "../catalogue/study";
 import {
   validateDraft,
@@ -42,6 +46,9 @@ const draft = reactive<StudyDraft>(structuredClone(toRaw(props.initialDraft)));
 const errors = ref<DraftErrors>({});
 const summary = ref<InstanceType<typeof ErrorSummary> | null>(null);
 
+/** Says which chosen tags were taken off the study because they no longer exist; "" while none were. */
+const droppedTagsNotice = ref("");
+
 const summaryItems = computed(() => errorSummaryItems(errors.value));
 
 /** Checks the draft: emits the details when valid, otherwise shows the messages and focuses the summary. */
@@ -61,6 +68,24 @@ async function submit(): Promise<void> {
 function fillFromLookup(fields: CrossrefFields): void {
   Object.assign(draft, fields);
 }
+
+/**
+ * When the catalogue's tags change under the open form (another device's changes arrived), keeps the draft's chosen tags
+ * valid: a tag that is gone moves to the same-named tag that survived, or is dropped and the person is told.
+ */
+watch(
+  () => catalogue.state.catalogue.tags,
+  (currentTags, previousTags) => {
+    const result = reconcileDraftTagIds(
+      draft.tagIds,
+      previousTags,
+      currentTags,
+    );
+    draft.tagIds = result.tagIds;
+    if (result.droppedTagNames.length === 0) return;
+    droppedTagsNotice.value = droppedTagsMessage(result.droppedTagNames);
+  },
+);
 
 /** Creates a tag typed in the tag box (or finds one by that name) and adds it to the study. */
 function createTag(name: string): void {
@@ -170,6 +195,14 @@ function createTag(name: string): void {
         allow-create
         @create="createTag"
       />
+      <!-- Always present, so screen readers announce the message when it appears -->
+      <p
+        class="droppedTagsNotice"
+        :class="{ isEmpty: droppedTagsNotice === '' }"
+        role="status"
+      >
+        {{ droppedTagsNotice }}
+      </p>
     </section>
 
     <section class="formSection panel" aria-labelledby="design-heading">
@@ -242,6 +275,15 @@ function createTag(name: string): void {
 /* The section's gap already spaces the title from the fields */
 .sectionTitle {
   margin-bottom: 0;
+}
+
+.droppedTagsNotice {
+  font-weight: 600;
+}
+
+/* Keeps the status region in the page for screen readers while there is nothing to say */
+.droppedTagsNotice.isEmpty {
+  display: contents;
 }
 
 .fieldRow {
