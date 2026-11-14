@@ -54,6 +54,16 @@ async function expectServerHolds(
     .toContain(`"title":"${title}"`);
 }
 
+/** Counts the saves the server refused (409) as the page sends them; read `count` when needed. */
+function countRefusedSaves(page: Page): { count: number } {
+  const refused = { count: 0 };
+  page.on("response", (response) => {
+    const isSave = response.request().method() === "PUT";
+    if (isSave && response.status() === 409) refused.count += 1;
+  });
+  return refused;
+}
+
 /** Tells the page it became visible again, as switching back to its tab does. */
 async function returnToTab(page: Page): Promise<void> {
   await page.evaluate(() =>
@@ -109,14 +119,16 @@ test("two devices editing different studies at once both keep their edits", asyn
   // Both pages started from the same empty catalogue; the PC saves first, so the laptop's save is refused and merged
   await addStudy(page, "Study from the PC");
   await expectServerHolds(page, "Study from the PC", homeServer.url);
+  const refusedSaves = countRefusedSaves(laptop);
   await addStudy(laptop, "Study from the laptop");
 
   await expect(
     laptop.getByRole("link", { name: "Study from the PC" }),
   ).toBeVisible();
-  await expect(laptop.getByRole("status").first()).toContainText(
-    "Changes from another device were merged",
-  );
+  // The laptop's save was refused and merged, whichever moment it happened at. The merge notice itself is not checked
+  // here: a tag made in the form is saved (and refused) before the study is added, and the "Added" confirmation that
+  // follows replaces the notice, so which of the two the status shows depends on timing. The notice has a unit test.
+  await expect.poll(() => refusedSaves.count).toBeGreaterThan(0);
   await expectServerHolds(laptop, "Study from the laptop", homeServer.url);
 
   await returnToTab(page);
