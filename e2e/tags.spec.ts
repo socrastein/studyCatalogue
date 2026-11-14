@@ -84,27 +84,48 @@ test("a new tag is added at the top level, and a duplicate name is refused", asy
   ).toBeVisible();
 });
 
-test("a new tag is confirmed in words and scrolled into view, with focus on its link", async ({
+test("a new tag is confirmed in words, the box keeps focus, and the window does not scroll the box away", async ({
   page,
 }) => {
-  // A short window, so the tag that sorts last starts below the fold
+  // A short window, so the tag that sorts last starts below the fold and centring it would hide the box
   await page.setViewportSize({ width: 800, height: 400 });
   await page.goto("/tags");
-  await page.getByRole("textbox", { name: "New Tag" }).fill("Zzz sleep");
+  const newTag = page.getByRole("textbox", { name: "New Tag" });
+  await newTag.fill("Zzz sleep");
   await page.getByRole("button", { name: "Add Tag" }).click();
 
   const confirmation = page
     .getByRole("status")
     .filter({ hasText: 'Added the tag "Zzz sleep".' });
   await expect(confirmation).toBeVisible();
-  const link = page.getByRole("link", { name: "Zzz sleep", exact: true });
-  await expect(link).toBeInViewport();
-  await expect(link).toBeFocused();
+  await expect(newTag).toHaveValue("");
+  await expect(newTag).toBeFocused();
+  await expect(newTag).toBeInViewport();
   await expectNoAxeViolations(page);
 
-  // Typing the next name takes the old confirmation away
-  await page.getByRole("textbox", { name: "New Tag" }).fill("Next");
-  await expect(confirmation).toHaveCount(0);
+  // Typing the next name leaves the confirmation readable
+  await newTag.pressSequentially("Next");
+  await expect(confirmation).toBeVisible();
+});
+
+test("three tags are added in a row with the keyboard alone", async ({
+  page,
+}) => {
+  await page.goto("/tags");
+  const newTag = page.getByRole("textbox", { name: "New Tag" });
+  await newTag.focus();
+  for (const name of ["Alpha tag", "Beta tag", "Gamma tag"]) {
+    await page.keyboard.type(name);
+    await page.keyboard.press("Enter");
+    await expect(
+      page.getByRole("status").filter({ hasText: `Added the tag "${name}".` }),
+    ).toBeVisible();
+    await expect(newTag).toBeFocused();
+    await expect(newTag).toHaveValue("");
+  }
+  for (const name of ["Alpha tag", "Beta tag", "Gamma tag"]) {
+    await expect(page.getByRole("link", { name, exact: true })).toBeVisible();
+  }
 });
 
 test("a tag is renamed, given an alias and moved, and search finds it by the alias", async ({

@@ -9,6 +9,9 @@ import TagTree from "../components/TagTree.vue";
 import TextField from "../components/TextField.vue";
 import { useCatalogue } from "../stores/catalogueStore";
 
+/** The id of the New Tag text box, which keeps focus after an add. */
+const NEW_TAG_BOX_ID = "new-tag-name";
+
 const catalogue = useCatalogue();
 const newTagName = ref("");
 const newTagError = ref("");
@@ -20,12 +23,13 @@ const studies = computed(() => catalogue.state.catalogue.studies);
 
 /**
  * Adds the typed name as a top-level tag, unless it is blank or a tag already has that name or alias. A new tag is
- * confirmed in words under the form and shown in the list: the list is long and the tag lands in alphabetical order,
- * possibly off screen, so it is scrolled into view and its link takes focus.
+ * confirmed in words under the form (announced to screen readers), and focus stays in the box, cleared for the next
+ * name, because several tags are usually added in a row. The confirmation stays until the next add or error.
  */
 async function addTag(): Promise<void> {
   const name = newTagName.value.trim();
   const existing = findTagByName(name, tags.value);
+  confirmation.value = "";
   if (name === "") {
     newTagError.value = "Enter a name for the new tag.";
     return;
@@ -40,21 +44,35 @@ async function addTag(): Promise<void> {
   confirmation.value = `Added the tag "${tag.name}". It is in the list below.`;
   // The list is drawn again with the new tag once Vue has run its update
   await nextTick();
-  revealTag(tag.id);
+  keepFocusInBoxAndRevealTag(tag.id);
 }
 
-/** Scrolls the tag's row into the middle of the window and moves focus to its link, so the new tag is seen and reachable. */
-function revealTag(tagId: string): void {
+/** Puts focus back in the name box (a click on Add Tag moved it to the button), then reveals the new tag's row. */
+function keepFocusInBoxAndRevealTag(tagId: string): void {
+  const nameBox = document.getElementById(NEW_TAG_BOX_ID);
+  nameBox?.focus();
+  revealTag(tagId, nameBox);
+}
+
+/**
+ * Scrolls the new tag's row into the middle of the window, unless that would push the name box out of view: then the
+ * window stays where it was, since the confirmation already says the tag is in the list and the box must stay usable.
+ */
+function revealTag(tagId: string, nameBox: HTMLElement | null): void {
   const row = document.querySelector<HTMLElement>(
     `[data-tag-id="${CSS.escape(tagId)}"]`,
   );
-  row?.scrollIntoView({ block: "center" });
-  row?.querySelector<HTMLElement>("a")?.focus();
+  if (!row || !nameBox) return;
+  const scrollXBefore = window.scrollX;
+  const scrollYBefore = window.scrollY;
+  row.scrollIntoView({ block: "center" });
+  if (!isInWindow(nameBox)) window.scrollTo(scrollXBefore, scrollYBefore);
 }
 
-/** Typing starts a new name, so the confirmation of the last one is out of date. */
-function clearConfirmation(): void {
-  confirmation.value = "";
+/** Whether the whole element is inside the visible window. */
+function isInWindow(element: HTMLElement): boolean {
+  const { top, bottom } = element.getBoundingClientRect();
+  return top >= 0 && bottom <= window.innerHeight;
 }
 </script>
 
@@ -68,11 +86,10 @@ function clearConfirmation(): void {
 
     <form class="addTag" novalidate @submit.prevent="addTag">
       <TextField
-        id="new-tag-name"
+        :id="NEW_TAG_BOX_ID"
         v-model="newTagName"
         label="New Tag"
         :error="newTagError || undefined"
-        @update:model-value="clearConfirmation"
       />
       <button type="submit" class="btn btnPrimary">Add Tag</button>
     </form>
