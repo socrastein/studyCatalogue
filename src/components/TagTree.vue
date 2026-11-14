@@ -44,7 +44,8 @@ function usageText(tag: Tag): string {
 <template>
   <ul v-if="children.length > 0" class="tagTree plainList">
     <li v-for="tag in children" :key="tag.id">
-      <div class="tagLine">
+      <!-- data-tag-id lets a page find this row to scroll to it (TagsView, after adding a tag) -->
+      <div class="tagLine" :data-tag-id="tag.id">
         <RouterLink :to="{ name: 'editTag', params: { id: tag.id } }">
           {{ tag.name }}
         </RouterLink>

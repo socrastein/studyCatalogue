@@ -84,6 +84,29 @@ test("a new tag is added at the top level, and a duplicate name is refused", asy
   ).toBeVisible();
 });
 
+test("a new tag is confirmed in words and scrolled into view, with focus on its link", async ({
+  page,
+}) => {
+  // A short window, so the tag that sorts last starts below the fold
+  await page.setViewportSize({ width: 800, height: 400 });
+  await page.goto("/tags");
+  await page.getByRole("textbox", { name: "New Tag" }).fill("Zzz sleep");
+  await page.getByRole("button", { name: "Add Tag" }).click();
+
+  const confirmation = page
+    .getByRole("status")
+    .filter({ hasText: 'Added the tag "Zzz sleep".' });
+  await expect(confirmation).toBeVisible();
+  const link = page.getByRole("link", { name: "Zzz sleep", exact: true });
+  await expect(link).toBeInViewport();
+  await expect(link).toBeFocused();
+  await expectNoAxeViolations(page);
+
+  // Typing the next name takes the old confirmation away
+  await page.getByRole("textbox", { name: "New Tag" }).fill("Next");
+  await expect(confirmation).toHaveCount(0);
+});
+
 test("a tag is renamed, given an alias and moved, and search finds it by the alias", async ({
   page,
 }) => {
