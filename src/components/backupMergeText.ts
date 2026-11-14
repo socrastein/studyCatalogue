@@ -2,18 +2,13 @@
  * The words Settings uses about adding a backup to the catalogue: the confirmation's detail before it, and the
  * notice after it. The counts come from `mergeBackup` (catalogue/backupMerge.ts).
  */
-import type { BackupMergeSummary } from "../catalogue/backupMerge";
+import {
+  changesAnything,
+  type BackupMergeSummary,
+} from "../catalogue/backupMerge";
 
-/**
- * Whether adding the backup would change anything.
- *
- * @param summary What the merge would do.
- */
-export function changesAnything(summary: BackupMergeSummary): boolean {
-  const changes =
-    summary.addedStudies + summary.updatedStudies + summary.addedTags;
-  return changes > 0;
-}
+// The check lives with the merge (the store needs it too); Settings and the tests read it from here
+export { changesAnything };
 
 /**
  * What adding the backup will do, for the confirmation, e.g. "It adds 5 new studies and 3 new tags, and updates 2

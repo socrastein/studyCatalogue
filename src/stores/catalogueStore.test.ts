@@ -1,13 +1,24 @@
 /**
  * Tests for the catalogue store: changes are saved to storage, unreadable saved data is kept rather than overwritten,
- * and a failed save is reported.
+ * a failed save is reported, and the same store works on the home server.
  */
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { newCatalogue } from "../catalogue/catalogue";
 import { parseCatalogue } from "../catalogue/serialization";
 import { createDraftSummary, withSummary } from "../catalogue/summary";
 import { exampleStudyDetails } from "../catalogue/testFixtures";
-import { createCatalogueStore, STORAGE_KEY } from "./catalogueStore";
+import {
+  createCatalogueStore,
+  createCatalogueStoreOn,
+  STORAGE_KEY,
+} from "./catalogueStore";
+import { createFakeHomeServer } from "./fakeHomeServer";
+import {
+  createHomeServerStorage,
+  DEFAULT_TIMING,
+  MERGED_NOTICE,
+} from "./homeServerStorage";
+import { noticeMessage } from "./notice";
 
 /** The catalogue as saved in storage right now; fails the test if nothing readable is saved. */
 function savedCatalogue() {
@@ -212,5 +223,83 @@ describe("summaries", () => {
     const { store } = storeWithDraft();
     store.approveSummary("no-such-id");
     expect(savedCatalogue().studies[0]?.summary?.approvedAt).toBeNull();
+  });
+});
+
+describe("a store on the home server", () => {
+  /** A store on a fake server holding one study, with time faked so saves happen when the test says. */
+  function homeServerStore(server = createFakeHomeServer()) {
+    const storage = createHomeServerStorage(server.copy, server.fetch);
+    return { server, store: createCatalogueStoreOn(storage) };
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("says where the catalogue is kept", () => {
+    expect(homeServerStore().store.state.storageLocation).toBe("homeServer");
+    expect(createCatalogueStore(localStorage).state.storageLocation).toBe(
+      "browser",
+    );
+  });
+
+  it("saves an added study to the server and leaves localStorage alone", async () => {
+    const { server, store } = homeServerStore();
+    store.addStudy(exampleStudyDetails());
+    await vi.advanceTimersByTimeAsync(
+      DEFAULT_TIMING.pauseBeforeSavingMilliseconds,
+    );
+    expect(server.copy.catalogue.studies).toHaveLength(1);
+    expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+  });
+
+  it("shows the merged result and says so when another device saved first", async () => {
+    const { server, store } = homeServerStore();
+    const other = createCatalogueStoreOn(
+      createHomeServerStorage(server.copy, server.fetch),
+    );
+    other.addStudy(
+      exampleStudyDetails({ title: "From the laptop", doi: null }),
+    );
+    await vi.advanceTimersByTimeAsync(
+      DEFAULT_TIMING.pauseBeforeSavingMilliseconds,
+    );
+
+    store.addStudy(exampleStudyDetails({ title: "From the PC", doi: null }));
+    await vi.advanceTimersByTimeAsync(
+      DEFAULT_TIMING.pauseBeforeSavingMilliseconds,
+    );
+
+    const titles = store.state.catalogue.studies.map((study) => study.title);
+    expect(titles.sort()).toEqual(["From the PC", "From the laptop"]);
+    expect(noticeMessage.value).toBe(MERGED_NOTICE);
+  });
+
+  it("keeps a change made while the server is away and shows the save problem", async () => {
+    const server = createFakeHomeServer();
+    server.isOffline = true;
+    const { store } = homeServerStore(server);
+    store.addStudy(exampleStudyDetails());
+    await vi.advanceTimersByTimeAsync(
+      DEFAULT_TIMING.pauseBeforeSavingMilliseconds,
+    );
+    expect(store.state.catalogue.studies).toHaveLength(1);
+    expect(store.state.saveProblem).toContain("home server");
+  });
+
+  it("refreshes to the server's newer copy", async () => {
+    const { server, store } = homeServerStore();
+    server.saveFromAnotherDevice({
+      ...newCatalogue(),
+      studies: [],
+      tags: newCatalogue().tags.slice(0, 2),
+    });
+    await store.refresh();
+    expect(store.state.catalogue.tags).toHaveLength(2);
   });
 });

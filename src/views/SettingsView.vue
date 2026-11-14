@@ -1,5 +1,5 @@
 <!--
-  Settings: the catalogue's backups: download one, add one to the catalogue (merging catalogues kept in different
+  Settings: where the catalogue is stored, and its backups: download one, add one to the catalogue (merging catalogues kept in different
   browsers; see catalogue/backupMerge.ts), or restore one, which replaces everything. Both ask first, saying what will
   change. Light and dark mode live in the header's theme button instead.
 
@@ -39,6 +39,13 @@ const addProblem = ref("");
 const restoreProblem = ref("");
 
 const loadProblem = computed(() => catalogue.state.loadProblem);
+
+/** Where the catalogue is kept, as the line under the Backups heading names it. */
+const storageName = computed(() =>
+  catalogue.state.storageLocation === "homeServer"
+    ? "This Home Server"
+    : "This Browser",
+);
 
 /** e.g. "12 studies and 50 tags". */
 function contentsText(contents: Catalogue): string {
@@ -191,6 +198,13 @@ async function startOver(): Promise<void> {
     <section class="panel" aria-labelledby="backup-heading">
       <h2 id="backup-heading" class="sectionTitle">Backups</h2>
       <p>
+        Stored in: <strong>{{ storageName }}</strong>
+      </p>
+      <p v-if="catalogue.state.storageLocation === 'homeServer'">
+        Every device that opens this address sees the same catalogue. Download a
+        backup now and then all the same.
+      </p>
+      <p v-else>
         Your catalogue is saved only in this browser. Clearing the browser's
         site data deletes it, so download a backup now and then.
       </p>

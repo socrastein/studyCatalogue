@@ -1,16 +1,16 @@
 /**
- * The catalogue's live state for the whole app, kept in localStorage. Views read `catalogue` reactively and change
- * it only through the store's actions, each of which saves straight away.
+ * The catalogue's live state for the whole app. Views read `catalogue` reactively and change it only through the
+ * store's actions, each of which saves straight away through a `CatalogueStorage` (catalogueStorage.ts): the
+ * browser's localStorage, or the home server when the app is served by it.
  *
  * Two problems are surfaced rather than hidden:
  * - Saved data that cannot be read is never overwritten: the app runs on an empty catalogue without saving, and
  *   `loadProblem` keeps the raw text so the person can download it before choosing to start over.
- * - A save that fails (the storage quota is full, or storage is blocked) leaves the change in memory and sets
- *   `saveProblem`, so the person knows it will be lost on reload.
+ * - A save that fails (the browser's quota is full, or the home server cannot be reached) leaves the change in
+ *   memory and sets `saveProblem`, so the person knows it is not saved yet.
  */
 import { reactive, readonly, type DeepReadonly } from "vue";
 import { newCatalogue, type Catalogue } from "../catalogue/catalogue";
-import { parseCatalogue, serializeCatalogue } from "../catalogue/serialization";
 import {
   createStudy,
   updateStudy,
@@ -30,17 +30,26 @@ import {
   type TagEditResult,
 } from "../catalogue/tagEdits";
 import { createTag, findTagByName, type Tag } from "../catalogue/tags";
+import { createBrowserStorage, STORAGE_KEY } from "./browserStorage";
+import type {
+  CatalogueStorage,
+  LoadProblem,
+  SaveEvents,
+  StorageLocation,
+  StoredCatalogue,
+} from "./catalogueStorage";
+import { showNoticeNow } from "./notice";
 
-/** The localStorage key the catalogue is saved under. */
-export const STORAGE_KEY = "studyCatalogue";
-
-/** Saved data the app could not read, kept untouched until the person decides what to do with it. */
-export type LoadProblem = { message: string; rawText: string };
+// Where the catalogue is kept moved to browserStorage.ts and catalogueStorage.ts; the browser tests read it from here
+export { STORAGE_KEY };
+export type { LoadProblem };
 
 type StoreState = {
   catalogue: Catalogue;
   loadProblem: LoadProblem | null;
   saveProblem: string | null;
+  /** Where the catalogue is kept, for Settings to say. */
+  storageLocation: StorageLocation;
 };
 
 /** The store's interface: read the state, change it only through the actions. */
@@ -55,6 +64,13 @@ export type CatalogueStore = {
      * chosen what the catalogue should be, so the unreadable data may now be overwritten.
      */
     replaceCatalogue(catalogue: Catalogue): void;
+
+    /**
+     * Picks up what storage holds now, when it is newer than what the app shows (the home server's copy after another
+     * device saved) and no change of ours is waiting; otherwise retries the waiting changes. Does nothing for the
+     * browser's storage. Called when the page becomes visible again.
+     */
+    refresh(): Promise<void>;
   };
 
 type StudyActions = {
@@ -115,18 +131,30 @@ type TagActions = {
 };
 
 /**
- * A catalogue store saving to the given storage, starting from what that storage holds. The app uses one, made by
- * `useCatalogue`; tests make their own with a fresh storage.
+ * A catalogue store saving to the given browser storage, starting from what it holds. Tests make their own with a
+ * fresh storage; the app uses `useCatalogue`.
  *
- * @param storage Where the catalogue is saved; localStorage in the app.
+ * @param storage The browser's localStorage, or a stand-in.
  */
 export function createCatalogueStore(storage: Storage): CatalogueStore {
-  const state = reactive<StoreState>(loadState(storage));
+  return createCatalogueStoreOn(createBrowserStorage(storage));
+}
 
-  /** Saves the current catalogue, unless unreadable saved data must be kept; records whether the save failed. */
+/**
+ * A catalogue store saving to the given storage, starting from what it holds.
+ *
+ * @param storage Where the catalogue is kept: the browser's, or the home server's.
+ */
+export function createCatalogueStoreOn(
+  storage: CatalogueStorage,
+): CatalogueStore {
+  const state = reactive<StoreState>(loadState(storage));
+  const events = saveEventsFor(state);
+
+  /** Saves the current catalogue, unless unreadable saved data must be kept. */
   function save(): void {
     if (state.loadProblem) return;
-    state.saveProblem = writeCatalogue(storage, state.catalogue);
+    storage.save(state.catalogue, events);
   }
 
   /** Makes the given catalogue the current one and saves it: the one way every action changes the catalogue. */
@@ -144,6 +172,20 @@ export function createCatalogueStore(storage: Storage): CatalogueStore {
       // Cleared first, so the commit's save may overwrite the unreadable data the person has chosen to replace
       state.loadProblem = null;
       commit(catalogue);
+    },
+    refresh: () => storage.refresh(events),
+  };
+}
+
+/** How storage tells the store about a finished save, or about a newer catalogue, by changing the state. */
+function saveEventsFor(state: StoreState): SaveEvents {
+  return {
+    reportSaveProblem(message) {
+      state.saveProblem = message;
+    },
+    adoptCatalogue(catalogue, notice) {
+      state.catalogue = catalogue;
+      if (notice !== null) showNoticeNow(notice);
     },
   };
 }
@@ -248,7 +290,8 @@ function commitTagEdit(commit: Commit, result: TagEditResult): string | null {
 let appStore: CatalogueStore | undefined;
 
 /**
- * The app's catalogue store, saving to localStorage. Created on first use and shared by every component after.
+ * The app's catalogue store. Created on first use, in the browser's localStorage, unless `installCatalogueStore` chose
+ * otherwise before the app mounted; shared by every component after.
  */
 export function useCatalogue(): CatalogueStore {
   appStore ??= createCatalogueStore(localStorage);
@@ -256,37 +299,26 @@ export function useCatalogue(): CatalogueStore {
 }
 
 /**
- * The starting state from storage: a new catalogue on a first visit, the saved one when it reads cleanly, and a new
- * unsaved one with the problem recorded when it does not.
+ * Chooses the store the whole app uses; called once at startup (startCatalogue.ts), before anything calls
+ * `useCatalogue`.
  */
-function loadState(storage: Storage): StoreState {
-  const rawText = storage.getItem(STORAGE_KEY);
-  if (rawText === null) {
-    return { catalogue: newCatalogue(), loadProblem: null, saveProblem: null };
-  }
-  const result = parseCatalogue(rawText);
-  if (result.kind === "parsed") {
-    return {
-      catalogue: result.catalogue,
-      loadProblem: null,
-      saveProblem: null,
-    };
-  }
-  const loadProblem = { message: result.problem, rawText };
-  return { catalogue: newCatalogue(), loadProblem, saveProblem: null };
+export function installCatalogueStore(store: CatalogueStore): void {
+  appStore = store;
 }
 
-/**
- * Writes the catalogue to storage.
- *
- * @returns null when it saved; otherwise a message saying the changes are not saved and why.
- */
-function writeCatalogue(storage: Storage, catalogue: Catalogue): string | null {
-  try {
-    storage.setItem(STORAGE_KEY, serializeCatalogue(catalogue));
-    return null;
-  } catch (error) {
-    const reason = error instanceof Error ? error.message : String(error);
-    return `Your latest changes could not be saved and will be lost when the page reloads (${reason}).`;
+/** The starting state from storage: a new catalogue on a first visit, the saved one, or an unsaved one with a problem. */
+function loadState(storage: CatalogueStorage): StoreState {
+  const stored: StoredCatalogue = storage.load();
+  const storageLocation = storage.location;
+  if (stored.kind === "loaded") {
+    const { catalogue } = stored;
+    return { catalogue, loadProblem: null, saveProblem: null, storageLocation };
   }
+  const loadProblem = stored.kind === "unreadable" ? stored.problem : null;
+  return {
+    catalogue: newCatalogue(),
+    loadProblem,
+    saveProblem: null,
+    storageLocation,
+  };
 }

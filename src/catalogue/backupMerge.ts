@@ -29,6 +29,17 @@ export type BackupMergeSummary = {
   addedTags: number;
 };
 
+/**
+ * Whether a merge changed or would change anything in the catalogue.
+ *
+ * @param summary What the merge did.
+ */
+export function changesAnything(summary: BackupMergeSummary): boolean {
+  const changes =
+    summary.addedStudies + summary.updatedStudies + summary.addedTags;
+  return changes > 0;
+}
+
 export type BackupMergeResult = {
   catalogue: Catalogue;
   summary: BackupMergeSummary;
