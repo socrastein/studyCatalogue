@@ -32,6 +32,12 @@ test("Settings has no accessibility violations", async ({ page }) => {
   await expectNoAxeViolations(page);
 });
 
+test("Settings says the catalogue is stored in this browser", async ({
+  page,
+}) => {
+  await expect(page.getByText("Stored in:")).toContainText("This Browser");
+});
+
 /** Downloads a backup from Settings and returns where Playwright saved it. */
 async function downloadBackup(page: Page): Promise<string> {
   const downloadPromise = page.waitForEvent("download");
