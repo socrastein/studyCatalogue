@@ -44,7 +44,10 @@ const form = reactive({
 });
 const saveProblem = ref("");
 const mergeTargetId = ref("");
+/** Why no target is chosen yet, shown as the Merge into field's error; "" when there is none. */
 const mergeProblem = ref("");
+/** Why the store refused the merge itself, shown as an alert in the merge section; "" when there is none. */
+const mergeRefusal = ref("");
 
 /** Tags this one may sit under: any but itself and the tags already beneath it. */
 const possibleParents = computed(() => {
@@ -83,7 +86,14 @@ async function save(): Promise<void> {
   await router.push("/tags");
 }
 
-/** After confirmation, merges this tag into the chosen one. */
+/** Remembers the chosen merge target and takes away the messages about the last attempt: they no longer apply. */
+function chooseMergeTarget(targetId: string): void {
+  mergeTargetId.value = targetId;
+  mergeProblem.value = "";
+  mergeRefusal.value = "";
+}
+
+/** After confirmation, merges this tag into the chosen one, or shows why the store refused. */
 async function merge(): Promise<void> {
   const target = mergeTargets.value.find(
     (candidate) => candidate.id === mergeTargetId.value,
@@ -92,16 +102,24 @@ async function merge(): Promise<void> {
     mergeProblem.value = "Choose the tag to merge into.";
     return;
   }
+  if (!(await confirmMergingInto(target.label))) return;
+  // Read before merging: the merged tag is gone afterwards
   const name = tag.value?.name ?? "";
-  const isConfirmed = await confirm({
-    question: `Merge into "${target.label}"?`,
-    detail: `The ${usageText.value} tagged "${name}" will be tagged "${target.label}" instead, and "${name}" will become another name for it.`,
-    confirmLabel: "Merge Tags",
-  });
-  if (!isConfirmed) return;
-  catalogue.mergeTags(props.id, target.id);
+  const refusal = catalogue.mergeTags(props.id, target.id);
+  mergeRefusal.value = refusal ?? "";
+  if (refusal !== null) return;
   showNoticeOnNextPage(`Merged "${name}" into "${target.label}".`);
   await router.push("/tags");
+}
+
+/** Asks whether to merge this tag into the target, saying what happens to the studies that use it. */
+function confirmMergingInto(targetLabel: string): Promise<boolean> {
+  const name = tag.value?.name ?? "";
+  return confirm({
+    question: `Merge into "${targetLabel}"?`,
+    detail: `The ${usageText.value} tagged "${name}" will be tagged "${targetLabel}" instead, and "${name}" will become another name for it.`,
+    confirmLabel: "Merge Tags",
+  });
 }
 
 /** After confirmation, deletes this tag. */
@@ -163,6 +181,9 @@ async function deleteThisTag(): Promise<void> {
           For duplicates. Studies move to the tag you choose, and this tag's
           names become other names for it.
         </p>
+        <p v-if="mergeRefusal" class="alert alertDanger" role="alert">
+          {{ mergeRefusal }}
+        </p>
         <FormField
           id="merge-target"
           v-slot="field"
@@ -179,7 +200,7 @@ async function deleteThisTag(): Promise<void> {
             :options="mergeOptions"
             :value="mergeTargetId"
             size="regular"
-            @change="(targetId) => (mergeTargetId = targetId)"
+            @change="chooseMergeTarget"
           />
         </FormField>
         <button type="button" class="btn btnDangerSubtle" @click="merge">

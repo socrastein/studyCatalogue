@@ -155,6 +155,18 @@ test("merging moves the studies to the kept tag after confirming", async ({
   ).toBeVisible();
 });
 
+test("the choose-a-tag message goes away once a target is chosen", async ({
+  page,
+}) => {
+  await openTag(page, "Hypertrophy");
+  await page.getByRole("button", { name: "Merge Tags" }).click();
+  await expect(page.getByText("Choose the tag to merge into.")).toBeVisible();
+  await expectNoAxeViolations(page);
+
+  await chooseDropdownOption(page, "Merge into", "Strength (Exercise Science)");
+  await expect(page.getByText("Choose the tag to merge into.")).toHaveCount(0);
+});
+
 test("deleting a tag after confirming removes it", async ({ page }) => {
   await openTag(page, "Hypertrophy");
   await page.getByRole("button", { name: "Delete Tag" }).click();
