@@ -124,6 +124,82 @@ test("a second device sees the first device's study when it returns to its tab",
   await laptop.context().close();
 });
 
+/**
+ * Starts recording what the page's toasts do: the messages in the order they appear, and the most toasts on the page at
+ * one moment. Read the record with `readToastRecord`.
+ */
+async function startRecordingToasts(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const record = { messages: [] as string[], mostAtOnce: 0 };
+    new MutationObserver(() => {
+      const shown = Array.from(document.querySelectorAll(".toast")).map(
+        (toast) => toast.textContent ?? "",
+      );
+      record.mostAtOnce = Math.max(record.mostAtOnce, shown.length);
+      for (const message of shown) {
+        if (record.messages.at(-1) !== message) record.messages.push(message);
+      }
+    }).observe(document.body, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+    });
+    (window as unknown as { toastRecord: typeof record }).toastRecord = record;
+  });
+}
+
+/** What `startRecordingToasts` has recorded so far. */
+async function readToastRecord(
+  page: Page,
+): Promise<{ messages: string[]; mostAtOnce: number }> {
+  return page.evaluate(
+    () =>
+      (
+        window as unknown as {
+          toastRecord: { messages: string[]; mostAtOnce: number };
+        }
+      ).toastRecord,
+  );
+}
+
+test("a page's toast and the app's toast asked for together are shown one after the other", async ({
+  page,
+  browser,
+  homeServer,
+  colorScheme,
+}) => {
+  await page.goto("/");
+  await addStudy(page, "Shown on the laptop");
+  await expectServerHolds(page, "Shown on the laptop", homeServer.url);
+  const laptop = await openSecondDevice(browser, homeServer.url, colorScheme);
+  await addStudy(page, "Added while the laptop copies");
+  await expectServerHolds(
+    page,
+    "Added while the laptop copies",
+    homeServer.url,
+  );
+  await startRecordingToasts(laptop);
+
+  // The browse page's own toast (a copied citation) and the app's toast (another device's changes) in the same moment
+  await laptop
+    .getByRole("article")
+    .filter({ hasText: "Shown on the laptop" })
+    .getByRole("button", { name: "APA, copy APA citation" })
+    .click();
+  await returnToTab(laptop);
+
+  await expect
+    .poll(async () => (await readToastRecord(laptop)).messages, {
+      timeout: 30_000,
+    })
+    .toEqual([
+      "APA copied to clipboard.",
+      "Updated with changes from another device.",
+    ]);
+  expect((await readToastRecord(laptop)).mostAtOnce).toBe(1);
+  await laptop.context().close();
+});
+
 test("two devices editing different studies at once both keep their edits", async ({
   page,
   browser,
