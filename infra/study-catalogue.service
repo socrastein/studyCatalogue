@@ -1,0 +1,19 @@
+# systemd USER unit for the Study Catalogue home server (see "Running at Home" in README.md).
+# It assumes the repository is at ~/repos/studyCatalogue and has been built with `npm run build:home`.
+# Install:  mkdir -p ~/.config/systemd/user && cp infra/study-catalogue.service ~/.config/systemd/user/
+#           systemctl --user daemon-reload && systemctl --user enable --now study-catalogue
+# To start it at boot without logging in:  sudo loginctl enable-linger $USER
+[Unit]
+Description=Study Catalogue home server
+After=network.target
+
+[Service]
+# %h is the home directory. npm and node live in /usr/bin on this machine.
+WorkingDirectory=%h/repos/studyCatalogue
+ExecStart=/usr/bin/npm run home:serve
+# Restart after a crash, but not forever-fast: a data file that cannot be read makes the server exit at once
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target
