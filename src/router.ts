@@ -27,14 +27,14 @@ export const router = createRouter({
     {
       path: "/studies/new",
       component: NewStudyView,
-      meta: { title: "Add a study" },
+      meta: { title: "Add a Study" },
     },
     {
       path: "/studies/:id/edit",
       component: EditStudyView,
       // The id reaches the view as a prop, so the view does not depend on the route object
       props: true,
-      meta: { title: "Edit study" },
+      meta: { title: "Edit Study" },
     },
     { path: "/tags", component: TagsView, meta: { title: "Tags" } },
     {
@@ -42,7 +42,7 @@ export const router = createRouter({
       name: "editTag",
       component: EditTagView,
       props: true,
-      meta: { title: "Edit tag" },
+      meta: { title: "Edit Tag" },
     },
     {
       path: "/review",

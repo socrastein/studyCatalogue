@@ -1,5 +1,5 @@
 /**
- * Adding a backup to the catalogue instead of replacing it (Settings, "Add a backup to this catalogue"), for joining
+ * Adding a backup to the catalogue instead of replacing it (Settings, "Add a Backup to This Catalogue"), for joining
  * catalogues kept in different browsers. Nothing already in the catalogue is ever removed. The rules, decided with
  * Matt on 2026-11-06:
  *

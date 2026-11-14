@@ -14,7 +14,7 @@ describe("navLinks", () => {
     const links = navLinks(3);
     expect(links.map((link) => link.name)).toEqual([
       "Studies",
-      "Add a study",
+      "Add a Study",
       "Tags",
       "Review Summaries (3)",
       "Settings",

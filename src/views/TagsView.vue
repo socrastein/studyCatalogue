@@ -48,15 +48,15 @@ function addTag(): void {
       <TextField
         id="new-tag-name"
         v-model="newTagName"
-        label="New tag"
+        label="New Tag"
         :error="newTagError || undefined"
       />
-      <button type="submit" class="btn btnPrimary">Add tag</button>
+      <button type="submit" class="btn btnPrimary">Add Tag</button>
     </form>
     <p class="visuallyHidden" role="status">{{ announcement }}</p>
 
     <section aria-labelledby="all-tags-heading">
-      <h2 id="all-tags-heading" class="sectionTitle">All tags</h2>
+      <h2 id="all-tags-heading" class="sectionTitle">All Tags</h2>
       <TagTree
         :tags="tags"
         :studies="studies"

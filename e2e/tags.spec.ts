@@ -12,7 +12,7 @@ async function openTag(page: Page, name: string): Promise<void> {
   await page.goto("/tags");
   await page.getByRole("link", { name, exact: true }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    `Edit tag: ${name}`,
+    `Edit Tag: ${name}`,
   );
 }
 
@@ -24,8 +24,8 @@ async function fillTagForm(page: Page, input: TagFormInput): Promise<void> {
   await page
     .getByRole("textbox", { name: "Name", exact: true })
     .fill(input.name);
-  await page.getByRole("textbox", { name: "Other names" }).fill(input.aliases);
-  const parents = page.getByRole("combobox", { name: "Sits under" });
+  await page.getByRole("textbox", { name: "Other Names" }).fill(input.aliases);
+  const parents = page.getByRole("combobox", { name: "Sits Under" });
   await parents.fill(input.parent);
   await parents.press("Enter");
 }
@@ -33,10 +33,10 @@ async function fillTagForm(page: Page, input: TagFormInput): Promise<void> {
 /** Merges the open tag into the one with this label, confirming in the dialog. */
 async function mergeInto(page: Page, targetLabel: string): Promise<void> {
   await chooseDropdownOption(page, "Merge into", targetLabel);
-  await page.getByRole("button", { name: "Merge tags" }).click();
+  await page.getByRole("button", { name: "Merge Tags" }).click();
   await page
     .getByRole("alertdialog")
-    .getByRole("button", { name: "Merge tags" })
+    .getByRole("button", { name: "Merge Tags" })
     .click();
 }
 
@@ -70,15 +70,15 @@ test("a new tag is added at the top level, and a duplicate name is refused", asy
   page,
 }) => {
   await page.goto("/tags");
-  const newTag = page.getByRole("textbox", { name: "New tag" });
+  const newTag = page.getByRole("textbox", { name: "New Tag" });
   await newTag.fill("Sleep");
-  await page.getByRole("button", { name: "Add tag" }).click();
+  await page.getByRole("button", { name: "Add Tag" }).click();
   await expect(
     page.getByRole("link", { name: "Sleep", exact: true }),
   ).toBeVisible();
 
   await newTag.fill("sleep");
-  await page.getByRole("button", { name: "Add tag" }).click();
+  await page.getByRole("button", { name: "Add Tag" }).click();
   await expect(
     page.getByText('A tag called "Sleep" already exists.'),
   ).toBeVisible();
@@ -93,7 +93,7 @@ test("a tag is renamed, given an alias and moved, and search finds it by the ali
     aliases: "muscle growth, gains",
     parent: "Strength",
   });
-  await page.getByRole("button", { name: "Save tag" }).click();
+  await page.getByRole("button", { name: "Save Tag" }).click();
 
   await expect(page).toHaveURL("/tags");
   await expect(page.getByRole("status").first()).toHaveText(
@@ -108,7 +108,7 @@ test("a name another tag has is refused with a message", async ({ page }) => {
   await page
     .getByRole("textbox", { name: "Name", exact: true })
     .fill("strength");
-  await page.getByRole("button", { name: "Save tag" }).click();
+  await page.getByRole("button", { name: "Save Tag" }).click();
   await expect(page.getByRole("alert")).toHaveText(
     'Another tag is already called "strength".',
   );
@@ -134,12 +134,12 @@ test("merging moves the studies to the kept tag after confirming", async ({
 
 test("deleting a tag after confirming removes it", async ({ page }) => {
   await openTag(page, "Hypertrophy");
-  await page.getByRole("button", { name: "Delete tag" }).click();
+  await page.getByRole("button", { name: "Delete Tag" }).click();
   const dialog = page.getByRole("alertdialog", {
     name: 'Delete the tag "Hypertrophy"?',
   });
   await expect(dialog).toContainText("It will be removed from 1 study");
-  await dialog.getByRole("button", { name: "Delete tag" }).click();
+  await dialog.getByRole("button", { name: "Delete Tag" }).click();
 
   await expect(page).toHaveURL("/tags");
   await expect(

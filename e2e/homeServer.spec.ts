@@ -30,13 +30,13 @@ async function openSecondDevice(
 async function addStudy(page: Page, title: string): Promise<void> {
   await page
     .getByRole("navigation", { name: "Main" })
-    .getByRole("link", { name: "Add a study" })
+    .getByRole("link", { name: "Add a Study" })
     .click();
   await fillInStudy(page, title);
   // A study with another title but the same DOI is taken for the same study by a merge, so each gets its own DOI
   const uniqueDoi = `10.1000/${title.toLowerCase().replaceAll(" ", "-")}`;
   await textField(page, /^DOI/).fill(uniqueDoi);
-  await page.getByRole("button", { name: "Add study" }).click();
+  await page.getByRole("button", { name: "Add Study" }).click();
   await expect(page.getByRole("link", { name: title })).toBeVisible();
 }
 

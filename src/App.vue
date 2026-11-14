@@ -45,7 +45,7 @@ watch(
 </script>
 
 <template>
-  <a class="skipLink" href="#main">Skip to main content</a>
+  <a class="skipLink" href="#main">Skip to Main Content</a>
   <header class="catalogueHeader">
     <RouterLink to="/" class="siteName">{{ APP_NAME }}</RouterLink>
     <PhoneMenu v-if="isPhoneWidth" />

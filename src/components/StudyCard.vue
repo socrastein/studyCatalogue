@@ -137,7 +137,7 @@ async function copy(
         target="_blank"
         rel="noopener noreferrer"
       >
-        Open paper<span class="visuallyHidden"> (opens in a new tab)</span>
+        Open Paper<span class="visuallyHidden"> (opens in a new tab)</span>
       </a>
       <RouterLink :to="`/studies/${study.id}/edit`">
         Edit<span class="visuallyHidden"> {{ study.title }}</span>

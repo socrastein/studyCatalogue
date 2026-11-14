@@ -68,9 +68,9 @@ copy back in (a merge only adds), so reload before editing.
 
 ### Moving an existing browser catalogue to the home server
 
-1. In the old browser (the one that holds the catalogue), open Settings and choose "Download a backup".
+1. In the old browser (the one that holds the catalogue), open Settings and choose "Download a Backup".
 2. Open the home server's address (see above) in any browser and go to Settings.
-3. Under "Add a backup to this catalogue", choose the downloaded file and confirm.
+3. Under "Add a Backup to This Catalogue", choose the downloaded file and confirm.
 
 The home server's catalogue now holds everything. Keep the backup file, and leave the old browser's copy alone until
 you have checked the studies and tags.

@@ -177,7 +177,7 @@ function createTag(name: string): void {
       <RadioGroup
         id="study-design"
         v-model="draft.design"
-        legend="Study design"
+        legend="Study Design"
         :values="STUDY_DESIGNS"
         :error="errors.design"
       />
@@ -199,13 +199,13 @@ function createTag(name: string): void {
       <CheckboxGroup
         id="study-age-groups"
         v-model="draft.ageGroups"
-        legend="Age group"
+        legend="Age Group"
         :values="AGE_GROUPS"
       />
       <CheckboxGroup
         id="study-training-statuses"
         v-model="draft.trainingStatuses"
-        legend="Training status"
+        legend="Training Status"
         :values="TRAINING_STATUSES"
       />
       <CheckboxGroup

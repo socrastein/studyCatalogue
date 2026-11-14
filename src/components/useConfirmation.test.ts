@@ -7,7 +7,7 @@ import { useConfirmation, type ConfirmationQuestion } from "./useConfirmation";
 const DELETE_QUESTION: ConfirmationQuestion = {
   question: "Delete this study?",
   detail: "This cannot be undone.",
-  confirmLabel: "Delete study",
+  confirmLabel: "Delete Study",
 };
 
 describe("useConfirmation", () => {

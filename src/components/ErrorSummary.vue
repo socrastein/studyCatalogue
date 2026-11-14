@@ -36,7 +36,7 @@ defineExpose({ focus });
     tabindex="-1"
     aria-labelledby="error-summary-title"
   >
-    <h2 id="error-summary-title" class="h6">There is a problem</h2>
+    <h2 id="error-summary-title" class="h6">There Is a Problem</h2>
     <ul>
       <li v-for="item in items" :key="item.fieldId">
         <a :href="`#${item.fieldId}`" @click.prevent="focusField(item.fieldId)">

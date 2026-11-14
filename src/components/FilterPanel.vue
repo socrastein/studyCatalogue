@@ -91,7 +91,7 @@ function clearFilters(): void {
     <CheckboxGroup
       id="filter-design"
       v-model="designs"
-      legend="Study design"
+      legend="Study Design"
       :values="STUDY_DESIGNS"
     />
     <CheckboxGroup
@@ -103,13 +103,13 @@ function clearFilters(): void {
     <CheckboxGroup
       id="filter-age"
       v-model="ageGroups"
-      legend="Age group"
+      legend="Age Group"
       :values="AGE_GROUPS"
     />
     <CheckboxGroup
       id="filter-training"
       v-model="trainingStatuses"
-      legend="Training status"
+      legend="Training Status"
       :values="TRAINING_STATUSES"
     />
     <CheckboxGroup
@@ -124,7 +124,7 @@ function clearFilters(): void {
       class="btn btnSubtle"
       @click="clearFilters"
     >
-      Clear all filters
+      Clear All Filters
     </button>
   </div>
 </template>

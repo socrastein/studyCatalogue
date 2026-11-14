@@ -72,11 +72,11 @@ test("finds hypertrophy meta-analyses in trained lifters, and puts the search in
 }) => {
   await filterByTopic(page, "Hypertrophy");
   await page
-    .getByRole("group", { name: "Training status" })
+    .getByRole("group", { name: "Training Status" })
     .getByRole("checkbox", { name: "Trained", exact: true })
     .check();
   await page
-    .getByRole("group", { name: "Study design" })
+    .getByRole("group", { name: "Study Design" })
     .getByRole("checkbox", { name: "Meta-analysis" })
     .check();
 
@@ -103,7 +103,7 @@ test("finds joint pain in older adults, and notes the study that does not report
 }) => {
   await page.getByRole("searchbox", { name: "Search" }).fill("joint pain");
   await page
-    .getByRole("group", { name: "Age group" })
+    .getByRole("group", { name: "Age Group" })
     .getByRole("checkbox", { name: "Older adults (65+)" })
     .check();
 
@@ -127,7 +127,7 @@ test("a topic on a card links to the list filtered by it", async ({ page }) => {
 test("shows a way out when nothing matches", async ({ page }) => {
   await page.getByRole("searchbox", { name: "Search" }).fill("zebrafish");
   await expect(page.getByText("No studies match these filters.")).toBeVisible();
-  await page.getByRole("button", { name: "Clear all filters" }).first().click();
+  await page.getByRole("button", { name: "Clear All Filters" }).first().click();
   await expect(shownTitles(page)).toHaveCount(4);
 });
 
@@ -172,7 +172,7 @@ test("the browse page has no accessibility violations, with and without filters"
   await expectNoAxeViolations(page);
   await page.getByRole("searchbox", { name: "Search" }).fill("joint");
   await page
-    .getByRole("group", { name: "Age group" })
+    .getByRole("group", { name: "Age Group" })
     .getByRole("checkbox", { name: "Older adults (65+)" })
     .check();
   await page.getByRole("article").first().getByText("Abstract").click();
@@ -228,7 +228,7 @@ test("the list can be sorted, and the order stays in the URL alongside the filte
   const newestFirst = ["Androulakis 2021", "Schoenfeld 2017", "Krieger 2010"];
   await expect(titles).toHaveText(newestFirst);
 
-  await chooseDropdownOption(page, "Sort by", "First author, A to Z");
+  await chooseDropdownOption(page, "Sort By", "First author, A to Z");
   await expect(page).toHaveURL("/?sort=author");
   const byAuthor = ["Androulakis 2021", "Krieger 2010", "Schoenfeld 2017"];
   await expect(titles).toHaveText(byAuthor);

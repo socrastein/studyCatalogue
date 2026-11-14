@@ -100,7 +100,7 @@ function confirmAdding(summary: BackupMergeSummary): Promise<boolean> {
   return confirm({
     question: "Add this backup to your catalogue?",
     detail: mergeConfirmationDetail(summary),
-    confirmLabel: "Add backup",
+    confirmLabel: "Add Backup",
   });
 }
 
@@ -124,7 +124,7 @@ function confirmReplacingWith(backup: Catalogue): Promise<boolean> {
   return confirm({
     question: "Restore this backup?",
     detail: `The backup holds ${contentsText(backup)}. It will replace the current ${current}. This cannot be undone.`,
-    confirmLabel: "Replace catalogue",
+    confirmLabel: "Replace Catalogue",
   });
 }
 
@@ -134,7 +134,7 @@ async function startOver(): Promise<void> {
     question: "Start a new catalogue?",
     detail:
       "The unreadable data will be replaced by an empty catalogue. Download it first if you may want it.",
-    confirmLabel: "Start over",
+    confirmLabel: "Start Over",
   });
   if (!isConfirmed) return;
   catalogue.replaceCatalogue(newCatalogue());
@@ -152,7 +152,7 @@ async function startOver(): Promise<void> {
       aria-labelledby="unreadable-heading"
     >
       <h2 id="unreadable-heading" class="sectionTitle">
-        Your saved catalogue could not be read
+        Your Saved Catalogue Could Not Be Read
       </h2>
       <p>{{ loadProblem.message }}</p>
       <p>
@@ -165,10 +165,10 @@ async function startOver(): Promise<void> {
           class="btn btnSecondary"
           @click="downloadUnreadableData"
         >
-          Download the unreadable data
+          Download the Unreadable Data
         </button>
         <button type="button" class="btn btnDangerSubtle" @click="startOver">
-          Start a new catalogue
+          Start a New Catalogue
         </button>
       </div>
     </section>
@@ -209,21 +209,21 @@ async function startOver(): Promise<void> {
         site data deletes it, so download a backup now and then.
       </p>
       <button type="button" class="btn btnPrimary" @click="downloadBackup">
-        Download a backup
+        Download a Backup
       </button>
       <!-- Not offered while the saved catalogue cannot be read: what is in memory then is not what was saved, and
            adding to it would write over the unreadable data -->
       <BackupFileField
         v-if="!loadProblem"
         id="add-backup-file"
-        label="Add a backup to this catalogue"
+        label="Add a Backup to This Catalogue"
         hint="Adds the backup's studies and tags to the ones here; a study in both keeps its latest edit. Nothing is deleted."
         :error="addProblem"
         @chosen="addBackup"
       />
       <BackupFileField
         id="restore-file"
-        label="Replace this catalogue with a backup"
+        label="Replace This Catalogue with a Backup"
         hint="Replaces the whole catalogue with the backup's contents."
         :error="restoreProblem"
         @chosen="restoreBackup"

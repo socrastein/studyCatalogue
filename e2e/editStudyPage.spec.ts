@@ -43,7 +43,7 @@ async function expectEditPageFilledIn(page: Page): Promise<void> {
   await page.goto("/");
   await page.getByRole("link", { name: "A study with a summary" }).click();
   await expectInBrowser(
-    page.getByRole("heading", { level: 1, name: "Edit study" }),
+    page.getByRole("heading", { level: 1, name: "Edit Study" }),
   ).toBeVisible();
   await expectInBrowser(textField(page, /^Title$/)).toHaveValue(
     "A study with a summary",

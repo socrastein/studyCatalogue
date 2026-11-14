@@ -127,7 +127,7 @@ function clearFilters(): void {
   <h1 tabindex="-1" class="pageTitle h3">Studies</h1>
 
   <p v-if="allStudies.length === 0" class="center">
-    No studies yet. <RouterLink to="/studies/new">Add a study</RouterLink>
+    No studies yet. <RouterLink to="/studies/new">Add a Study</RouterLink>
   </p>
 
   <div v-else class="browseLayout">
@@ -148,12 +148,12 @@ function clearFilters(): void {
       <h2 id="results-heading" class="visuallyHidden">Results</h2>
       <div class="resultsBar">
         <p class="resultCount" role="status">{{ countText }}</p>
-        <FormField id="browse-sort" v-slot="field" label="Sort by" is-combobox>
+        <FormField id="browse-sort" v-slot="field" label="Sort By" is-combobox>
           <!-- Named by aria-label, not aria-labelledby: a named getByRole on aria-labelledby crashes Firefox under axe (microsoft/playwright#43967). Drop the two lines when Playwright ships a fixed Firefox. -->
           <DropdownSelect
             v-bind="field"
             :labelled-by="undefined"
-            label="Sort by"
+            label="Sort By"
             :combo-id="field.id"
             :options="SORT_OPTIONS"
             :value="sortOrder"
@@ -168,7 +168,7 @@ function clearFilters(): void {
       <p v-if="sortedMatches.length === 0" class="noMatches">
         No studies match these filters.
         <button type="button" class="btn btnSubtle" @click="clearFilters">
-          Clear all filters
+          Clear All Filters
         </button>
       </p>
       <ol class="studyList plainList">

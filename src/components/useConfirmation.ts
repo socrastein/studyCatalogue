@@ -16,7 +16,7 @@ export type ConfirmationQuestion = {
   question: string;
   /** What answering yes will do, e.g. "It will be removed from the catalogue. This cannot be undone." */
   detail: string;
-  /** The words on the button that goes ahead, naming the action: "Delete study", never "OK". */
+  /** The words on the button that goes ahead, naming the action: "Delete Study", never "OK". */
   confirmLabel: string;
 };
 

@@ -10,17 +10,17 @@ import { addTagsByKeyboard, fillInStudy, textField } from "./studyFormSteps";
 /** Adds a complete study and opens its edit page from the study list. */
 async function addStudyAndOpenIt(page: Page, title: string): Promise<void> {
   await fillInStudy(page, title);
-  await page.getByRole("button", { name: "Add study" }).click();
+  await page.getByRole("button", { name: "Add Study" }).click();
   await page.getByRole("link", { name: title }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Edit study",
+    "Edit Study",
   );
 }
 
 /** The error summary box, found by its heading. */
 function errorSummary(page: Page) {
   return page
-    .getByRole("heading", { name: "There is a problem" })
+    .getByRole("heading", { name: "There Is a Problem" })
     .locator("..");
 }
 
@@ -32,7 +32,7 @@ test("a new study is saved and listed, with a confirmation", async ({
   page,
 }) => {
   await fillInStudy(page, "Weekly volume and muscle mass");
-  await page.getByRole("button", { name: "Add study" }).click();
+  await page.getByRole("button", { name: "Add Study" }).click();
 
   await expect(page).toHaveURL("/");
   await expect(page.getByRole("status").first()).toHaveText(
@@ -89,7 +89,7 @@ test("the tag combobox adds an existing tag, creates a new one, and removes one"
 test("submitting an empty form lists every problem in a focused summary", async ({
   page,
 }) => {
-  await page.getByRole("button", { name: "Add study" }).click();
+  await page.getByRole("button", { name: "Add Study" }).click();
 
   await expect(errorSummary(page)).toBeFocused();
   await expect(errorSummary(page).getByRole("link")).toHaveText([
@@ -109,7 +109,7 @@ test("submitting an empty form lists every problem in a focused summary", async 
 test("a link in the error summary puts the cursor in its field", async ({
   page,
 }) => {
-  await page.getByRole("button", { name: "Add study" }).click();
+  await page.getByRole("button", { name: "Add Study" }).click();
   await errorSummary(page)
     .getByRole("link", { name: "Enter the year it was published." })
     .click();
@@ -128,7 +128,7 @@ test("an edited study is saved with its changes", async ({ page }) => {
   await addStudyAndOpenIt(page, "Original title");
   await expect(textField(page, /^Year$/)).toHaveValue("2017");
   await textField(page, /^Title$/).fill("Edited title");
-  await page.getByRole("button", { name: "Save changes" }).click();
+  await page.getByRole("button", { name: "Save Changes" }).click();
 
   await expect(page.getByRole("status").first()).toHaveText(
     'Saved changes to "Edited title".',
@@ -138,11 +138,11 @@ test("an edited study is saved with its changes", async ({ page }) => {
 
 test("a study is deleted after confirming in the dialog", async ({ page }) => {
   await addStudyAndOpenIt(page, "Delete me");
-  await page.getByRole("button", { name: "Delete study" }).click();
+  await page.getByRole("button", { name: "Delete Study" }).click();
   const dialog = page.getByRole("alertdialog", { name: "Delete this study?" });
   await expect(dialog.getByRole("button", { name: "Cancel" })).toBeFocused();
   await expectNoAxeViolations(page);
-  await dialog.getByRole("button", { name: "Delete study" }).click();
+  await dialog.getByRole("button", { name: "Delete Study" }).click();
 
   await expect(page).toHaveURL("/");
   await expect(page.getByRole("status").first()).toHaveText(
@@ -155,11 +155,11 @@ test("cancelling the delete dialog keeps the study and returns focus", async ({
   page,
 }) => {
   await addStudyAndOpenIt(page, "Keep me");
-  await page.getByRole("button", { name: "Delete study" }).click();
+  await page.getByRole("button", { name: "Delete Study" }).click();
   await page.keyboard.press("Escape");
 
   await expect(
-    page.getByRole("button", { name: "Delete study" }),
+    page.getByRole("button", { name: "Delete Study" }),
   ).toBeFocused();
   await page.goto("/");
   await expect(page.getByRole("link", { name: "Keep me" })).toBeVisible();
@@ -170,6 +170,6 @@ test("an edit link to a missing study says it was not found", async ({
 }) => {
   await page.goto("/studies/does-not-exist/edit");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Study not found",
+    "Study Not Found",
   );
 });

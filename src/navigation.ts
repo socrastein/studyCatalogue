@@ -8,7 +8,7 @@ export type NavLink = { name: string; path: string };
  */
 export const NAV_LINKS: readonly NavLink[] = [
   { name: "Studies", path: "/" },
-  { name: "Add a study", path: "/studies/new" },
+  { name: "Add a Study", path: "/studies/new" },
   { name: "Tags", path: "/tags" },
   { name: "Settings", path: "/settings" },
 ];

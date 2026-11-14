@@ -96,7 +96,7 @@ async function merge(): Promise<void> {
   const isConfirmed = await confirm({
     question: `Merge into "${target.label}"?`,
     detail: `The ${usageText.value} tagged "${name}" will be tagged "${target.label}" instead, and "${name}" will become another name for it.`,
-    confirmLabel: "Merge tags",
+    confirmLabel: "Merge Tags",
   });
   if (!isConfirmed) return;
   catalogue.mergeTags(props.id, target.id);
@@ -110,7 +110,7 @@ async function deleteThisTag(): Promise<void> {
   const isConfirmed = await confirm({
     question: `Delete the tag "${name}"?`,
     detail: `It will be removed from ${usageText.value}, and any subtopics will move up a level. This cannot be undone.`,
-    confirmLabel: "Delete tag",
+    confirmLabel: "Delete Tag",
   });
   if (!isConfirmed) return;
   catalogue.deleteTag(props.id);
@@ -121,7 +121,7 @@ async function deleteThisTag(): Promise<void> {
 
 <template>
   <template v-if="tag">
-    <h1 tabindex="-1" class="pageTitle h3">Edit tag: {{ tag.name }}</h1>
+    <h1 tabindex="-1" class="pageTitle h3">Edit Tag: {{ tag.name }}</h1>
     <div class="editTagPage">
       <p>
         Used by
@@ -139,26 +139,26 @@ async function deleteThisTag(): Promise<void> {
         <TextField
           id="tag-aliases"
           v-model="form.aliases"
-          label="Other names"
+          label="Other Names"
           hint="Names that should also find this tag, separated by commas, e.g. muscle growth, muscle size"
           is-optional
         />
         <TagCombobox
           id="tag-parents"
           v-model="form.parentIds"
-          label="Sits under"
+          label="Sits Under"
           hint="Leave empty for a top-level topic. Tags beneath this one are not offered."
           :tags="possibleParents"
           :allow-create="false"
         />
         <div class="actions">
-          <button type="submit" class="btn btnPrimary">Save tag</button>
+          <button type="submit" class="btn btnPrimary">Save Tag</button>
           <RouterLink to="/tags">Cancel</RouterLink>
         </div>
       </form>
 
       <section class="panel" aria-labelledby="merge-heading">
-        <h2 id="merge-heading" class="sectionTitle">Merge into another tag</h2>
+        <h2 id="merge-heading" class="sectionTitle">Merge into Another Tag</h2>
         <p class="textMuted">
           For duplicates. Studies move to the tag you choose, and this tag's
           names become other names for it.
@@ -183,18 +183,18 @@ async function deleteThisTag(): Promise<void> {
           />
         </FormField>
         <button type="button" class="btn btnDangerSubtle" @click="merge">
-          Merge tags
+          Merge Tags
         </button>
       </section>
 
       <section class="panel" aria-labelledby="delete-heading">
-        <h2 id="delete-heading" class="sectionTitle">Delete this tag</h2>
+        <h2 id="delete-heading" class="sectionTitle">Delete This Tag</h2>
         <button
           type="button"
           class="btn btnDangerSubtle"
           @click="deleteThisTag"
         >
-          Delete tag
+          Delete Tag
         </button>
       </section>
     </div>
@@ -206,7 +206,7 @@ async function deleteThisTag(): Promise<void> {
     />
   </template>
   <template v-else>
-    <h1 tabindex="-1" class="pageTitle h3">Tag not found</h1>
+    <h1 tabindex="-1" class="pageTitle h3">Tag Not Found</h1>
     <p class="center">
       There is no tag at this address. It may have been merged or deleted.
       <RouterLink to="/tags">Back to the tags</RouterLink>

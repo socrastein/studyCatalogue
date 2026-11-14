@@ -8,7 +8,7 @@ import type { Page } from "@playwright/test";
  * Opens the drop-down with this accessible name and clicks the option with this label.
  *
  * @param page The page the drop-down is on.
- * @param dropdownName The drop-down's label, e.g. "Sort by".
+ * @param dropdownName The drop-down's label, e.g. "Sort By".
  * @param optionLabel The option's visible label, e.g. "First author, A to Z".
  */
 export async function chooseDropdownOption(

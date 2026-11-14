@@ -41,7 +41,7 @@ test("Settings says the catalogue is stored in this browser", async ({
 /** Downloads a backup from Settings and returns where Playwright saved it. */
 async function downloadBackup(page: Page): Promise<string> {
   const downloadPromise = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Download a backup" }).click();
+  await page.getByRole("button", { name: "Download a Backup" }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toMatch(
     /^study-catalogue-\d{4}-\d{2}-\d{2}\.json$/,
@@ -61,7 +61,7 @@ test("a backup is added to the catalogue after confirming, keeping what was here
   await addInput(page).setInputFiles(backupPath);
   const dialog = page.getByRole("alertdialog");
   await expect(dialog).toContainText("It adds 1 new study.");
-  await dialog.getByRole("button", { name: "Add backup" }).click();
+  await dialog.getByRole("button", { name: "Add Backup" }).click();
 
   await expect(page).toHaveURL("/");
   await expect(page.getByRole("status").first()).toContainText("1 new study");
@@ -102,7 +102,7 @@ test("a downloaded backup restores the catalogue after confirming", async ({
     name: "Restore this backup?",
   });
   await expect(dialog).toContainText("The backup holds 1 study");
-  await dialog.getByRole("button", { name: "Replace catalogue" }).click();
+  await dialog.getByRole("button", { name: "Replace Catalogue" }).click();
 
   await expect(page).toHaveURL("/");
   await expect(
@@ -137,12 +137,12 @@ test("unreadable saved data is flagged on every page, with a link to recover it"
 }) => {
   await breakSavedData(page);
   await expect(
-    page.getByText("Your saved catalogue could not be read"),
+    page.getByText("Your Saved Catalogue Could Not Be Read"),
   ).toBeVisible();
   await page.getByRole("link", { name: "Recover it in Settings" }).click();
   await expect(
     page.getByRole("heading", {
-      name: "Your saved catalogue could not be read",
+      name: "Your Saved Catalogue Could Not Be Read",
     }),
   ).toBeVisible();
 });
@@ -155,10 +155,10 @@ test("unreadable saved data is kept until the person starts over", async ({
   expect(
     await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY),
   ).toBe("{broken");
-  await page.getByRole("button", { name: "Start a new catalogue" }).click();
+  await page.getByRole("button", { name: "Start a New Catalogue" }).click();
   await page
     .getByRole("alertdialog")
-    .getByRole("button", { name: "Start over" })
+    .getByRole("button", { name: "Start Over" })
     .click();
 
   await expect(page.getByText("No studies yet.")).toBeVisible();

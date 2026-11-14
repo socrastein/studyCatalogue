@@ -39,7 +39,7 @@ async function deleteStudy(): Promise<void> {
   const isConfirmed = await confirm({
     question: "Delete this study?",
     detail: `"${title}" will be removed from the catalogue. This cannot be undone.`,
-    confirmLabel: "Delete study",
+    confirmLabel: "Delete Study",
   });
   if (!isConfirmed) return;
   catalogue.deleteStudy(props.id);
@@ -50,11 +50,11 @@ async function deleteStudy(): Promise<void> {
 
 <template>
   <template v-if="study">
-    <h1 tabindex="-1" class="pageTitle h3">Edit study</h1>
+    <h1 tabindex="-1" class="pageTitle h3">Edit Study</h1>
     <StudyForm
       :key="study.id"
       :initial-draft="draftFromDetails(study)"
-      submit-label="Save changes"
+      submit-label="Save Changes"
       @save="saveStudy"
     >
       <template #extraActions>
@@ -63,7 +63,7 @@ async function deleteStudy(): Promise<void> {
           class="btn btnDangerSubtle deleteButton"
           @click="deleteStudy"
         >
-          Delete study
+          Delete Study
         </button>
       </template>
     </StudyForm>
@@ -75,7 +75,7 @@ async function deleteStudy(): Promise<void> {
     />
   </template>
   <template v-else>
-    <h1 tabindex="-1" class="pageTitle h3">Study not found</h1>
+    <h1 tabindex="-1" class="pageTitle h3">Study Not Found</h1>
     <p class="center">
       There is no study at this address. It may have been deleted.
       <RouterLink to="/">Back to the study list</RouterLink>

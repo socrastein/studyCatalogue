@@ -10,7 +10,7 @@ import { openWithSummaries, studyDetails } from "./seedCatalogue";
 
 const PAGES = [
   { link: "Studies", path: "/", heading: "Studies" },
-  { link: "Add a study", path: "/studies/new", heading: "Add a study" },
+  { link: "Add a Study", path: "/studies/new", heading: "Add a Study" },
   { link: "Tags", path: "/tags", heading: "Tags" },
   { link: "Settings", path: "/settings", heading: "Settings" },
 ];
@@ -48,7 +48,7 @@ test("the skip link jumps past the navigation to the page content", async ({
 }) => {
   await page.goto("/");
   await page.keyboard.press("Tab");
-  const skipLink = page.getByRole("link", { name: "Skip to main content" });
+  const skipLink = page.getByRole("link", { name: "Skip to Main Content" });
   await expect(skipLink).toBeFocused();
   await skipLink.press("Enter");
   await expect(page).toHaveURL(/#main$/);

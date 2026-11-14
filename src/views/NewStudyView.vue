@@ -21,10 +21,10 @@ async function addStudy(details: StudyDetails): Promise<void> {
 </script>
 
 <template>
-  <h1 tabindex="-1" class="pageTitle h3">Add a study</h1>
+  <h1 tabindex="-1" class="pageTitle h3">Add a Study</h1>
   <StudyForm
     :initial-draft="emptyDraft()"
-    submit-label="Add study"
+    submit-label="Add Study"
     @save="addStudy"
   />
 </template>
