@@ -11,6 +11,7 @@ import {
   isAwaitingReview,
   rejectSummary,
   studiesAwaitingReview,
+  studiesInReviewOrder,
   withSummary,
 } from "./summary";
 import { exampleStudyDetails } from "./testFixtures";
@@ -123,5 +124,61 @@ describe("rejectSummary", () => {
     expect(rejected.abstract).toBe(study.abstract);
     expect(rejected.title).toBe(study.title);
     expect(rejected.updatedAt).toBe("2026-11-03T10:00:00.000Z");
+  });
+});
+
+describe("studiesInReviewOrder", () => {
+  /** Three studies with drafts, in catalogue order a, b, c, and one with none. */
+  function threeDrafts() {
+    const make = (title: string) =>
+      withSummary(
+        createStudy(exampleStudyDetails({ title }), CREATED),
+        createDraftSummary(`${title} draft`, "abstract", DRAFTED),
+        DRAFTED,
+      );
+    return [
+      make("a"),
+      make("b"),
+      createStudy(exampleStudyDetails({ title: "none" }), CREATED),
+      make("c"),
+    ];
+  }
+  const titles = (studies: readonly { title: string }[]) =>
+    studies.map((study) => study.title);
+
+  it("is the catalogue's order of drafts when nothing was skipped", () => {
+    expect(titles(studiesInReviewOrder(threeDrafts(), []))).toEqual([
+      "a",
+      "b",
+      "c",
+    ]);
+  });
+
+  it("puts a skipped draft after the rest", () => {
+    const studies = threeDrafts();
+    const skippedA = [studies[0]?.id ?? ""];
+    expect(titles(studiesInReviewOrder(studies, skippedA))).toEqual([
+      "b",
+      "c",
+      "a",
+    ]);
+  });
+
+  it("puts the skipped drafts last, the longest ago skipped first", () => {
+    const studies = threeDrafts();
+    const [a, b, , c] = studies;
+    const skipped = [b?.id ?? "", a?.id ?? ""];
+    expect(titles(studiesInReviewOrder(studies, skipped))).toEqual([
+      "c",
+      "b",
+      "a",
+    ]);
+    expect(c).toBeDefined();
+  });
+
+  it("ignores a skipped id whose draft is gone", () => {
+    expect(titles(studiesInReviewOrder(threeDrafts(), ["no-such-id"]))).toEqual(
+      ["a", "b", "c"],
+    );
   });
 });

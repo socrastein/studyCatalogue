@@ -14,10 +14,14 @@ import TextField from "./TextField.vue";
 const props = defineProps<{
   /** The study to review; it has a draft summary. */
   study: Study;
+  /** Whether another draft waits to be shown instead: skipping the only one would change nothing. */
+  canSkip: boolean;
 }>();
 
 const emit = defineEmits<{
   approve: [];
+  /** Put this draft at the end of the queue for this visit. */
+  skip: [];
   /** The edited words, not empty. */
   saveText: [text: string];
   reject: [];
@@ -30,6 +34,16 @@ const SOURCE_TEXT: Record<SummarySource, string> = {
 };
 
 const draft = computed(() => props.study.summary);
+
+/** Where the draft came from, naming the PDF for a full-text draft so it can be opened and checked. */
+const sourceText = computed(() => {
+  const summary = draft.value;
+  if (summary === undefined) return "";
+  const base = SOURCE_TEXT[summary.source];
+  if (summary.source !== "fullText" || summary.sourceFile === undefined)
+    return base;
+  return `${base} File: ${summary.sourceFile}`;
+});
 const citation = computed(() => formatApa(props.study).plainText);
 const isEditing = ref(false);
 const editedText = ref("");
@@ -79,7 +93,7 @@ defineExpose({
     <div class="columns">
       <section aria-labelledby="draft-heading">
         <h3 id="draft-heading" class="partTitle">Draft Summary</h3>
-        <p v-if="draft" class="textMuted">{{ SOURCE_TEXT[draft.source] }}</p>
+        <p v-if="draft" class="textMuted">{{ sourceText }}</p>
         <p v-if="!isEditing" class="draftText">{{ draft?.text }}</p>
         <form v-else class="editor" @submit.prevent="saveEditing">
           <TextField
@@ -120,6 +134,14 @@ defineExpose({
         @click="startEditing"
       >
         Edit
+      </button>
+      <button
+        v-if="canSkip"
+        type="button"
+        class="btn btnSecondary"
+        @click="emit('skip')"
+      >
+        Skip
       </button>
       <button
         type="button"

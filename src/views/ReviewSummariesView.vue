@@ -11,6 +11,7 @@ import SummaryReviewCard from "../components/SummaryReviewCard.vue";
 import { useConfirmation } from "../components/useConfirmation";
 import { useCatalogue } from "../stores/catalogueStore";
 import { showNoticeNow } from "../stores/notice";
+import { studiesInReviewOrder } from "../catalogue/summary";
 import { useSummariesAwaitingReview } from "../stores/summaryReview";
 
 const catalogue = useCatalogue();
@@ -18,8 +19,16 @@ const awaitingReview = useSummariesAwaitingReview();
 const { question: pendingQuestion, ask: confirm, answer } = useConfirmation();
 const card = ref<InstanceType<typeof SummaryReviewCard> | null>(null);
 
-/** The study being reviewed: the first with a draft; the one after it is shown once this one is dealt with. */
-const current = computed(() => awaitingReview.value[0]);
+/** The studies skipped on this visit, in the order skipped; nothing is saved, so the next visit starts afresh. */
+const skippedIds = ref<string[]>([]);
+
+/** The drafts in the order to show them: the skipped ones after the rest. */
+const queue = computed(() =>
+  studiesInReviewOrder(awaitingReview.value, skippedIds.value),
+);
+
+/** The study being reviewed: the first of the queue; the one after it is shown once this one is dealt with. */
+const current = computed(() => queue.value[0]);
 
 /** e.g. "3 summaries left to review", "1 summary left to review". */
 function remainingText(count: number): string {
@@ -41,6 +50,21 @@ async function approve(): Promise<void> {
   if (study === undefined) return;
   catalogue.approveSummary(study.id);
   await reportAndMoveOn(`Approved the summary of "${study.title}".`);
+}
+
+/** Puts the draft at the end of the queue for this visit, and moves on to the next. */
+async function skip(): Promise<void> {
+  const study = current.value;
+  if (study === undefined) return;
+  skippedIds.value = [
+    ...skippedIds.value.filter((id) => id !== study.id),
+    study.id,
+  ];
+  showNoticeNow(
+    `Skipped "${study.title}". ${remainingText(awaitingReview.value.length)}.`,
+  );
+  await nextTick();
+  card.value?.focusTitle();
 }
 
 /** Saves the edited words; the draft stays up for review (and approval) afterwards. */
@@ -75,7 +99,9 @@ async function reject(): Promise<void> {
         :key="current.id"
         ref="card"
         :study="current"
+        :can-skip="awaitingReview.length > 1"
         @approve="approve"
+        @skip="skip"
         @save-text="saveText"
         @reject="reject"
       />

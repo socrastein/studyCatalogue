@@ -51,6 +51,8 @@ allows git dependencies for this project's own `package.json` only). `src/main.t
   never written by the app; drafts arrive in a backup merged in Settings. Editing an approved summary keeps it approved;
   a merge that replaces it with a newer draft does not (`backupMerge.ts`). Every change stamps `updatedAt`, which is how
   merges pick the newer copy.
+- A full-text draft names the PDF it was written from (`summary.sourceFile`), shown on the review screen and never
+  exported. Skip on that screen only reorders the queue for the visit; nothing is saved.
 - Saved format is schema v2; v1 data still loads unchanged (`serialization.ts`).
 - "Export for the Website" (`catalogue/websiteExport.ts`) is an explicit allow-list: a field is published only if the
   export names it, so a field added to `Study` stays private by default. Never spread a study into the export, and never

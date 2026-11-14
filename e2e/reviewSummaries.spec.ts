@@ -77,6 +77,82 @@ test("the page shows the draft beside the abstract and the citation, with where 
   await expect(page.getByText("The second draft.")).toHaveCount(0);
 });
 
+test("a full-text draft names the PDF it was written from, an abstract draft does not", async ({
+  page,
+}) => {
+  await openWithSummaries(page, [
+    {
+      details: studyDetails({ title: "From a PDF", doi: "10.1000/pdf" }),
+      summary: {
+        ...createDraftSummary("Pdf draft.", "fullText", WHEN),
+        sourceFile: "(Hall, 2018) Carbohydrate Insulin Model.pdf",
+      },
+    },
+    {
+      details: studyDetails({ title: "From an abstract", doi: "10.1000/abs" }),
+      summary: createDraftSummary("Abstract draft.", "abstract", WHEN),
+    },
+  ]);
+  await page.goto("/review");
+  await expect(
+    page.getByText(
+      "Written from the full text. File: (Hall, 2018) Carbohydrate Insulin Model.pdf",
+    ),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Skip" }).click();
+  await expect(page.getByText("Written from the abstract.")).toBeVisible();
+  await expect(page.getByText(/File:/)).toHaveCount(0);
+});
+
+test("Skip puts the draft at the end of the queue for this visit and saves nothing", async ({
+  page,
+}) => {
+  await openWithTwoDrafts(page);
+  await page.goto("/review");
+  const before = await page.evaluate(
+    (key) => localStorage.getItem(key),
+    STORAGE_KEY,
+  );
+
+  await page.getByRole("button", { name: "Skip" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Second drafted study" }),
+  ).toBeFocused();
+  await expect(page.getByRole("status").first()).toContainText(
+    'Skipped "First drafted study".',
+  );
+  await expect(
+    page.getByText("2 summaries left to review", { exact: true }),
+  ).toBeVisible();
+
+  // Skipping the second brings the first back round
+  await page.getByRole("button", { name: "Skip" }).click();
+  await expect(
+    page.getByRole("heading", { name: "First drafted study" }),
+  ).toBeVisible();
+
+  expect(
+    await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY),
+  ).toBe(before);
+  // The next visit starts from the catalogue's order again
+  await page.reload();
+  await expect(
+    page.getByRole("heading", { name: "First drafted study" }),
+  ).toBeVisible();
+});
+
+test("there is no Skip while only one draft waits", async ({ page }) => {
+  await openWithSummaries(page, [
+    {
+      details: studyDetails({ title: "Only one" }),
+      summary: createDraftSummary("Only draft.", "abstract", WHEN),
+    },
+  ]);
+  await page.goto("/review");
+  await expect(page.getByRole("button", { name: "Approve" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Skip" })).toHaveCount(0);
+});
+
 test("the nav link counts the drafts, and is there only while drafts wait", async ({
   page,
 }) => {

@@ -125,6 +125,23 @@ describe("buildWebsiteExport", () => {
     });
   });
 
+  it("does not export the file a summary was written from", () => {
+    const original = study("Plain words.", true);
+    const withFile = {
+      ...original,
+      summary: {
+        text: "Plain words.",
+        source: "fullText" as const,
+        generatedAt: NOW.toISOString(),
+        approvedAt: NOW.toISOString(),
+        sourceFile: "(Private, 2026) Name.pdf",
+      },
+    };
+    const text = serializeWebsiteExport(catalogueOf([withFile]), NOW);
+    expect(text).not.toContain("Private");
+    expect(text).not.toContain("sourceFile");
+  });
+
   it("exports no summary while it is only a draft", () => {
     const text = serializeWebsiteExport(
       catalogueOf([study("Draft words not yet approved.")]),

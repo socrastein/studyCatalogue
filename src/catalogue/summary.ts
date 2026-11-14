@@ -17,6 +17,11 @@ export type StudySummary = {
   generatedAt: string;
   /** ISO 8601 timestamp of Matt's approval; null while it is a draft. Only approved summaries leave the app. */
   approvedAt: string | null;
+  /**
+   * For a full-text draft, the name of the PDF it was written from (e.g. "(Hall, 2018) Carbohydrate Insulin Model.pdf"),
+   * so Matt knows which file to open to check it. Absent for an abstract draft. Never exported to the site.
+   */
+  sourceFile?: string;
 };
 
 /**
@@ -46,6 +51,27 @@ export function isAwaitingReview(study: Study): boolean {
  */
 export function studiesAwaitingReview(studies: readonly Study[]): Study[] {
   return studies.filter(isAwaitingReview);
+}
+
+/**
+ * The studies awaiting review in the order to show them on this visit: the ones not skipped, in the catalogue's order,
+ * then the skipped ones, the longest ago skipped first. Skipping saves nothing; the next visit starts from the catalogue's
+ * order again.
+ *
+ * @param studies Every study.
+ * @param skippedIds The ids skipped so far this visit, in the order they were skipped.
+ */
+export function studiesInReviewOrder(
+  studies: readonly Study[],
+  skippedIds: readonly string[],
+): Study[] {
+  const waiting = studiesAwaitingReview(studies);
+  const isSkipped = (study: Study) => skippedIds.includes(study.id);
+  const notSkipped = waiting.filter((study) => !isSkipped(study));
+  const skipped = skippedIds
+    .map((id) => waiting.find((study) => study.id === id))
+    .filter((study) => study !== undefined);
+  return [...notSkipped, ...skipped];
 }
 
 /**

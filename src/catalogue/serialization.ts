@@ -153,6 +153,9 @@ function readSummary(value: unknown, where: string): StudySummary {
       record.approvedAt,
       `${where}: approvedAt`,
     ),
+    ...(record.sourceFile === undefined
+      ? {}
+      : { sourceFile: readString(record.sourceFile, `${where}: sourceFile`) }),
   };
 }
 

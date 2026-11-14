@@ -65,6 +65,21 @@ describe("serializeCatalogue and parseCatalogue", () => {
     expect(data.schemaVersion).toBe(SCHEMA_VERSION);
   });
 
+  it("round-trip the name of the file a full-text draft was written from", () => {
+    const when = new Date("2026-11-05T10:00:00.000Z");
+    const study = withSummary(
+      createStudy(exampleStudyDetails({ doi: null })),
+      {
+        ...createDraftSummary("A draft.", "fullText", when),
+        sourceFile: "(Hall, 2018) Carbohydrate Insulin Model.pdf",
+      },
+      when,
+    );
+    const catalogue = { ...newCatalogue(), studies: [study] };
+    const result = parseCatalogue(serializeCatalogue(catalogue));
+    expect(result).toEqual({ kind: "parsed", catalogue });
+  });
+
   it("round-trip a draft and an approved summary", () => {
     const when = new Date("2026-11-05T10:00:00.000Z");
     const draft = withSummary(
@@ -141,6 +156,19 @@ describe("parseCatalogue rejects", () => {
     expect(problemWith(text)).toContain(
       "study 1: summary: source should be abstract or fullText",
     );
+  });
+
+  it("a summary whose source file is not text", () => {
+    const text = corruptedText((data) => {
+      data.studies[0].summary = {
+        text: "x",
+        source: "fullText",
+        generatedAt: "2026-11-05T10:00:00.000Z",
+        approvedAt: null,
+        sourceFile: 7,
+      };
+    });
+    expect(problemWith(text)).toContain("study 1: summary: sourceFile");
   });
 
   it("a summary whose approval is neither a timestamp nor null", () => {
