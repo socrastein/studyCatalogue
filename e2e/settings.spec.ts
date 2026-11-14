@@ -152,5 +152,5 @@ test("unreadable saved data is kept until the person starts over", async ({
   await expect(page.getByText("No studies yet.")).toBeVisible();
   expect(
     await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY),
-  ).toContain('"schemaVersion":1');
+  ).toContain('"schemaVersion":2');
 });

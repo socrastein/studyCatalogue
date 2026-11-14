@@ -6,6 +6,9 @@
  * - A study already here (the same id, or the same DOI under another id) keeps whichever version was edited last;
  *   a tie keeps this catalogue's. It keeps this catalogue's id and creation time either way, so its address and
  *   history do not change.
+ * - A study's summary travels with the study, so the newer edit's summary wins; a summary is never lost to a copy that
+ *   has none (a version 1 backup, say): the older copy's summary fills the gap. A newer unapproved draft that replaces
+ *   an approved summary with other words leaves it unapproved; one with the same words keeps the approval.
  * - A backup tag with the same id as one here, or a name or alias matching one here, is the same tag: the backup's
  *   names and parents are added to it, skipping a parent that would make a loop. Any other tag is added as it is.
  *
@@ -13,6 +16,7 @@
  */
 import type { Catalogue } from "./catalogue";
 import type { Study } from "./study";
+import type { StudySummary } from "./summary";
 import { findTagByName, wouldCreateCycle, type Tag } from "./tags";
 
 /** What a merge did, for the confirmation before it and the notice after it. */
@@ -178,9 +182,16 @@ function placeStudy(studies: Study[], incoming: Study): StudyOutcome {
     studies.push(incoming);
     return "added";
   }
-  if (!isEditedLater(incoming, existing)) return "unchanged";
-  studies[index] = keepingIdentity(incoming, existing);
-  return "updated";
+  if (isEditedLater(incoming, existing)) {
+    studies[index] = keepingIdentity(incoming, existing);
+    return "updated";
+  }
+  if (existing.summary === undefined && incoming.summary !== undefined) {
+    // This copy is the newer, but has no summary to lose: the older copy's fills the gap
+    studies[index] = { ...existing, summary: incoming.summary };
+    return "updated";
+  }
+  return "unchanged";
 }
 
 /** How many studies were added, updated and left unchanged. */
@@ -215,7 +226,30 @@ function isEditedLater(incoming: Study, existing: Study): boolean {
   return incoming.updatedAt > existing.updatedAt;
 }
 
-/** The newer copy's details under the existing study's id and creation time, so its address does not change. */
+/**
+ * The newer copy's details under the existing study's id and creation time, so its address does not change, with the
+ * summary the two copies' summaries settle on (see `settledSummary`).
+ */
 function keepingIdentity(newer: Study, existing: Study): Study {
-  return { ...newer, id: existing.id, createdAt: existing.createdAt };
+  const { summary: _newerSummary, ...details } = newer;
+  const summary = settledSummary(newer.summary, existing.summary);
+  return {
+    ...details,
+    ...(summary === undefined ? {} : { summary }),
+    id: existing.id,
+    createdAt: existing.createdAt,
+  };
+}
+
+/**
+ * The summary a newer copy of a study ends up with: its own; the older copy's when it has none; and its own words
+ * carrying the older copy's approval when the words are the same (an approval is of words, not of a draft's date).
+ */
+function settledSummary(
+  newer: StudySummary | undefined,
+  older: StudySummary | undefined,
+): StudySummary | undefined {
+  if (newer === undefined) return older;
+  if (older === undefined || older.text !== newer.text) return newer;
+  return { ...newer, approvedAt: older.approvedAt ?? newer.approvedAt };
 }

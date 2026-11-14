@@ -11,6 +11,7 @@ import type {
   TrainingStatusId,
 } from "./facets";
 import { createId } from "./ids";
+import type { StudySummary } from "./summary";
 
 /**
  * One author: a person, split the way citation styles need, or an organization (a group author such as "American
@@ -55,6 +56,11 @@ export type StudyDetails = {
 };
 
 export type Study = StudyDetails & {
+  /**
+   * The short summary shown on the public site in place of the abstract, once approved (see summary.ts). Absent until
+   * one is drafted. It is not entered in the study form: editing a study's details leaves it as it is.
+   */
+  summary?: StudySummary;
   id: string;
   /** ISO 8601 timestamp, e.g. "2026-11-06T22:45:54.000Z". */
   createdAt: string;
@@ -80,7 +86,7 @@ export function createStudy(details: StudyDetails, now = new Date()): Study {
 }
 
 /**
- * The study with its details replaced by edited ones, keeping its id and creation time.
+ * The study with its details replaced by edited ones, keeping its id, creation time and summary.
  *
  * @param study The study as saved.
  * @param details The edited details, complete (not just the changed fields).
@@ -94,6 +100,8 @@ export function updateStudy(
 ): Study {
   return {
     ...details,
+    // Not part of the form, so the edit would otherwise drop it
+    ...(study.summary === undefined ? {} : { summary: study.summary }),
     id: study.id,
     createdAt: study.createdAt,
     updatedAt: now.toISOString(),

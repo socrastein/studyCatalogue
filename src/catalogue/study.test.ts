@@ -3,6 +3,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { createStudy, updateStudy } from "./study";
+import { createDraftSummary, withSummary } from "./summary";
 import { exampleStudyDetails } from "./testFixtures";
 
 const CREATED = new Date("2026-11-01T10:00:00.000Z");
@@ -35,6 +36,26 @@ describe("updateStudy", () => {
     expect(edited.id).toBe(original.id);
     expect(edited.createdAt).toBe(original.createdAt);
     expect(edited.updatedAt).toBe("2026-11-05T18:30:00.000Z");
+  });
+
+  it("keeps the study's summary, which the form does not hold", () => {
+    const original = withSummary(
+      createStudy(exampleStudyDetails(), CREATED),
+      createDraftSummary("A summary.", "abstract", CREATED),
+      CREATED,
+    );
+    const edited = updateStudy(
+      original,
+      exampleStudyDetails({ year: 2018 }),
+      EDITED,
+    );
+    expect(edited.summary).toEqual(original.summary);
+  });
+
+  it("does not invent a summary for a study without one", () => {
+    const original = createStudy(exampleStudyDetails(), CREATED);
+    const edited = updateStudy(original, exampleStudyDetails(), EDITED);
+    expect(edited).not.toHaveProperty("summary");
   });
 
   it("leaves the original study unchanged", () => {

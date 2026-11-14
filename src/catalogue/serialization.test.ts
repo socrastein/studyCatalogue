@@ -11,6 +11,7 @@ import {
   serializeCatalogue,
 } from "./serialization";
 import { createStudy } from "./study";
+import { approveSummary, createDraftSummary, withSummary } from "./summary";
 import { exampleStudyDetails } from "./testFixtures";
 
 /** A catalogue with the seed tags and one example study. */
@@ -63,6 +64,52 @@ describe("serializeCatalogue and parseCatalogue", () => {
     const data = JSON.parse(serializeCatalogue(newCatalogue()));
     expect(data.schemaVersion).toBe(SCHEMA_VERSION);
   });
+
+  it("round-trip a draft and an approved summary", () => {
+    const when = new Date("2026-11-05T10:00:00.000Z");
+    const draft = withSummary(
+      createStudy(exampleStudyDetails({ doi: null })),
+      createDraftSummary("A draft.", "abstract", when),
+      when,
+    );
+    const approved = approveSummary(
+      withSummary(
+        createStudy(exampleStudyDetails({ doi: null })),
+        createDraftSummary("An approved one.", "fullText", when),
+        when,
+      ),
+      when,
+    );
+    const catalogue = { ...newCatalogue(), studies: [draft, approved] };
+    expect(parseCatalogue(serializeCatalogue(catalogue))).toEqual({
+      kind: "parsed",
+      catalogue,
+    });
+  });
+});
+
+describe("a version 1 catalogue", () => {
+  /** A catalogue and its text as version 1 saved it: no summary field anywhere, and the old version number. */
+  function savedAsVersionOne(): { catalogue: Catalogue; text: string } {
+    const catalogue = exampleCatalogue();
+    const data = JSON.parse(serializeCatalogue(catalogue));
+    return { catalogue, text: JSON.stringify({ ...data, schemaVersion: 1 }) };
+  }
+
+  it("still loads, with its studies exactly as they were and no summary on any", () => {
+    const { catalogue, text } = savedAsVersionOne();
+    const result = parseCatalogue(text);
+    expect(result).toEqual({ kind: "parsed", catalogue });
+    if (result.kind === "parsed")
+      expect(result.catalogue.studies[0]).not.toHaveProperty("summary");
+  });
+
+  it("is written back as the current version", () => {
+    const result = parseCatalogue(savedAsVersionOne().text);
+    if (result.kind !== "parsed") throw new Error("expected it to load");
+    const data = JSON.parse(serializeCatalogue(result.catalogue));
+    expect(data.schemaVersion).toBe(SCHEMA_VERSION);
+  });
 });
 
 describe("parseCatalogue rejects", () => {
@@ -80,6 +127,32 @@ describe("parseCatalogue rejects", () => {
   it("data with no schema version", () => {
     const text = corruptedText((data) => delete data.schemaVersion);
     expect(problemWith(text)).toContain("format version should be 1");
+  });
+
+  it("a summary with a source other than abstract or fullText", () => {
+    const text = corruptedText((data) => {
+      data.studies[0].summary = {
+        text: "x",
+        source: "guess",
+        generatedAt: "2026-11-05T10:00:00.000Z",
+        approvedAt: null,
+      };
+    });
+    expect(problemWith(text)).toContain(
+      "study 1: summary: source should be abstract or fullText",
+    );
+  });
+
+  it("a summary whose approval is neither a timestamp nor null", () => {
+    const text = corruptedText((data) => {
+      data.studies[0].summary = {
+        text: "x",
+        source: "abstract",
+        generatedAt: "2026-11-05T10:00:00.000Z",
+        approvedAt: true,
+      };
+    });
+    expect(problemWith(text)).toContain("study 1: summary: approvedAt");
   });
 
   it("a study with a field of the wrong type, naming the study and field", () => {

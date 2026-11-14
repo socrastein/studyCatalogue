@@ -6,6 +6,12 @@ import { describe, expect, it } from "vitest";
 import { mergeBackup } from "./backupMerge";
 import type { Catalogue } from "./catalogue";
 import type { Study } from "./study";
+import {
+  approveSummary,
+  createDraftSummary,
+  withSummary,
+  type StudySummary,
+} from "./summary";
 import type { Tag } from "./tags";
 import { exampleStudyDetails } from "./testFixtures";
 
@@ -178,5 +184,139 @@ describe("mergeBackup: tags", () => {
       ),
     );
     expect(merged.studies[0]?.tagIds).toEqual(["c"]);
+  });
+});
+
+/** A summary with fixed words and times, approved or not. */
+function summary(text: string, approvedAt: string | null): StudySummary {
+  return { text, source: "abstract", generatedAt: JANUARY, approvedAt };
+}
+
+describe("mergeBackup: summaries", () => {
+  it("carries a summary in with a study the catalogue did not have", () => {
+    const theirs = {
+      ...study("theirs", JANUARY),
+      summary: summary("Hers.", null),
+    };
+    const { catalogue: merged } = mergeBackup(
+      catalogue([]),
+      catalogue([theirs]),
+    );
+    expect(merged.studies[0]?.summary?.text).toBe("Hers.");
+  });
+
+  it("takes the newer copy's summary", () => {
+    const mine = {
+      ...study("same", JANUARY),
+      summary: summary("Old.", JANUARY),
+    };
+    const theirs = { ...study("same", MARCH), summary: summary("New.", MARCH) };
+    const { catalogue: merged } = mergeBackup(
+      catalogue([mine]),
+      catalogue([theirs]),
+    );
+    expect(merged.studies[0]?.summary).toEqual(theirs.summary);
+  });
+
+  it("keeps this catalogue's summary when its copy is the newer", () => {
+    const mine = { ...study("same", MARCH), summary: summary("Mine.", MARCH) };
+    const theirs = {
+      ...study("same", JANUARY),
+      summary: summary("Older.", JANUARY),
+    };
+    const { catalogue: merged } = mergeBackup(
+      catalogue([mine]),
+      catalogue([theirs]),
+    );
+    expect(merged.studies).toEqual([mine]);
+  });
+
+  it("leaves a newer draft from the backup unapproved when it replaces an approved summary with other words", () => {
+    const mine = {
+      ...study("same", JANUARY),
+      summary: summary("Approved words.", JANUARY),
+    };
+    const theirs = {
+      ...study("same", MARCH),
+      summary: summary("A new draft.", null),
+    };
+    const { catalogue: merged } = mergeBackup(
+      catalogue([mine]),
+      catalogue([theirs]),
+    );
+    expect(merged.studies[0]?.summary).toMatchObject({
+      text: "A new draft.",
+      approvedAt: null,
+    });
+  });
+
+  it("keeps the approval when the newer copy's draft has the same words", () => {
+    const mine = {
+      ...study("same", JANUARY),
+      summary: summary("Same words.", JANUARY),
+    };
+    const theirs = {
+      ...study("same", MARCH),
+      summary: summary("Same words.", null),
+    };
+    const { catalogue: merged } = mergeBackup(
+      catalogue([mine]),
+      catalogue([theirs]),
+    );
+    expect(merged.studies[0]?.summary?.approvedAt).toBe(JANUARY);
+  });
+
+  it("does not lose this catalogue's summary to a newer copy that has none (a version 1 backup)", () => {
+    const mine = {
+      ...study("same", JANUARY),
+      summary: summary("Mine.", JANUARY),
+    };
+    const theirs = study("same", MARCH, { title: "Retitled" });
+    const { catalogue: merged } = mergeBackup(
+      catalogue([mine]),
+      catalogue([theirs]),
+    );
+    expect(merged.studies[0]).toMatchObject({ title: "Retitled" });
+    expect(merged.studies[0]?.summary).toEqual(mine.summary);
+  });
+
+  it("fills in a summary from an older copy when this catalogue's newer copy has none", () => {
+    const mine = study("same", MARCH);
+    const theirs = {
+      ...study("same", JANUARY),
+      summary: summary("Theirs.", JANUARY),
+    };
+    const { catalogue: merged, summary: counts } = mergeBackup(
+      catalogue([mine]),
+      catalogue([theirs]),
+    );
+    expect(merged.studies[0]?.summary).toEqual(theirs.summary);
+    expect(merged.studies[0]?.updatedAt).toBe(MARCH);
+    expect(counts.updatedStudies).toBe(1);
+  });
+
+  it("keeps a study as it is when neither copy has a summary", () => {
+    const mine = study("same", JANUARY);
+    const theirs = study("same", MARCH, { title: "Newer" });
+    const { catalogue: merged } = mergeBackup(
+      catalogue([mine]),
+      catalogue([theirs]),
+    );
+    expect(merged.studies[0]).not.toHaveProperty("summary");
+  });
+
+  it("works with the summary operations: a draft edited on one machine reaches the other", () => {
+    const base = study("same", JANUARY);
+    const drafted = withSummary(
+      base,
+      createDraftSummary("Draft.", "abstract", new Date(JANUARY)),
+      new Date(JANUARY),
+    );
+    const approved = approveSummary(drafted, new Date(MARCH));
+    const { catalogue: merged } = mergeBackup(
+      catalogue([drafted]),
+      catalogue([approved]),
+    );
+    expect(merged.studies[0]?.summary?.approvedAt).toBe(MARCH);
   });
 });

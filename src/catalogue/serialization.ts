@@ -26,10 +26,18 @@ import {
   ShapeError,
 } from "./readers";
 import type { Author, Study, StudyDetails } from "./study";
+import { SUMMARY_SOURCES, type StudySummary } from "./summary";
 import type { Tag } from "./tags";
 
-/** The version of the saved format. Raise it, and migrate older versions on read, whenever the format changes. */
-export const SCHEMA_VERSION = 1;
+/**
+ * The version of the saved format. Raise it, and migrate older versions on read, whenever the format changes.
+ *
+ * Version 2 added a study's optional `summary` (summary.ts). Version 1 data has none, and reads exactly as it did.
+ */
+export const SCHEMA_VERSION = 2;
+
+/** Every version this code can read: the current one, and the older ones that read as they are. */
+const READABLE_VERSIONS: readonly number[] = [1, 2];
 
 /** The result of reading saved or imported text: the catalogue, or why it could not be read. */
 export type ParseResult =
@@ -81,15 +89,18 @@ function readCatalogue(value: unknown): Catalogue {
   return { studies, tags };
 }
 
-/** Throws unless the data is in the format this version writes. */
+/** Throws unless the data is in a format this version can read. */
 function checkSchemaVersion(version: unknown): void {
-  if (version === SCHEMA_VERSION) return;
+  if (typeof version === "number" && READABLE_VERSIONS.includes(version))
+    return;
   if (typeof version === "number" && version > SCHEMA_VERSION) {
     throw new ShapeError(
       `it was saved by a newer version of the app (format ${version})`,
     );
   }
-  throw new ShapeError(`its format version should be ${SCHEMA_VERSION}`);
+  throw new ShapeError(
+    `its format version should be ${READABLE_VERSIONS.join(" or ")}`,
+  );
 }
 
 /** One tag; `index` counts from 0, the message from 1. */
@@ -111,11 +122,44 @@ function readStudy(value: unknown, index: number): Study {
   return {
     ...readBibliography(record, where),
     ...readFacets(record, where),
+    ...readOptionalSummary(record, where),
     tagIds: readStringList(record.tagIds, `${where}: tagIds`),
     id: readString(record.id, `${where}: id`),
     createdAt: readString(record.createdAt, `${where}: createdAt`),
     updatedAt: readString(record.updatedAt, `${where}: updatedAt`),
   };
+}
+
+/** A study's summary when it has one, as a field to spread in; nothing for a study without (every version 1 study). */
+function readOptionalSummary(
+  record: Record<string, unknown>,
+  where: string,
+): { summary?: StudySummary } {
+  if (record.summary === undefined) return {};
+  return { summary: readSummary(record.summary, `${where}: summary`) };
+}
+
+/** A summary: its text, where it was written from, and when it was drafted and (if at all) approved. */
+function readSummary(value: unknown, where: string): StudySummary {
+  const record = readRecord(value, where);
+  const source = readString(record.source, `${where}: source`);
+  if (!SUMMARY_SOURCES.some((known) => known === source))
+    throw new ShapeError(`${where}: source should be abstract or fullText`);
+  return {
+    text: readString(record.text, `${where}: text`),
+    source: source as StudySummary["source"],
+    generatedAt: readString(record.generatedAt, `${where}: generatedAt`),
+    approvedAt: readNullableTimestamp(
+      record.approvedAt,
+      `${where}: approvedAt`,
+    ),
+  };
+}
+
+/** A timestamp, or null for "not yet". */
+function readNullableTimestamp(value: unknown, where: string): string | null {
+  if (value === null) return null;
+  return readString(value, where);
 }
 
 /** The fields a citation is built from. */
