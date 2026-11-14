@@ -44,6 +44,20 @@ allows git dependencies for this project's own `package.json` only). `src/main.t
 - Dark mode is the library's `dark` class on `<html>`, switched by `ThemeButton` in the header and saved under
   `studyCatalogue.colorScheme` (`src/colorSchemeKey.ts`; `index.html` applies it before the first paint).
 
+## Summaries and the website export
+
+- A study may hold a `summary` (`catalogue/summary.ts`): short text written from the abstract or the full text, a draft until
+  Matt approves it on the Review Summaries screen (`/review`, linked in the nav only while drafts wait). Summaries are
+  never written by the app; drafts arrive in a backup merged in Settings. Editing an approved summary keeps it approved;
+  a merge that replaces it with a newer draft does not (`backupMerge.ts`). Every change stamps `updatedAt`, which is how
+  merges pick the newer copy.
+- Saved format is schema v2; v1 data still loads unchanged (`serialization.ts`).
+- "Export for the Website" (`catalogue/websiteExport.ts`) is an explicit allow-list: a field is published only if the
+  export names it, so a field added to `Study` stays private by default. Never spread a study into the export, and never
+  export the abstract or an unapproved summary. A test pins the exact field list.
+- Matt's real catalogue lives in his browser's localStorage on the dev server (port 5173) of the main folder. Develop and
+  test in a worktree on other ports with test data, and never run new code against his data.
+
 ## Domain vocabulary
 
 - **Tag**: a topic, with optional parents; filtering by a tag includes its descendants.
