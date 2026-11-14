@@ -213,3 +213,28 @@ test("a failed save's banner stays in view while the page is scrolled", async ({
   expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
   await expect(banner).toBeInViewport();
 });
+
+test("a home server that stops answering is warned about, and Try Again checks it once more", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(
+    page.getByRole("alert").filter({ hasText: "not the home server's" }),
+  ).toHaveCount(0);
+
+  // The server does not answer on the next start; the app itself still loads from the same address
+  await page.route("**/api/catalogue", (request) => request.abort());
+  await page.reload();
+  const warning = page
+    .getByRole("alert")
+    .filter({ hasText: "This is not the home server's catalogue." });
+  await expect(warning).toContainText("Changes made here will not reach");
+  await expectNoAxeViolations(page);
+  await page.goto("/settings");
+  await expect(page.getByText("Stored in:")).toContainText("This Browser");
+
+  await page.unroute("**/api/catalogue");
+  await page.getByRole("button", { name: "Try Again" }).click();
+  await expect(page.getByText("Stored in:")).toContainText("This Home Server");
+  await expect(warning).toHaveCount(0);
+});

@@ -164,3 +164,22 @@ for (const { name, width } of HEADER_WIDTHS) {
     });
   }
 }
+
+test("plain dev-server use stays silent even if the address was once a home server", async ({
+  page,
+}) => {
+  await page.goto("/");
+  // As if an earlier visit had found a home server here; this address now answers with the app's own page, as a dev
+  // server does, which is not a missing home server but a different kind of site
+  await page.evaluate(() =>
+    localStorage.setItem("studyCatalogue.originIsHomeServer", "true"),
+  );
+  await page.reload();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Studies");
+  await expect(page.getByText("This is not the home server's")).toHaveCount(0);
+  expect(
+    await page.evaluate(() =>
+      localStorage.getItem("studyCatalogue.originIsHomeServer"),
+    ),
+  ).toBeNull();
+});

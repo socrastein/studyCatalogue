@@ -26,6 +26,50 @@ export type SaveOutcome =
 /** How long a read may take before it counts as no answer, so a hung server cannot keep the app from opening. */
 const READ_TIMEOUT_MILLISECONDS = 5000;
 
+/** HTTP status codes from 500 up mean the server itself failed (RFC 9110, 15.6): a proxy in front of a dead home server answers 502. */
+const FIRST_SERVER_ERROR_STATUS = 500;
+
+/** What the app's own address answered when asked for the catalogue. */
+export type ServerAnswer =
+  | { kind: "copy"; copy: NumberedCatalogue }
+  /** An answer, but not a home server's: a 404 or the app's own page, as a static host or dev server gives. */
+  | { kind: "notAHomeServer" }
+  /** No usable answer: no connection, a timeout, a server error (5xx) or a body cut off half way. */
+  | { kind: "noAnswer" };
+
+/**
+ * Asks the app's own address for the catalogue, and tells apart an address that is not a home server (it answered
+ * something else) from one that did not answer at all: the first is normal on a dev server, the second means a home
+ * server that is down.
+ */
+export async function askForServerCopy(
+  fetchFunction: FetchFunction,
+): Promise<ServerAnswer> {
+  try {
+    const response = await fetchFunction(CATALOGUE_API_PATH, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(READ_TIMEOUT_MILLISECONDS),
+    });
+    const isServerError = response.status >= FIRST_SERVER_ERROR_STATUS;
+    if (isServerError) return { kind: "noAnswer" };
+    if (!response.ok) return { kind: "notAHomeServer" };
+    // Read as text before parsing: a connection that drops here is no answer, but text that is not JSON is another site
+    return answerFromText(await response.text());
+  } catch {
+    return { kind: "noAnswer" };
+  }
+}
+
+/** The answer a successful response's body stands for. */
+function answerFromText(text: string): ServerAnswer {
+  try {
+    const copy = numberedCatalogueFrom(JSON.parse(text));
+    return copy === null ? { kind: "notAHomeServer" } : { kind: "copy", copy };
+  } catch {
+    return { kind: "notAHomeServer" };
+  }
+}
+
 /**
  * The server's copy of the catalogue.
  *
@@ -35,16 +79,8 @@ const READ_TIMEOUT_MILLISECONDS = 5000;
 export async function readServerCopy(
   fetchFunction: FetchFunction,
 ): Promise<NumberedCatalogue | null> {
-  try {
-    const response = await fetchFunction(CATALOGUE_API_PATH, {
-      cache: "no-store",
-      signal: AbortSignal.timeout(READ_TIMEOUT_MILLISECONDS),
-    });
-    if (!response.ok) return null;
-    return numberedCatalogueFrom(await response.json());
-  } catch {
-    return null;
-  }
+  const answer = await askForServerCopy(fetchFunction);
+  return answer.kind === "copy" ? answer.copy : null;
 }
 
 /**

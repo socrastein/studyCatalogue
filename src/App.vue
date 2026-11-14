@@ -19,6 +19,7 @@ import {
   latestToastRequest,
   noticeMessage,
 } from "./stores/notice";
+import { isHomeServerMissing } from "./stores/startCatalogue";
 import { useSummariesAwaitingReview } from "./stores/summaryReview";
 
 const route = useRoute();
@@ -32,6 +33,11 @@ const toast = ref<InstanceType<typeof StatusToast> | null>(null);
 
 // A request's number changes with every message, so the same words twice in a row are shown twice
 watch(latestToastRequest, (request) => void toast.value?.show(request.text));
+
+/** Reloads the page, which asks the home server for the catalogue again, as the app does every time it starts. */
+function tryHomeServerAgain(): void {
+  window.location.reload();
+}
 
 /**
  * Moves keyboard and screen reader focus to the new page's heading, so a page change is announced and Tab continues
@@ -78,6 +84,31 @@ watch(
       role="alert"
     >
       {{ catalogue.state.saveProblem }}
+    </p>
+    <div
+      v-if="isHomeServerMissing"
+      class="banner homeServerMissingBanner alert alertDanger"
+      role="alert"
+    >
+      <p>
+        This is not the home server's catalogue. The home server did not answer,
+        so this page shows only what this browser has kept, which may be empty
+        or out of date. Changes made here will not reach the home server.
+      </p>
+      <button
+        type="button"
+        class="btn btnSecondary"
+        @click="tryHomeServerAgain"
+      >
+        Try Again
+      </button>
+    </div>
+    <p
+      v-if="catalogue.state.loadProblem && route.path !== '/settings'"
+      class="banner alert alertDanger"
+    >
+      Your saved catalogue could not be read, so changes are not being saved.
+      <RouterLink to="/settings">Recover it in Settings</RouterLink>
     </p>
     <!-- Always present, so screen readers notice when a message appears in it -->
     <p
@@ -170,6 +201,14 @@ watch(
   background:
     linear-gradient(var(--dangerSubtle), var(--dangerSubtle)), var(--bgTop);
   box-shadow: var(--shadowRaised);
+}
+
+/* The warning and its Try Again button, stacked */
+.homeServerMissingBanner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space1);
 }
 
 .noticeBanner {
