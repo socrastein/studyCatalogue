@@ -79,19 +79,27 @@ export function emptyDraft(): StudyDraft {
 /**
  * The draft for editing a saved study: its details as form text, with missing optional fields as empty text.
  *
+ * Every field is named, never spread from `details`: the page passes a whole saved study (reactive, with its id,
+ * timestamps and summary), and a draft must hold only plain form text and lists. A spread carried the summary object
+ * (a reactive proxy) into the draft, and the form's `structuredClone` of the draft threw on it.
+ *
  * @param details The saved study's details.
  */
 export function draftFromDetails(details: StudyDetails): StudyDraft {
   return {
-    ...details,
+    title: details.title,
     authors: formatAuthorList(details.authors),
     year: String(details.year),
+    journal: details.journal,
     volume: details.volume ?? "",
     issue: details.issue ?? "",
     pages: details.pages ?? "",
     doi: details.doi ?? "",
     url: details.url ?? "",
+    abstract: details.abstract,
     tagIds: [...details.tagIds],
+    design: details.design,
+    subjects: details.subjects,
     ageGroups: [...details.ageGroups],
     trainingStatuses: [...details.trainingStatuses],
     sexes: [...details.sexes],

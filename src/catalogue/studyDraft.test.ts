@@ -2,6 +2,7 @@
  * Tests for the form draft: converting saved studies to drafts and back, and every validation message.
  */
 import { describe, expect, it } from "vitest";
+import { reactive } from "vue";
 import {
   draftFromDetails,
   emptyDraft,
@@ -60,6 +61,34 @@ describe("draftFromDetails and validateDraft", () => {
     const details = exampleStudyDetails();
     draftFromDetails(details).tagIds.push("other");
     expect(details.tagIds).toEqual(["exercise-science/hypertrophy"]);
+  });
+});
+
+describe("draftFromDetails given a whole saved study", () => {
+  it("holds only form fields, so a summary or id never reaches the draft", () => {
+    const study = {
+      ...exampleStudyDetails(),
+      id: "abc",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+      summary: {
+        text: "A made-up summary.",
+        source: "abstract",
+        generatedAt: "2026-01-01T00:00:00.000Z",
+        approvedAt: null,
+      },
+    };
+    const draft = draftFromDetails(study);
+    expect(Object.keys(draft).sort()).toEqual(Object.keys(emptyDraft()).sort());
+  });
+
+  it("makes a draft the form can clone even when the study is a reactive proxy", () => {
+    // The edit page reads the study from reactive store state, where its summary is a nested proxy
+    const study = reactive({
+      ...exampleStudyDetails(),
+      summary: { text: "Made up.", approvedAt: null },
+    });
+    expect(() => structuredClone(draftFromDetails(study))).not.toThrow();
   });
 });
 

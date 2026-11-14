@@ -3,7 +3,7 @@
  * in the current saved format.
  */
 import type { Page } from "@playwright/test";
-import { newCatalogue } from "../src/catalogue/catalogue";
+import { newCatalogue, type Catalogue } from "../src/catalogue/catalogue";
 import { serializeCatalogue } from "../src/catalogue/serialization";
 import { createStudy, type StudyDetails } from "../src/catalogue/study";
 import { withSummary, type StudySummary } from "../src/catalogue/summary";
@@ -41,6 +41,19 @@ export async function openWithStudies(
 export type SeededStudy = { details: StudyDetails; summary?: StudySummary };
 
 /**
+ * A catalogue of the seed tags and the given studies, which may hold summaries (drafts or approved).
+ *
+ * @param studies The studies to hold, in the order given, each with its summary when it has one.
+ */
+export function catalogueWithSummaries(studies: SeededStudy[]): Catalogue {
+  const saved = studies.map(({ details, summary }) => {
+    const study = createStudy(details);
+    return summary === undefined ? study : withSummary(study, summary);
+  });
+  return { ...newCatalogue(), studies: saved };
+}
+
+/**
  * Like `openWithStudies`, for studies that may hold summaries (drafts or approved).
  *
  * @param page The test's page.
@@ -50,11 +63,7 @@ export async function openWithSummaries(
   page: Page,
   studies: SeededStudy[],
 ): Promise<void> {
-  const saved = studies.map(({ details, summary }) => {
-    const study = createStudy(details);
-    return summary === undefined ? study : withSummary(study, summary);
-  });
-  const catalogue = { ...newCatalogue(), studies: saved };
+  const catalogue = catalogueWithSummaries(studies);
   await page.goto("/");
   await page.evaluate(([key, text]) => localStorage.setItem(key, text), [
     STORAGE_KEY,
