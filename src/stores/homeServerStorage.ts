@@ -37,9 +37,11 @@ export const DEFAULT_TIMING: HomeServerTiming = {
   retryAfterFailureMilliseconds: 5000,
 };
 
-/** The notice shown when another device's changes were merged into this one's. */
-export const MERGED_NOTICE =
-  "Changes from another device were merged into this catalogue.";
+/** The toast shown when another device's changes were merged into this one's after a refused save. */
+export const MERGED_NOTICE = "Changes from another device were merged in.";
+
+/** The toast shown when the server's newer copy, saved by another device, replaced what this page showed. */
+export const REFRESHED_NOTICE = "Updated with changes from another device.";
 
 /** The newest catalogue that has not reached the server yet, and who to tell about it. */
 type WaitingSave = { catalogue: Catalogue; events: SaveEvents };
@@ -151,7 +153,7 @@ export function createHomeServerStorage(
     if (serverCopy === null || !isStillIdle || hasSavedSinceRead) return;
     if (serverCopy.revision === knownRevision) return;
     knownRevision = serverCopy.revision;
-    events.adoptCatalogue(serverCopy.catalogue, null);
+    events.adoptCatalogue(serverCopy.catalogue, REFRESHED_NOTICE);
   }
 
   return {

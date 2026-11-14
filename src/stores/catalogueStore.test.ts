@@ -17,8 +17,9 @@ import {
   createHomeServerStorage,
   DEFAULT_TIMING,
   MERGED_NOTICE,
+  REFRESHED_NOTICE,
 } from "./homeServerStorage";
-import { noticeMessage } from "./notice";
+import { latestToastRequest, noticeMessage } from "./notice";
 
 /** The catalogue as saved in storage right now; fails the test if nothing readable is saved. */
 function savedCatalogue() {
@@ -287,7 +288,9 @@ describe("a store on the home server", () => {
 
     const titles = store.state.catalogue.studies.map((study) => study.title);
     expect(titles.sort()).toEqual(["From the PC", "From the laptop"]);
-    expect(noticeMessage.value).toBe(MERGED_NOTICE);
+    expect(latestToastRequest.value.text).toBe(MERGED_NOTICE);
+    // The page's own banner is left for the page's own confirmations
+    expect(noticeMessage.value).toBe("");
   });
 
   it("keeps a change made while the server is away and shows the save problem", async () => {
@@ -311,5 +314,62 @@ describe("a store on the home server", () => {
     });
     await store.refresh();
     expect(store.state.catalogue.tags).toHaveLength(2);
+    expect(latestToastRequest.value.text).toBe(REFRESHED_NOTICE);
+    expect(noticeMessage.value).toBe("");
+  });
+
+  it("confirms in the toast that the changes are saved once a failed save succeeds", async () => {
+    const server = createFakeHomeServer();
+    server.isOffline = true;
+    const { store } = homeServerStore(server);
+    store.addStudy(exampleStudyDetails());
+    await vi.advanceTimersByTimeAsync(
+      DEFAULT_TIMING.pauseBeforeSavingMilliseconds,
+    );
+    expect(store.state.saveProblem).not.toBeNull();
+    const requestsBefore = latestToastRequest.value.number;
+
+    server.isOffline = false;
+    await vi.advanceTimersByTimeAsync(
+      DEFAULT_TIMING.retryAfterFailureMilliseconds,
+    );
+
+    expect(store.state.saveProblem).toBeNull();
+    expect(latestToastRequest.value.number).toBe(requestsBefore + 1);
+    expect(latestToastRequest.value.text).toBe(
+      "Your changes are now saved on the home server.",
+    );
+  });
+
+  it("says nothing extra when an ordinary save succeeds", async () => {
+    const { store } = homeServerStore();
+    const requestsBefore = latestToastRequest.value.number;
+    store.addStudy(exampleStudyDetails());
+    await vi.advanceTimersByTimeAsync(
+      DEFAULT_TIMING.pauseBeforeSavingMilliseconds,
+    );
+    expect(latestToastRequest.value.number).toBe(requestsBefore);
+  });
+});
+
+describe("a store on the browser's storage after a failed save", () => {
+  it("says the changes are saved in this browser once the storage accepts them again", () => {
+    let isFull = true;
+    const storage = storageThatRejectsWrites();
+    storage.setItem = (key, value) => {
+      if (isFull) throw new Error("QuotaExceededError");
+      localStorage.setItem(key, value);
+    };
+    const store = createCatalogueStore(storage);
+    store.addStudy(exampleStudyDetails({ title: "One", doi: null }));
+    expect(store.state.saveProblem).not.toBeNull();
+
+    isFull = false;
+    store.addStudy(exampleStudyDetails({ title: "Two", doi: null }));
+
+    expect(store.state.saveProblem).toBeNull();
+    expect(latestToastRequest.value.text).toBe(
+      "Your changes are now saved in this browser.",
+    );
   });
 });

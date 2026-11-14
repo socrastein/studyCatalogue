@@ -5,6 +5,7 @@
 -->
 <script setup lang="ts">
 import { useMediaQuery } from "@vueuse/core";
+import StatusToast from "lifting-school-ui/components/StatusToast.vue";
 import ThemeButton from "lifting-school-ui/components/ThemeButton.vue";
 import { computed, nextTick, ref, watch } from "vue";
 import { useRoute } from "vue-router";
@@ -13,7 +14,11 @@ import PhoneMenu from "./components/PhoneMenu.vue";
 import { navLinks, PHONE_WIDTH_QUERY } from "./navigation";
 import { APP_NAME } from "./router.ts";
 import { useCatalogue } from "./stores/catalogueStore";
-import { advanceNoticeOnNavigation, noticeMessage } from "./stores/notice";
+import {
+  advanceNoticeOnNavigation,
+  latestToastRequest,
+  noticeMessage,
+} from "./stores/notice";
 import { useSummariesAwaitingReview } from "./stores/summaryReview";
 
 const route = useRoute();
@@ -22,6 +27,11 @@ const mainElement = ref<HTMLElement | null>(null);
 const isPhoneWidth = useMediaQuery(PHONE_WIDTH_QUERY);
 const awaitingReview = useSummariesAwaitingReview();
 const links = computed(() => navLinks(awaitingReview.value.length));
+/** The bottom toast for news the store brings (another device's changes, a save that works again): see `showToast`. */
+const toast = ref<InstanceType<typeof StatusToast> | null>(null);
+
+// A request's number changes with every message, so the same words twice in a row are shown twice
+watch(latestToastRequest, (request) => void toast.value?.show(request.text));
 
 /**
  * Moves keyboard and screen reader focus to the new page's heading, so a page change is announced and Tab continues
@@ -68,13 +78,6 @@ watch(
     >
       {{ catalogue.state.saveProblem }}
     </p>
-    <p
-      v-if="catalogue.state.loadProblem && route.path !== '/settings'"
-      class="banner alert alertDanger"
-    >
-      Your saved catalogue could not be read, so changes are not being saved.
-      <RouterLink to="/settings">Recover it in Settings</RouterLink>
-    </p>
     <!-- Always present, so screen readers notice when a message appears in it -->
     <p
       class="banner panel noticeBanner"
@@ -86,6 +89,7 @@ watch(
     <!-- Keyed by path, so moving between two edit pages builds a fresh page with that item's details -->
     <RouterView :key="route.path" />
   </main>
+  <StatusToast ref="toast" />
 </template>
 
 <style scoped>

@@ -39,7 +39,7 @@ import type {
   StorageLocation,
   StoredCatalogue,
 } from "./catalogueStorage";
-import { showNoticeNow } from "./notice";
+import { showToast } from "./notice";
 
 // Where the catalogue is kept moved to browserStorage.ts and catalogueStorage.ts; the browser tests read it from here
 export { STORAGE_KEY };
@@ -181,17 +181,30 @@ export function createCatalogueStoreOn(
   };
 }
 
-/** How storage tells the store about a finished save, or about a newer catalogue, by changing the state. */
+/**
+ * How storage tells the store about a finished save, or about a newer catalogue, by changing the state. News the
+ * person did not ask for (a save that works again, another device's changes) goes to the bottom toast.
+ */
 function saveEventsFor(state: StoreState): SaveEvents {
   return {
     reportSaveProblem(message) {
+      const hadProblem = state.saveProblem !== null;
       state.saveProblem = message;
+      // The red banner disappears when the problem does; the toast says why
+      if (hadProblem && message === null) showToast(nowSavedText(state));
     },
     adoptCatalogue(catalogue, notice) {
       state.catalogue = catalogue;
-      if (notice !== null) showNoticeNow(notice);
+      if (notice !== null) showToast(notice);
     },
   };
+}
+
+/** The toast after a save problem cleared, naming where the changes are now kept. */
+function nowSavedText(state: StoreState): string {
+  return state.storageLocation === "homeServer"
+    ? "Your changes are now saved on the home server."
+    : "Your changes are now saved in this browser.";
 }
 
 /** Commits a changed catalogue; see `commit` in createCatalogueStore. */

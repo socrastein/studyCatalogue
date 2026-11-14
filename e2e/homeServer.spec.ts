@@ -64,6 +64,22 @@ function countRefusedSaves(page: Page): { count: number } {
   return refused;
 }
 
+/** Waits for the bottom toast (a status region) to say exactly this; polls long, since the toast shows only for a few seconds. */
+async function expectToastSays(page: Page, text: string): Promise<void> {
+  await expect(page.getByRole("status").filter({ hasText: text })).toBeVisible({
+    timeout: 30_000,
+  });
+}
+
+/** Makes every save the page sends fail as if the server were away, until `restoreSaving` is called. */
+async function makeSavesFail(page: Page): Promise<() => Promise<void>> {
+  const route = "**/api/catalogue";
+  await page.route(route, (request) =>
+    request.request().method() === "PUT" ? request.abort() : request.continue(),
+  );
+  return () => page.unroute(route);
+}
+
 /** Tells the page it became visible again, as switching back to its tab does. */
 async function returnToTab(page: Page): Promise<void> {
   await page.evaluate(() =>
@@ -104,6 +120,7 @@ test("a second device sees the first device's study when it returns to its tab",
   await expect(
     laptop.getByRole("link", { name: "Added on the PC" }),
   ).toBeVisible();
+  await expectToastSays(laptop, "Updated with changes from another device.");
   await laptop.context().close();
 });
 
@@ -120,14 +137,19 @@ test("two devices editing different studies at once both keep their edits", asyn
   await addStudy(page, "Study from the PC");
   await expectServerHolds(page, "Study from the PC", homeServer.url);
   const refusedSaves = countRefusedSaves(laptop);
+  // Started before the laptop's edit, as it shows only for a few seconds and the merge comes at some point during it
+  const mergeToast = expectToastSays(
+    laptop,
+    "Changes from another device were merged in.",
+  );
   await addStudy(laptop, "Study from the laptop");
+  await mergeToast;
 
   await expect(
     laptop.getByRole("link", { name: "Study from the PC" }),
   ).toBeVisible();
-  // The laptop's save was refused and merged, whichever moment it happened at. The merge notice itself is not checked
-  // here: a tag made in the form is saved (and refused) before the study is added, and the "Added" confirmation that
-  // follows replaces the notice, so which of the two the status shows depends on timing. The notice has a unit test.
+  // The laptop's save was refused and merged, whichever moment it happened at. The merge news is in the toast, so the
+  // page's own "Added" confirmation neither replaces it nor is replaced by it.
   await expect.poll(() => refusedSaves.count).toBeGreaterThan(0);
   await expectServerHolds(laptop, "Study from the laptop", homeServer.url);
 
@@ -152,4 +174,22 @@ test("the app's pages reload on their own address, not only from the start page"
   await page.goto("/settings");
   await page.reload();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Settings");
+});
+
+test("the toast confirms that changes are saved once a failed save works again", async ({
+  page,
+  homeServer,
+}) => {
+  await page.goto("/");
+  const restoreSaving = await makeSavesFail(page);
+  await addStudy(page, "Saved late");
+  const banner = page
+    .getByRole("alert")
+    .filter({ hasText: "have not reached" });
+  await expect(banner).toBeVisible();
+
+  await restoreSaving();
+  await expectToastSays(page, "Your changes are now saved on the home server.");
+  await expect(banner).toHaveCount(0);
+  await expectServerHolds(page, "Saved late", homeServer.url);
 });

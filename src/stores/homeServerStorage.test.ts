@@ -12,6 +12,7 @@ import {
   createHomeServerStorage,
   DEFAULT_TIMING,
   MERGED_NOTICE,
+  REFRESHED_NOTICE,
 } from "./homeServerStorage";
 
 /** A record of what storage told the store. */
@@ -197,7 +198,7 @@ describe("a server that cannot be reached", () => {
 });
 
 describe("refreshing", () => {
-  it("adopts a newer server copy without a notice", async () => {
+  it("adopts a newer server copy and says another device changed it", async () => {
     const server = createFakeHomeServer();
     const storage = createHomeServerStorage(server.copy, server.fetch);
     const { events, adopted } = recordingEvents();
@@ -205,7 +206,9 @@ describe("refreshing", () => {
 
     await storage.refresh(events);
 
-    expect(adopted).toEqual([{ titles: ["From the PC"], notice: null }]);
+    expect(adopted).toEqual([
+      { titles: ["From the PC"], notice: REFRESHED_NOTICE },
+    ]);
   });
 
   it("leaves things alone when the server's copy is the one we know", async () => {

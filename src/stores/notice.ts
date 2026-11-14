@@ -42,3 +42,22 @@ export function advanceNoticeOnNavigation(): void {
 
 /** The current message, read-only; empty when there is none. */
 export const noticeMessage = readonly(message);
+
+/** A message for the bottom toast and a number that grows with each, so the same words twice in a row show twice. */
+type ToastRequest = { number: number; text: string };
+
+const toastRequest = ref<ToastRequest>({ number: 0, text: "" });
+
+/**
+ * Asks the app's bottom toast (the library's StatusToast, drawn once by App.vue) to show a message. Unlike the notice
+ * banner it is for news that arrives on its own, from the store rather than from a button on the page: it neither
+ * replaces nor is replaced by the page's own confirmations, and it is seen however far the page is scrolled.
+ *
+ * @param text The message, e.g. "Updated with changes from another device."
+ */
+export function showToast(text: string): void {
+  toastRequest.value = { number: toastRequest.value.number + 1, text };
+}
+
+/** The latest request for the bottom toast, read-only; App.vue shows it when its number changes. */
+export const latestToastRequest = readonly(toastRequest);
