@@ -228,6 +228,30 @@ describe("refreshing", () => {
     expect(adopted).toEqual([]);
   });
 
+  it("does not replace an edit that was made and fully saved while the read was on its way", async () => {
+    const server = createFakeHomeServer();
+    // The read is answered from the server's copy at the moment it is sent, but arrives only when released
+    let releaseRead: () => void = () => {};
+    const slowRead = new Promise<void>((resolve) => (releaseRead = resolve));
+    const fetchWithSlowRead: typeof server.fetch = async (input, init) => {
+      const answer = await server.fetch(input, init);
+      if (init?.method !== "PUT") await slowRead;
+      return answer;
+    };
+    const storage = createHomeServerStorage(server.copy, fetchWithSlowRead);
+    const { events, adopted } = recordingEvents();
+
+    const refreshing = storage.refresh(events);
+    storage.save(catalogueOf("Typed during the read"), events);
+    await letSavesHappen();
+    releaseRead();
+    await refreshing;
+
+    // Without the check the page would go back to the empty copy the read saw, hiding a study that is on the server
+    expect(server.copy.revision).toBe(1);
+    expect(adopted).toEqual([]);
+  });
+
   it("ignores an unreachable server", async () => {
     const server = createFakeHomeServer();
     const storage = createHomeServerStorage(server.copy, server.fetch);

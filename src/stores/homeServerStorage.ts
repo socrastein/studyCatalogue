@@ -142,10 +142,13 @@ export function createHomeServerStorage(
       if (waiting !== null && !isWorking) scheduleWork(0);
       return;
     }
+    const revisionBeforeRead = knownRevision;
     const serverCopy = await readServerCopy(fetchFunction);
-    // An edit made while the read was on its way is newer than what was read
+    // An edit made while the read was on its way is newer than what was read, even when it was already saved by the
+    // time the read arrived: that save moved the known revision on, so the read is of the copy before it
     const isStillIdle = waiting === null && !isWorking;
-    if (serverCopy === null || !isStillIdle) return;
+    const hasSavedSinceRead = knownRevision !== revisionBeforeRead;
+    if (serverCopy === null || !isStillIdle || hasSavedSinceRead) return;
     if (serverCopy.revision === knownRevision) return;
     knownRevision = serverCopy.revision;
     events.adoptCatalogue(serverCopy.catalogue, null);
