@@ -112,11 +112,62 @@ test("a new tag is created from the New Tag box and added, by Enter or by the bu
   await expect(page.getByRole("option")).toHaveText(["Rest intervals"]);
 });
 
-test("a blank new tag creates nothing and says so", async ({ page }) => {
+test("a blank new tag creates nothing and says so beside the box, where it can be seen", async ({
+  page,
+}) => {
   await page.getByRole("button", { name: "Add New Tag" }).click();
   await expect(chips(page)).toHaveCount(0);
-  await expect(page.getByRole("status").last()).toHaveText(
-    "Type a name for the new tag first",
-  );
+  await expect(
+    page.getByText("Type a name for the new tag first."),
+  ).toBeVisible();
   await expect(textField(page, "New Tag")).toBeFocused();
+  await expect(textField(page, "New Tag")).toHaveAttribute(
+    "aria-invalid",
+    "true",
+  );
+  await expectNoAxeViolations(page);
+
+  // Typing clears the message
+  await textField(page, "New Tag").fill("R");
+  await expect(
+    page.getByText("Type a name for the new tag first."),
+  ).toHaveCount(0);
+});
+
+test("a tag the study already has is not added twice and the box says it is already chosen", async ({
+  page,
+}) => {
+  await tagDropdown(page).fill("hypertrophy");
+  await page.keyboard.press("Enter");
+  await expect(chips(page)).toHaveCount(1);
+
+  // By alias, to show the match is the same one the creation would find
+  await textField(page, "New Tag").fill("muscle growth");
+  await page.getByRole("button", { name: "Add New Tag" }).click();
+  await expect(
+    page.getByText('"Hypertrophy" is already chosen.'),
+  ).toBeVisible();
+  await expect(chips(page)).toHaveCount(1);
+  await expect(page.getByText(/Created the new tag/)).toHaveCount(0);
+  await expect(textField(page, "New Tag")).toHaveValue("muscle growth");
+  await expectNoAxeViolations(page);
+});
+
+test("the box tells a created tag from an existing tag it added", async ({
+  page,
+}) => {
+  await textField(page, "New Tag").fill("Volume landmarks");
+  await page.getByRole("button", { name: "Add New Tag" }).click();
+  await expect(
+    page.getByText('Created the new tag "Volume landmarks" and added it.'),
+  ).toBeVisible();
+
+  await textField(page, "New Tag").fill("protein");
+  await page.getByRole("button", { name: "Add New Tag" }).click();
+  await expect(
+    page.getByText('Added the existing tag "Protein".'),
+  ).toBeVisible();
+  await expect(page.getByText(/Created the new tag/)).toHaveCount(0);
+  await expect(chips(page)).toHaveText([/Volume landmarks/, /Protein/]);
+  await expectNoAxeViolations(page);
 });

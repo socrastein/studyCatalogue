@@ -19,6 +19,7 @@
 import DropdownSelect from "lifting-school-ui/components/DropdownSelect.vue";
 import FormField from "lifting-school-ui/components/FormField.vue";
 import { computed, ref } from "vue";
+import { newTagRequest, type NewTagRequest } from "../catalogue/newTagRequest";
 import { tagPickerOptions } from "../catalogue/tagPickerOptions";
 import { tagNameWithParents, type Tag } from "../catalogue/tags";
 import TextField from "./TextField.vue";
@@ -40,6 +41,10 @@ const emit = defineEmits<{
 const selectedIds = defineModel<string[]>({ required: true });
 
 const newTagName = ref("");
+/** Why the last Add New Tag did nothing, shown as the New Tag field's error; "" when there is none. */
+const newTagError = ref("");
+/** What the last Add New Tag did, shown under the field; "" when there is nothing to report. */
+const newTagResult = ref("");
 const announcement = ref("");
 const rootElement = ref<HTMLElement | null>(null);
 
@@ -64,6 +69,12 @@ const dropdownName = computed(() => `Add to ${props.label}`);
 
 const newTagFieldId = computed(() => `${props.id}-new`);
 
+/** Typing starts a new request, so the answer to the last one is out of date. */
+function clearNewTagAnswer(): void {
+  newTagError.value = "";
+  newTagResult.value = "";
+}
+
 /** Adds the tag the drop-down reported; the drop-down stays focused and empty for the next one. */
 function addTag(tagId: string): void {
   selectedIds.value = [...selectedIds.value, tagId];
@@ -79,19 +90,40 @@ function removeTag(tag: Tag): void {
 }
 
 /**
- * Asks the parent to create the typed tag, then clears the box for the next one. A blank name creates nothing and says
- * so; focus stays in the box either way, so the person can carry on typing.
+ * Carries out the New Tag box's request, after saying what it will do (see `newTagRequest`). A blank name or a tag the
+ * study already has creates nothing and is shown as the box's visible error; otherwise the parent creates (or finds)
+ * the tag, the box is cleared for the next one, and a visible line says whether the tag is new or was already in the
+ * catalogue. Focus stays in the box either way, so the person can carry on typing.
  */
 function createNewTag(): void {
-  const name = newTagName.value.trim();
-  if (name === "") {
-    announcement.value = "Type a name for the new tag first";
-  } else {
-    emit("create", name);
-    announcement.value = `Created and added ${name}`;
+  const request = newTagRequest(
+    newTagName.value,
+    props.tags,
+    selectedIds.value,
+  );
+  newTagError.value = newTagErrorText(request);
+  newTagResult.value = newTagResultText(request);
+  if (request.kind === "createsNewTag" || request.kind === "addsExistingTag") {
+    emit("create", request.tagName);
     newTagName.value = "";
   }
   focusInside(`#${newTagFieldId.value}`);
+}
+
+/** The error under the New Tag box for a request that does nothing; "" when the request goes ahead. */
+function newTagErrorText(request: NewTagRequest): string {
+  if (request.kind === "blank") return "Type a name for the new tag first.";
+  if (request.kind === "alreadyChosen")
+    return `"${request.tagName}" is already chosen.`;
+  return "";
+}
+
+/** The line shown after a request went ahead: a created tag and an existing one are told apart; "" when it did nothing. */
+function newTagResultText(request: NewTagRequest): string {
+  if (request.kind === "blank" || request.kind === "alreadyChosen") return "";
+  if (request.kind === "createsNewTag")
+    return `Created the new tag "${request.tagName}" and added it.`;
+  return `Added the existing tag "${request.tagName}".`;
 }
 
 /** Puts focus on the first element inside this component that matches the selector. */
@@ -140,12 +172,22 @@ function focusInside(selector: string): void {
         v-model="newTagName"
         class="newTagName"
         label="New Tag"
+        :error="newTagError || undefined"
+        @update:model-value="clearNewTagAnswer"
         @keydown.enter.prevent="createNewTag"
       />
       <button type="button" class="btn btnSecondary" @click="createNewTag">
         Add New Tag
       </button>
     </div>
+    <!-- Always present, so screen readers announce what Add New Tag did when it appears -->
+    <p
+      class="newTagResult"
+      :class="{ isEmpty: newTagResult === '' }"
+      role="status"
+    >
+      {{ newTagResult }}
+    </p>
     <p class="visuallyHidden" role="status">{{ announcement }}</p>
   </div>
 </template>
@@ -188,6 +230,11 @@ function focusInside(selector: string): void {
   flex-wrap: wrap;
   align-items: flex-end;
   gap: var(--space1);
+}
+
+/* Keeps the status region in the page for screen readers while there is nothing to say */
+.newTagResult.isEmpty {
+  display: contents;
 }
 
 .newTagName {
