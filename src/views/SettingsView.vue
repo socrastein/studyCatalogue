@@ -8,6 +8,7 @@
 -->
 <script setup lang="ts">
 import ConfirmDialog from "lifting-school-ui/components/ConfirmDialog.vue";
+import StatusToast from "lifting-school-ui/components/StatusToast.vue";
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { mergeBackup, type BackupMergeSummary } from "../catalogue/backupMerge";
@@ -28,6 +29,11 @@ import {
   downloadTextFile,
   websiteExportFileName,
 } from "../components/downloadFile";
+import {
+  backupDownloadMessage,
+  unreadableDownloadMessage,
+  websiteExportMessage,
+} from "../components/downloadMessages";
 import { useConfirmation } from "../components/useConfirmation";
 import { useCatalogue } from "../stores/catalogueStore";
 import { showNoticeOnNextPage } from "../stores/notice";
@@ -35,6 +41,8 @@ import { showNoticeOnNextPage } from "../stores/notice";
 const catalogue = useCatalogue();
 const router = useRouter();
 const { question: pendingQuestion, ask: confirm, answer } = useConfirmation();
+/** The confirmation at the bottom of the window: the download buttons sit far from the top, where the notice banner is. */
+const toast = ref<InstanceType<typeof StatusToast> | null>(null);
 const addProblem = ref("");
 const restoreProblem = ref("");
 
@@ -54,27 +62,34 @@ function contentsText(contents: Catalogue): string {
   return `${studies} ${studies === 1 ? "study" : "studies"} and ${tags} ${tags === 1 ? "tag" : "tags"}`;
 }
 
+/** Starts the download of a backup of the whole catalogue and confirms it in the toast. */
 function downloadBackup(): void {
   const text = serializeCatalogue(catalogue.state.catalogue);
-  downloadTextFile(backupFileName(), text, "application/json");
+  const fileName = backupFileName();
+  downloadTextFile(fileName, text, "application/json");
+  void toast.value?.show(backupDownloadMessage(fileName));
 }
 
 /** Only approved summaries and the allow-listed fields go in (see catalogue/websiteExport.ts). */
 function exportForWebsite(): void {
   const text = serializeWebsiteExport(catalogue.state.catalogue);
-  downloadTextFile(websiteExportFileName(), text, "application/json");
+  const fileName = websiteExportFileName();
+  downloadTextFile(fileName, text, "application/json");
+  const studyCount = catalogue.state.catalogue.studies.length;
+  void toast.value?.show(
+    websiteExportMessage(fileName, studyCount, approvedSummaryCount.value),
+  );
 }
 
 const approvedSummaryCount = computed(() =>
   countApprovedSummaries(catalogue.state.catalogue.studies),
 );
 
+/** Starts the download of the saved text that could not be read and confirms it in the toast. */
 function downloadUnreadableData(): void {
-  downloadTextFile(
-    "study-catalogue-unreadable.txt",
-    loadProblem.value?.rawText ?? "",
-    "text/plain",
-  );
+  const fileName = "study-catalogue-unreadable.txt";
+  downloadTextFile(fileName, loadProblem.value?.rawText ?? "", "text/plain");
+  void toast.value?.show(unreadableDownloadMessage(fileName));
 }
 
 /** Reads the chosen backup and, after confirmation, adds its studies and tags to the catalogue. */
@@ -171,6 +186,10 @@ async function startOver(): Promise<void> {
           Start a New Catalogue
         </button>
       </div>
+      <p class="textMuted">
+        The unreadable data downloads as a text file, to your browser's
+        downloads.
+      </p>
     </section>
 
     <section class="panel" aria-labelledby="export-heading">
@@ -193,6 +212,9 @@ async function startOver(): Promise<void> {
       <button type="button" class="btn btnSecondary" @click="exportForWebsite">
         Export for the Website
       </button>
+      <p class="textMuted">
+        The file goes to your browser's downloads, usually the Downloads folder.
+      </p>
     </section>
 
     <section class="panel" aria-labelledby="backup-heading">
@@ -211,6 +233,9 @@ async function startOver(): Promise<void> {
       <button type="button" class="btn btnPrimary" @click="downloadBackup">
         Download a Backup
       </button>
+      <p class="textMuted">
+        The file goes to your browser's downloads, usually the Downloads folder.
+      </p>
       <!-- Not offered while the saved catalogue cannot be read: what is in memory then is not what was saved, and
            adding to it would write over the unreadable data -->
       <BackupFileField
@@ -230,6 +255,7 @@ async function startOver(): Promise<void> {
       />
     </section>
   </div>
+  <StatusToast ref="toast" />
   <ConfirmDialog
     v-if="pendingQuestion"
     v-bind="pendingQuestion"

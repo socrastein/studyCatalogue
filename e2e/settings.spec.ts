@@ -23,6 +23,13 @@ function restoreInput(page: Page) {
   return page.locator("#restore-file");
 }
 
+/** Waits for a status region (the bottom toast) that says exactly this. */
+async function expectToastSays(page: Page, text: string): Promise<void> {
+  await expect(
+    page.getByRole("status").filter({ hasText: text }),
+  ).toBeVisible();
+}
+
 test.beforeEach(async ({ page }) => {
   await openWithStudies(page, [studyDetails({ title: "Backed-up study" })]);
   await page.goto("/settings");
@@ -207,4 +214,38 @@ test("Export for the Website downloads the approved summaries and no abstracts, 
   expect(text).not.toContain("The publisher abstract.");
   expect(text).not.toContain("Unapproved draft words.");
   expect(JSON.parse(text).studies).toHaveLength(3);
+  await expectToastSays(
+    page,
+    `Exported 3 studies (1 with a summary) to "${download.suggestedFilename()}".`,
+  );
+});
+
+test("each download button says where the file goes and confirms what it started", async ({
+  page,
+}) => {
+  const hints = page.getByText("The file goes to your browser's downloads");
+  await expect(hints).toHaveCount(2);
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Download a Backup" }).click();
+  const download = await downloadPromise;
+  await expectToastSays(
+    page,
+    `Started the download of the backup "${download.suggestedFilename()}".`,
+  );
+  await expectNoAxeViolations(page);
+});
+
+test("the unreadable data's download is confirmed too", async ({ page }) => {
+  await breakSavedData(page);
+  await page.goto("/settings");
+  const downloadPromise = page.waitForEvent("download");
+  await page
+    .getByRole("button", { name: "Download the Unreadable Data" })
+    .click();
+  await downloadPromise;
+  await expectToastSays(
+    page,
+    'Started the download of the unreadable data as "study-catalogue-unreadable.txt".',
+  );
 });
