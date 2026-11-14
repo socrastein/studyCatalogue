@@ -133,3 +133,62 @@ export function rejectSummary(study: Study, now = new Date()): Study {
   const { summary: _removed, ...rest } = study;
   return { ...rest, updatedAt: now.toISOString() };
 }
+
+/**
+ * The study with its approved summary sent back to review: the approval is cleared, so the summary is a draft again
+ * (shown on the Review Summaries screen) and no longer leaves the app. A study without a summary, or with a draft
+ * already, is returned unchanged.
+ *
+ * @param study The study as saved.
+ * @param now The time of the change; the current time unless a test fixes it.
+ */
+export function sendSummaryBackToReview(study: Study, now = new Date()): Study {
+  if (study.summary === undefined || study.summary.approvedAt === null)
+    return study;
+  const summary = { ...study.summary, approvedAt: null };
+  return { ...study, summary, updatedAt: now.toISOString() };
+}
+
+/** What the person is told about where a summary came from, by its source. */
+const SOURCE_TEXT: Record<SummarySource, string> = {
+  abstract: "Written from the abstract.",
+  fullText: "Written from the full text.",
+};
+
+/**
+ * Where a summary came from, in words: "Written from the abstract.", or for a full-text summary whose PDF is known,
+ * "Written from the full text. File: Hall 2018.pdf", so the file can be opened and checked.
+ *
+ * @param summary The summary to describe.
+ */
+export function describeSummarySource(summary: StudySummary): string {
+  const base = SOURCE_TEXT[summary.source];
+  if (summary.source !== "fullText" || summary.sourceFile === undefined)
+    return base;
+  return `${base} File: ${summary.sourceFile}`;
+}
+
+/**
+ * The summary's state in one word, as shown beside it: "Draft" until approved, then "Approved".
+ *
+ * @param summary The summary to describe.
+ */
+export function summaryStatusText(summary: StudySummary): "Draft" | "Approved" {
+  return summary.approvedAt === null ? "Draft" : "Approved";
+}
+
+/**
+ * The day an approval happened, e.g. "Nov 10, 2026", in the reader's own time zone.
+ *
+ * @param approvedAt The summary's ISO 8601 approval timestamp.
+ * @param timeZone The zone to read the day in; the device's own unless a test fixes it.
+ */
+export function approvalDateText(
+  approvedAt: string,
+  timeZone?: string,
+): string {
+  return new Date(approvedAt).toLocaleDateString("en-US", {
+    dateStyle: "medium",
+    timeZone,
+  });
+}

@@ -8,7 +8,7 @@
 import { computed, nextTick, ref } from "vue";
 import { formatApa } from "../catalogue/citations/apa";
 import type { Study } from "../catalogue/study";
-import type { SummarySource } from "../catalogue/summary";
+import { describeSummarySource } from "../catalogue/summary";
 import TextField from "./TextField.vue";
 
 const props = defineProps<{
@@ -27,23 +27,12 @@ const emit = defineEmits<{
   reject: [];
 }>();
 
-/** What the person is told about where the draft came from. */
-const SOURCE_TEXT: Record<SummarySource, string> = {
-  abstract: "Written from the abstract.",
-  fullText: "Written from the full text.",
-};
-
 const draft = computed(() => props.study.summary);
 
 /** Where the draft came from, naming the PDF for a full-text draft so it can be opened and checked. */
-const sourceText = computed(() => {
-  const summary = draft.value;
-  if (summary === undefined) return "";
-  const base = SOURCE_TEXT[summary.source];
-  if (summary.source !== "fullText" || summary.sourceFile === undefined)
-    return base;
-  return `${base} File: ${summary.sourceFile}`;
-});
+const sourceText = computed(() =>
+  draft.value === undefined ? "" : describeSummarySource(draft.value),
+);
 const citation = computed(() => formatApa(props.study).plainText);
 const isEditing = ref(false);
 const editedText = ref("");

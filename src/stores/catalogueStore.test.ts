@@ -205,6 +205,16 @@ describe("summaries", () => {
     });
   });
 
+  it("go back to the review queue with their words when sent back, and are saved", () => {
+    const { store, id } = storeWithDraft();
+    store.approveSummary(id);
+    store.sendSummaryBackToReview(id);
+    expect(savedCatalogue().studies[0]?.summary).toMatchObject({
+      text: "A draft.",
+      approvedAt: null,
+    });
+  });
+
   it("are deleted when rejected, leaving the study and its abstract", () => {
     const { store, id } = storeWithDraft();
     store.rejectSummary(id);

@@ -21,6 +21,7 @@ import {
   approveSummary,
   editSummaryText,
   rejectSummary,
+  sendSummaryBackToReview,
 } from "../catalogue/summary";
 import {
   deleteTag,
@@ -98,6 +99,9 @@ type SummaryActions = {
 
   /** Changes the words of a study's summary, draft or approved (see `editSummaryText` in summary.ts). */
   editSummary(studyId: string, text: string): void;
+
+  /** Clears the approval of a study's summary so it is a draft in the review queue again (see `sendSummaryBackToReview`). */
+  sendSummaryBackToReview(studyId: string): void;
 
   /** Deletes a study's summary, as rejecting a draft does (see `rejectSummary` in summary.ts). */
   rejectSummary(studyId: string): void;
@@ -240,6 +244,10 @@ function summaryActions(state: StoreState, commit: Commit): SummaryActions {
 
     editSummary(studyId, text) {
       changeStudy(studyId, (study) => editSummaryText(study, text));
+    },
+
+    sendSummaryBackToReview(studyId) {
+      changeStudy(studyId, (study) => sendSummaryBackToReview(study));
     },
 
     rejectSummary(studyId) {

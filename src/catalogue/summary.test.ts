@@ -5,13 +5,17 @@
 import { describe, expect, it } from "vitest";
 import { createStudy } from "./study";
 import {
+  approvalDateText,
   approveSummary,
   createDraftSummary,
   editSummaryText,
   isAwaitingReview,
+  describeSummarySource,
   rejectSummary,
+  sendSummaryBackToReview,
   studiesAwaitingReview,
   studiesInReviewOrder,
+  summaryStatusText,
   withSummary,
 } from "./summary";
 import { exampleStudyDetails } from "./testFixtures";
@@ -124,6 +128,63 @@ describe("rejectSummary", () => {
     expect(rejected.abstract).toBe(study.abstract);
     expect(rejected.title).toBe(study.title);
     expect(rejected.updatedAt).toBe("2026-11-03T10:00:00.000Z");
+  });
+});
+
+describe("sendSummaryBackToReview", () => {
+  it("clears the approval, keeps the words, and stamps the edit", () => {
+    const approved = approveSummary(studyWithDraft(), LATER);
+    const sentBack = sendSummaryBackToReview(approved, LATER);
+    expect(sentBack.summary).toMatchObject({
+      text: "The draft.",
+      approvedAt: null,
+    });
+    expect(isAwaitingReview(sentBack)).toBe(true);
+    expect(sentBack.updatedAt).toBe("2026-11-03T10:00:00.000Z");
+  });
+
+  it("returns a draft, or a study with no summary, unchanged", () => {
+    const draft = studyWithDraft();
+    expect(sendSummaryBackToReview(draft, LATER)).toBe(draft);
+    const none = createStudy(exampleStudyDetails(), CREATED);
+    expect(sendSummaryBackToReview(none, LATER)).toBe(none);
+  });
+});
+
+describe("describeSummarySource", () => {
+  it("says an abstract summary was written from the abstract", () => {
+    const summary = createDraftSummary("Text.", "abstract", DRAFTED);
+    expect(describeSummarySource(summary)).toBe("Written from the abstract.");
+  });
+
+  it("names the PDF of a full-text summary when it is known", () => {
+    const summary = {
+      ...createDraftSummary("Text.", "fullText", DRAFTED),
+      sourceFile: "Made Up 2018.pdf",
+    };
+    expect(describeSummarySource(summary)).toBe(
+      "Written from the full text. File: Made Up 2018.pdf",
+    );
+  });
+
+  it("gives no file for a full-text summary without one", () => {
+    const summary = createDraftSummary("Text.", "fullText", DRAFTED);
+    expect(describeSummarySource(summary)).toBe("Written from the full text.");
+  });
+});
+
+describe("summaryStatusText and approvalDateText", () => {
+  it("call a summary a draft until it is approved", () => {
+    const draft = studyWithDraft();
+    expect(summaryStatusText(draft.summary!)).toBe("Draft");
+    const approved = approveSummary(draft, LATER);
+    expect(summaryStatusText(approved.summary!)).toBe("Approved");
+  });
+
+  it("write the approval's day in the given time zone", () => {
+    expect(approvalDateText("2026-11-03T10:00:00.000Z", "UTC")).toBe(
+      "Nov 3, 2026",
+    );
   });
 });
 
