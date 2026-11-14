@@ -10,6 +10,7 @@ import {
   CATALOGUE_API_PATH,
   numberedCatalogueText,
   readSaveRequest,
+  type SaveRequest,
 } from "../src/catalogue/homeServerProtocol";
 import type { CatalogueFile } from "./catalogueFile";
 import { BodyTooLargeError, readBody } from "./readBody";
@@ -33,8 +34,8 @@ export function createRequestHandler(
 ): (request: IncomingMessage, response: ServerResponse) => void {
   return (request, response) => {
     const startedAt = Date.now();
-    const path = new URL(request.url ?? "/", "http://localhost").pathname;
-    void answer(parts, request, response, path)
+    const path = pathOf(request);
+    void answer(parts, request, response)
       .catch((error: unknown) => answerServerError(response, error))
       .then((status) => {
         const elapsed = Date.now() - startedAt;
@@ -43,13 +44,18 @@ export function createRequestHandler(
   };
 }
 
+/** The path of a request's address, without the query string. */
+function pathOf(request: IncomingMessage): string {
+  return new URL(request.url ?? "/", "http://localhost").pathname;
+}
+
 /** Sends the answer for one request and says which status it sent. */
 async function answer(
   parts: RequestHandlerParts,
   request: IncomingMessage,
   response: ServerResponse,
-  path: string,
 ): Promise<number> {
+  const path = pathOf(request);
   if (path === CATALOGUE_API_PATH)
     return answerCatalogue(parts, request, response);
   if (path.startsWith("/api/"))
@@ -80,31 +86,47 @@ async function answerSave(
   request: IncomingMessage,
   response: ServerResponse,
 ): Promise<number> {
-  let body: string;
-  try {
-    body = await readBody(request, parts.bodyLimitBytes);
-  } catch (error) {
-    if (!(error instanceof BodyTooLargeError)) throw error;
+  const body = await readBodyWithinLimit(request, parts.bodyLimitBytes);
+  if (body === null) {
     // The rest of the upload is not read, so the connection is closed after the answer
     response.setHeader("Connection", "close");
-    return sendJson(
-      response,
-      413,
-      '{"error":"The catalogue is too large to save"}',
-    );
+    const tooLarge = '{"error":"The catalogue is too large to save"}';
+    return sendJson(response, 413, tooLarge);
   }
   const parsed = readSaveRequest(parseJson(body));
   if (parsed.kind === "invalid")
     return sendJson(response, 400, JSON.stringify({ error: parsed.problem }));
-  const { baseRevision, catalogue } = parsed.message;
-  const result = await parts.catalogueFile.save(baseRevision, catalogue);
-  if (result.kind === "saved")
-    return sendJson(
-      response,
-      200,
-      JSON.stringify({ revision: result.revision }),
-    );
+  return saveAndAnswer(parts, parsed.message, response);
+}
+
+/** Saves a checked request and answers with the new revision, or with 409 and the current copy when it was stale. */
+async function saveAndAnswer(
+  parts: RequestHandlerParts,
+  request: SaveRequest,
+  response: ServerResponse,
+): Promise<number> {
+  const result = await parts.catalogueFile.save(
+    request.baseRevision,
+    request.catalogue,
+  );
+  if (result.kind === "saved") {
+    const answer = JSON.stringify({ revision: result.revision });
+    return sendJson(response, 200, answer);
+  }
   return sendJson(response, 409, numberedCatalogueText(result.current));
+}
+
+/** The request body, or null when it is larger than the limit. */
+async function readBodyWithinLimit(
+  request: IncomingMessage,
+  limitBytes: number,
+): Promise<string | null> {
+  try {
+    return await readBody(request, limitBytes);
+  } catch (error) {
+    if (error instanceof BodyTooLargeError) return null;
+    throw error;
+  }
 }
 
 /** The parsed JSON, or undefined when the text is not JSON (which the save check then refuses). */

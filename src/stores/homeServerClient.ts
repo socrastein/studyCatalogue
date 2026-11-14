@@ -84,14 +84,17 @@ async function describeSaveAnswer(response: Response): Promise<SaveOutcome> {
       kind: "failed",
       reason: `the server answered ${response.status}`,
     };
-  const saved: unknown = await response.json();
-  const revision =
-    typeof saved === "object" && saved !== null && "revision" in saved
-      ? saved.revision
-      : undefined;
-  if (typeof revision !== "number")
+  const revision = revisionIn(await response.json());
+  if (revision === undefined)
     return { kind: "failed", reason: "the server's answer was unreadable" };
   return { kind: "saved", revision };
+}
+
+/** The revision in a server's answer to a save, `{ "revision": 5 }`; undefined when it does not say one. */
+function revisionIn(answer: unknown): number | undefined {
+  const isRecord = typeof answer === "object" && answer !== null;
+  if (!isRecord || !("revision" in answer)) return undefined;
+  return typeof answer.revision === "number" ? answer.revision : undefined;
 }
 
 /** The numbered catalogue in parsed JSON, or null when it is not one. */

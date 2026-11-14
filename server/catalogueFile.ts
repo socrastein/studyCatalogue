@@ -82,7 +82,7 @@ export async function openCatalogueFile(
     const saved = { revision: current.revision + 1, catalogue };
     const text = numberedCatalogueText(saved);
     await writeFileAtomically(dataPath, text, options.fileSystem);
-    await keepVersion(versionsPath, saved.revision, text, now());
+    await keepVersion(versionsPath, { revision: saved.revision, text }, now());
     return { kind: "saved", revision: saved.revision };
   }
 
@@ -129,14 +129,13 @@ function isMissingFile(error: unknown): boolean {
  */
 async function keepVersion(
   versionsPath: string,
-  revision: number,
-  text: string,
+  save: { revision: number; text: string },
   savedAt: Date,
 ): Promise<void> {
   try {
     await writeFileAtomically(
-      join(versionsPath, versionFileName(savedAt, revision)),
-      text,
+      join(versionsPath, versionFileName(savedAt, save.revision)),
+      save.text,
     );
     const names = await readdir(versionsPath);
     for (const name of versionsToDelete(names, savedAt)) {

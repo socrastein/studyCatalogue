@@ -70,21 +70,25 @@ export function createHomeServerStorage(
     timer = setTimeout(() => void work(), delayMilliseconds);
   }
 
-  /** Saves waiting changes until none are left; stops and schedules a retry when a save fails. */
+  /** Saves waiting changes until none are left; schedules a retry when a save fails. */
   async function work(): Promise<void> {
     if (isWorking) return;
     isWorking = true;
     try {
-      while (waiting !== null) {
-        const succeeded = await saveWaitingChanges();
-        if (!succeeded) {
-          scheduleWork(timing.retryAfterFailureMilliseconds);
-          return;
-        }
-      }
+      const allSaved = await saveWhileChangesWait();
+      if (!allSaved) scheduleWork(timing.retryAfterFailureMilliseconds);
     } finally {
       isWorking = false;
     }
+  }
+
+  /** Saves until nothing is waiting. Returns false, leaving the changes waiting, when a save fails. */
+  async function saveWhileChangesWait(): Promise<boolean> {
+    while (waiting !== null) {
+      const succeeded = await saveWaitingChanges();
+      if (!succeeded) return false;
+    }
+    return true;
   }
 
   /** One save attempt of the waiting changes. Returns whether the server answered (saved or refused as a conflict). */

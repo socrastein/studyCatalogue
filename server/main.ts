@@ -5,12 +5,27 @@
 import { createServer } from "node:http";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { openCatalogueFile } from "./catalogueFile";
+import { openCatalogueFile, type CatalogueFile } from "./catalogueFile";
 import { createRequestHandler } from "./requestHandler";
-import { readSettings } from "./settings";
+import { readSettings, type ServerSettings } from "./settings";
 
 /** The repository folder: this file is in server/ or dist-server/, one level below it. */
 const repositoryFolder = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+/** The HTTP server for the settings and the opened catalogue file. */
+function createHomeServer(
+  settings: ServerSettings,
+  catalogueFile: CatalogueFile,
+) {
+  return createServer(
+    createRequestHandler({
+      catalogueFile,
+      distDirectory: settings.distDirectory,
+      bodyLimitBytes: settings.bodyLimitBytes,
+      log: (line) => console.log(line),
+    }),
+  );
+}
 
 /** Starts listening; exits with a message when the settings or the data file are bad. */
 async function main(): Promise<void> {
@@ -22,14 +37,7 @@ async function main(): Promise<void> {
   const catalogueFile = await openCatalogueFile(settings.dataDirectory);
   // Fail now, not on the first request, when the data file cannot be read: it is never overwritten or replaced
   await catalogueFile.read();
-  const server = createServer(
-    createRequestHandler({
-      catalogueFile,
-      distDirectory: settings.distDirectory,
-      bodyLimitBytes: settings.bodyLimitBytes,
-      log: (line) => console.log(line),
-    }),
-  );
+  const server = createHomeServer(settings, catalogueFile);
   server.listen(settings.port, settings.host, () => {
     console.log(
       `Study Catalogue home server on ${settings.host}:${settings.port}, data in ${settings.dataDirectory}`,
