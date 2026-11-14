@@ -29,3 +29,4 @@ playwright-report
 
 # Local-only working notes (not committed)
 IMPORT_PLAN.md
+dist-server

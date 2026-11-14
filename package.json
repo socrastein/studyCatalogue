@@ -12,7 +12,11 @@
     "test:watch": "vitest",
     "test:browser": "playwright test",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "build:server": "vite build --config vite.server.config.ts",
+    "build:home": "npm run build && npm run build:server",
+    "home:serve": "node dist-server/main.js",
+    "home": "npm run build:home && npm run home:serve"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",

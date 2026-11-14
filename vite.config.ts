@@ -8,8 +8,8 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   plugins: [vue()],
   test: {
-    // Unit tests live beside the code they test; e2e/ holds the Playwright browser tests, which Vitest must not run.
-    include: ["src/**/*.test.ts"],
+    // Unit tests live beside the code they test (the home server is in server/); e2e/ holds the Playwright browser tests, which Vitest must not run.
+    include: ["src/**/*.test.ts", "server/**/*.test.ts"],
     // Components and the theme settings need a DOM; the pure catalogue code runs the same either way.
     environment: "jsdom",
   },
