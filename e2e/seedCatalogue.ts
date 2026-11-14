@@ -6,6 +6,7 @@ import type { Page } from "@playwright/test";
 import { newCatalogue } from "../src/catalogue/catalogue";
 import { serializeCatalogue } from "../src/catalogue/serialization";
 import { createStudy, type StudyDetails } from "../src/catalogue/study";
+import { withSummary, type StudySummary } from "../src/catalogue/summary";
 import { exampleStudyDetails } from "../src/catalogue/testFixtures";
 import { STORAGE_KEY } from "../src/stores/catalogueStore";
 
@@ -28,6 +29,32 @@ export async function openWithStudies(
     ...newCatalogue(),
     studies: studies.map((details) => createStudy(details)),
   };
+  await page.goto("/");
+  await page.evaluate(([key, text]) => localStorage.setItem(key, text), [
+    STORAGE_KEY,
+    serializeCatalogue(catalogue),
+  ] as const);
+  await page.reload();
+}
+
+/** A study to seed, and the summary it already has, if any. */
+export type SeededStudy = { details: StudyDetails; summary?: StudySummary };
+
+/**
+ * Like `openWithStudies`, for studies that may hold summaries (drafts or approved).
+ *
+ * @param page The test's page.
+ * @param studies The studies to save, in the order given, each with its summary when it has one.
+ */
+export async function openWithSummaries(
+  page: Page,
+  studies: SeededStudy[],
+): Promise<void> {
+  const saved = studies.map(({ details, summary }) => {
+    const study = createStudy(details);
+    return summary === undefined ? study : withSummary(study, summary);
+  });
+  const catalogue = { ...newCatalogue(), studies: saved };
   await page.goto("/");
   await page.evaluate(([key, text]) => localStorage.setItem(key, text), [
     STORAGE_KEY,

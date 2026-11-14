@@ -5,6 +5,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { newCatalogue } from "../catalogue/catalogue";
 import { parseCatalogue } from "../catalogue/serialization";
+import { createDraftSummary, withSummary } from "../catalogue/summary";
 import { exampleStudyDetails } from "../catalogue/testFixtures";
 import { createCatalogueStore, STORAGE_KEY } from "./catalogueStore";
 
@@ -157,5 +158,59 @@ describe("tag edits", () => {
     const ids = savedCatalogue().tags.map((tag) => tag.id);
     expect(ids).not.toContain("exercise-science/cardio");
     expect(ids).not.toContain("physics");
+  });
+});
+
+describe("summaries", () => {
+  /** A store holding one study with a draft summary, and that study's id. */
+  function storeWithDraft() {
+    const store = createCatalogueStore(localStorage);
+    const study = store.addStudy(exampleStudyDetails());
+    const drafted = withSummary(
+      study,
+      createDraftSummary("A draft.", "abstract"),
+    );
+    store.replaceCatalogue({
+      ...store.state.catalogue,
+      studies: [drafted],
+    });
+    return { store, id: study.id };
+  }
+
+  it("are approved and saved, and the approval is there for the next visit", () => {
+    const { store, id } = storeWithDraft();
+    store.approveSummary(id);
+    const saved = savedCatalogue().studies[0];
+    expect(saved?.summary?.approvedAt).not.toBeNull();
+  });
+
+  it("keep their approval when the words are edited, and are saved", () => {
+    const { store, id } = storeWithDraft();
+    store.approveSummary(id);
+    store.editSummary(id, "His own words.");
+    expect(savedCatalogue().studies[0]?.summary).toMatchObject({
+      text: "His own words.",
+      approvedAt: expect.any(String),
+    });
+  });
+
+  it("are deleted when rejected, leaving the study and its abstract", () => {
+    const { store, id } = storeWithDraft();
+    store.rejectSummary(id);
+    const saved = savedCatalogue().studies[0];
+    expect(saved).not.toHaveProperty("summary");
+    expect(saved?.abstract).toBe(exampleStudyDetails().abstract);
+  });
+
+  it("survive an edit of the study's details in the form", () => {
+    const { store, id } = storeWithDraft();
+    store.editStudy(id, exampleStudyDetails({ year: 2018 }));
+    expect(savedCatalogue().studies[0]?.summary?.text).toBe("A draft.");
+  });
+
+  it("are left alone by an action on a study that does not exist", () => {
+    const { store } = storeWithDraft();
+    store.approveSummary("no-such-id");
+    expect(savedCatalogue().studies[0]?.summary?.approvedAt).toBeNull();
   });
 });

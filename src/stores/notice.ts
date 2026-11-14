@@ -20,6 +20,17 @@ export function showNoticeOnNextPage(text: string): void {
   isWaitingForNextPage = true;
 }
 
+/**
+ * Shows a message on the page already showing, for an action that stays on it (approving a summary): it is read out at
+ * once and cleared by the next navigation.
+ *
+ * @param text The confirmation, e.g. "Approved. 2 summaries left to review."
+ */
+export function showNoticeNow(text: string): void {
+  message.value = text;
+  isWaitingForNextPage = false;
+}
+
 /** Called by App.vue on every navigation: keeps a message through the navigation it was set for, then clears it. */
 export function advanceNoticeOnNavigation(): void {
   if (isWaitingForNextPage) {

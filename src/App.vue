@@ -6,19 +6,22 @@
 <script setup lang="ts">
 import { useMediaQuery } from "@vueuse/core";
 import ThemeButton from "lifting-school-ui/components/ThemeButton.vue";
-import { nextTick, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { COLOR_SCHEME_STORAGE_KEY } from "./colorSchemeKey";
 import PhoneMenu from "./components/PhoneMenu.vue";
-import { NAV_LINKS, PHONE_WIDTH_QUERY } from "./navigation";
+import { navLinks, PHONE_WIDTH_QUERY } from "./navigation";
 import { APP_NAME } from "./router.ts";
 import { useCatalogue } from "./stores/catalogueStore";
 import { advanceNoticeOnNavigation, noticeMessage } from "./stores/notice";
+import { useSummariesAwaitingReview } from "./stores/summaryReview";
 
 const route = useRoute();
 const catalogue = useCatalogue();
 const mainElement = ref<HTMLElement | null>(null);
 const isPhoneWidth = useMediaQuery(PHONE_WIDTH_QUERY);
+const awaitingReview = useSummariesAwaitingReview();
+const links = computed(() => navLinks(awaitingReview.value.length));
 
 /**
  * Moves keyboard and screen reader focus to the new page's heading, so a page change is announced and Tab continues
@@ -49,7 +52,7 @@ watch(
     <template v-else>
       <nav aria-label="Main">
         <ul class="navList plainList">
-          <li v-for="link in NAV_LINKS" :key="link.path">
+          <li v-for="link in links" :key="link.path">
             <RouterLink :to="link.path">{{ link.name }}</RouterLink>
           </li>
         </ul>

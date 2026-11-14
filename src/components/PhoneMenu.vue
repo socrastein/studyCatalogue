@@ -13,15 +13,18 @@ import PopupTransition from "lifting-school-ui/components/PopupTransition.vue";
 import ThemeSlider from "lifting-school-ui/components/ThemeSlider.vue";
 import closeIcon from "lifting-school-ui/icons/x.svg";
 import menuIcon from "lifting-school-ui/icons/menu.svg";
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { COLOR_SCHEME_STORAGE_KEY } from "../colorSchemeKey";
-import { NAV_LINKS } from "../navigation";
+import { navLinks } from "../navigation";
+import { useSummariesAwaitingReview } from "../stores/summaryReview";
 
 const isOpen = ref(false);
 const panel = ref<HTMLElement | null>(null);
 const toggleButton = ref<HTMLButtonElement | null>(null);
 const route = useRoute();
+const awaitingReview = useSummariesAwaitingReview();
+const links = computed(() => navLinks(awaitingReview.value.length));
 
 function close(): void {
   isOpen.value = false;
@@ -63,7 +66,7 @@ watch(() => route.path, close);
         data-side="bottom"
       >
         <ul class="plainList">
-          <li v-for="link in NAV_LINKS" :key="link.path">
+          <li v-for="link in links" :key="link.path">
             <RouterLink :to="link.path" class="menuItem" @click="close">
               {{ link.name }}
             </RouterLink>

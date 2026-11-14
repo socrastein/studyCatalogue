@@ -18,6 +18,11 @@ import {
   type StudyDetails,
 } from "../catalogue/study";
 import {
+  approveSummary,
+  editSummaryText,
+  rejectSummary,
+} from "../catalogue/summary";
+import {
   deleteTag,
   editTag,
   mergeTags,
@@ -43,6 +48,7 @@ export type CatalogueStore = {
   /** Read-only view of the state; views read it reactively. */
   state: DeepReadonly<StoreState>;
 } & StudyActions &
+  SummaryActions &
   TagActions & {
     /**
      * Replaces the whole catalogue, as an import does, and saves it. Also clears a load problem: the person has
@@ -68,6 +74,17 @@ type StudyActions = {
 
   /** Removes a study; does nothing when no study has that id. */
   deleteStudy(id: string): void;
+};
+
+type SummaryActions = {
+  /** Approves a study's draft summary (see `approveSummary` in summary.ts); does nothing when there is none. */
+  approveSummary(studyId: string): void;
+
+  /** Changes the words of a study's summary, draft or approved (see `editSummaryText` in summary.ts). */
+  editSummary(studyId: string, text: string): void;
+
+  /** Deletes a study's summary, as rejecting a draft does (see `rejectSummary` in summary.ts). */
+  rejectSummary(studyId: string): void;
 };
 
 type TagActions = {
@@ -121,6 +138,7 @@ export function createCatalogueStore(storage: Storage): CatalogueStore {
   return {
     state: readonly(state),
     ...studyActions(state, commit),
+    ...summaryActions(state, commit),
     ...tagActions(state, commit),
     replaceCatalogue(catalogue) {
       // Cleared first, so the commit's save may overwrite the unreadable data the person has chosen to replace
@@ -159,6 +177,31 @@ function studyActions(state: StoreState, commit: Commit): StudyActions {
         (study) => study.id !== id,
       );
       commit({ ...state.catalogue, studies });
+    },
+  };
+}
+
+/** The actions on studies' summaries. */
+function summaryActions(state: StoreState, commit: Commit): SummaryActions {
+  /** Replaces the study with the changed one; does nothing when no study has that id. */
+  function changeStudy(id: string, change: (study: Study) => Study): void {
+    const studies = state.catalogue.studies.map((study) =>
+      study.id === id ? change(study) : study,
+    );
+    commit({ ...state.catalogue, studies });
+  }
+
+  return {
+    approveSummary(studyId) {
+      changeStudy(studyId, (study) => approveSummary(study));
+    },
+
+    editSummary(studyId, text) {
+      changeStudy(studyId, (study) => editSummaryText(study, text));
+    },
+
+    rejectSummary(studyId) {
+      changeStudy(studyId, (study) => rejectSummary(study));
     },
   };
 }

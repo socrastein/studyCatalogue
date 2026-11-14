@@ -8,6 +8,7 @@ import NewStudyView from "./views/NewStudyView.vue";
 import EditStudyView from "./views/EditStudyView.vue";
 import TagsView from "./views/TagsView.vue";
 import EditTagView from "./views/EditTagView.vue";
+import ReviewSummariesView from "./views/ReviewSummariesView.vue";
 import SettingsView from "./views/SettingsView.vue";
 
 /** Shown in every tab title after the page's own title, e.g. "Tags - Study Catalogue". */
@@ -42,6 +43,11 @@ export const router = createRouter({
       component: EditTagView,
       props: true,
       meta: { title: "Edit tag" },
+    },
+    {
+      path: "/review",
+      component: ReviewSummariesView,
+      meta: { title: "Review Summaries" },
     },
     { path: "/settings", component: SettingsView, meta: { title: "Settings" } },
   ],
