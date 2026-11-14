@@ -6,7 +6,8 @@
 -->
 <script setup lang="ts">
 import ConfirmDialog from "lifting-school-ui/components/ConfirmDialog.vue";
-import { computed } from "vue";
+import StatusToast from "lifting-school-ui/components/StatusToast.vue";
+import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import type { StudyDetails } from "../catalogue/study";
 import { draftFromDetails } from "../catalogue/studyDraft";
@@ -14,13 +15,15 @@ import StudyForm from "../components/StudyForm.vue";
 import StudySummaryEditor from "../components/StudySummaryEditor.vue";
 import { useConfirmation } from "../components/useConfirmation";
 import { useCatalogue } from "../stores/catalogueStore";
-import { showNoticeNow, showNoticeOnNextPage } from "../stores/notice";
+import { showNoticeOnNextPage } from "../stores/notice";
 
 const props = defineProps<{ id: string }>();
 
 const catalogue = useCatalogue();
 const router = useRouter();
 const { question: pendingQuestion, ask: confirm, answer } = useConfirmation();
+/** Confirms a summary action at the bottom of the window: the summary is far down the page, out of sight of the top. */
+const toast = ref<InstanceType<typeof StatusToast> | null>(null);
 
 const study = computed(() =>
   catalogue.state.catalogue.studies.find(
@@ -52,15 +55,13 @@ async function deleteStudy(): Promise<void> {
 /** Saves the summary's new words; the page stays, since the study's own fields may be half edited. */
 function saveSummary(text: string): void {
   catalogue.editSummary(props.id, text);
-  showNoticeNow(`Saved the summary of "${study.value?.title ?? ""}".`);
+  toast.value?.show("Summary saved.");
 }
 
 /** Clears the summary's approval, so it waits in the review queue again; the page stays. */
 function sendSummaryBackToReview(): void {
   catalogue.sendSummaryBackToReview(props.id);
-  showNoticeNow(
-    `Sent the summary of "${study.value?.title ?? ""}" back to review.`,
-  );
+  toast.value?.show("Summary sent back to review.");
 }
 
 /** Asks first, then deletes the summary; the study and its abstract are not affected. */
@@ -73,7 +74,7 @@ async function removeSummary(): Promise<void> {
   });
   if (!isConfirmed) return;
   catalogue.rejectSummary(props.id);
-  showNoticeNow(`Removed the summary of "${title}".`);
+  toast.value?.show("Summary removed.");
 }
 </script>
 
@@ -104,6 +105,7 @@ async function removeSummary(): Promise<void> {
       @send-back="sendSummaryBackToReview"
       @remove="removeSummary"
     />
+    <StatusToast ref="toast" />
     <ConfirmDialog
       v-if="pendingQuestion"
       v-bind="pendingQuestion"

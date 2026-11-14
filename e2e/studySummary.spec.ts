@@ -58,6 +58,11 @@ function summarySection(page: Page) {
   return page.locator("#study-summary");
 }
 
+/** The confirmation toast, found as the live region (role status) that is showing a message, so a screen reader hears it. */
+function summaryToast(page: Page) {
+  return page.getByRole("status").filter({ has: page.locator(".toast") });
+}
+
 test.describe("on the study list", () => {
   test("a study's summary is shown with its status, above the abstract", async ({
     page,
@@ -130,13 +135,21 @@ test.describe("on the Edit Study page", () => {
       .getByRole("textbox", { name: "Summary Text" })
       .fill("Corrected words.");
     await section.getByRole("button", { name: "Save Summary" }).click();
-    await expect(page.getByRole("status").first()).toContainText(
-      'Saved the summary of "Study with approved summary".',
-    );
+    await expect(summaryToast(page)).toHaveText("Summary saved.");
     await expect(section).toContainText("Approved on");
 
     await page.getByRole("link", { name: "Cancel" }).click();
     await expect(page.getByText("Corrected words.")).toBeVisible();
+  });
+
+  test("saving unchanged words still confirms", async ({ page }) => {
+    await openWithThreeStudies(page);
+    await openEditPage(page, "Study with approved summary");
+    await summarySection(page)
+      .getByRole("button", { name: "Save Summary" })
+      .click();
+    await expect(summaryToast(page)).toHaveText("Summary saved.");
+    await expectNoAxeViolations(page);
   });
 
   test("saving the words keeps a draft a draft", async ({ page }) => {
@@ -176,6 +189,7 @@ test.describe("on the Edit Study page", () => {
     await section.getByRole("button", { name: "Send Back to Review" }).click();
 
     await expect(section).toContainText("Status: Draft");
+    await expect(summaryToast(page)).toHaveText("Summary sent back to review.");
     await expect(
       section.getByRole("button", { name: "Send Back to Review" }),
     ).toHaveCount(0);
@@ -212,6 +226,7 @@ test.describe("on the Edit Study page", () => {
       .getByRole("button", { name: "Remove Summary" })
       .click();
     await expect(section).toContainText("This study has no summary.");
+    await expect(summaryToast(page)).toHaveText("Summary removed.");
     await expect(
       section.getByRole("textbox", { name: "Summary Text" }),
     ).toHaveCount(0);
