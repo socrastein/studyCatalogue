@@ -45,9 +45,9 @@ function shownTitles(page: Page) {
   return page.getByRole("article").getByRole("heading", { level: 2 });
 }
 
-/** Adds a topic filter by typing its name and pressing Enter. */
+/** Adds a topic filter by typing in the topic drop-down and pressing Enter. */
 async function filterByTopic(page: Page, text: string): Promise<void> {
-  const topics = page.getByRole("combobox", { name: "Topics" });
+  const topics = page.getByRole("combobox", { name: "Add to Topics" });
   await topics.fill(text);
   await expect(page.getByRole("option").first()).toBeVisible();
   await topics.press("Enter");
@@ -65,6 +65,16 @@ test("lists every study, newest first, with a count", async ({ page }) => {
     "Hypertrophy in beginners",
     "Joint pain and protein",
   ]);
+});
+
+test("the Topics drop-down lists every topic without typing", async ({
+  page,
+}) => {
+  await page.getByRole("combobox", { name: "Add to Topics" }).click();
+  await expect(page.getByRole("option").first()).toHaveText("Biology");
+  await expect(
+    page.getByRole("option", { name: "Hypertrophy (Exercise Science)" }),
+  ).toBeVisible();
 });
 
 test("finds hypertrophy meta-analyses in trained lifters, and puts the search in the URL", async ({

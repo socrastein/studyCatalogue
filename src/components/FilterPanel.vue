@@ -19,7 +19,7 @@ import {
 } from "../catalogue/filterStudies";
 import type { Tag } from "../catalogue/tags";
 import CheckboxGroup from "./CheckboxGroup.vue";
-import TagCombobox from "./TagCombobox.vue";
+import TagPicker from "./TagPicker.vue";
 
 defineProps<{ tags: readonly Tag[] }>();
 
@@ -80,7 +80,7 @@ function clearFilters(): void {
         autocomplete="off"
       />
     </FormField>
-    <TagCombobox
+    <TagPicker
       id="browse-tags"
       v-model="tagIds"
       label="Topics"

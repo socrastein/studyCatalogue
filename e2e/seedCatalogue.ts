@@ -7,6 +7,7 @@ import { newCatalogue, type Catalogue } from "../src/catalogue/catalogue";
 import { serializeCatalogue } from "../src/catalogue/serialization";
 import { createStudy, type StudyDetails } from "../src/catalogue/study";
 import { withSummary, type StudySummary } from "../src/catalogue/summary";
+import type { Tag } from "../src/catalogue/tags";
 import { exampleStudyDetails } from "../src/catalogue/testFixtures";
 import { STORAGE_KEY } from "../src/stores/catalogueStore";
 
@@ -20,13 +21,17 @@ export function studyDetails(overrides: Partial<StudyDetails>): StudyDetails {
  *
  * @param page The test's page.
  * @param studies The studies to save, in the order given.
+ * @param tags The tags to save in place of the seed tags; omit to keep the seed tags.
  */
 export async function openWithStudies(
   page: Page,
   studies: StudyDetails[],
+  tags?: Tag[],
 ): Promise<void> {
+  const starting = newCatalogue();
   const catalogue = {
-    ...newCatalogue(),
+    ...starting,
+    tags: tags ?? starting.tags,
     studies: studies.map((details) => createStudy(details)),
   };
   await page.goto("/");

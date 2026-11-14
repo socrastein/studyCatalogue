@@ -22,15 +22,17 @@ export async function fillInPublication(
   );
 }
 
-/** Adds the existing Hypertrophy tag and creates "Volume landmarks", using only the keyboard. */
+/**
+ * Adds the existing Hypertrophy tag by typing in the tag drop-down and creates "Volume landmarks" in the New Tag box,
+ * using only the keyboard.
+ */
 export async function addTagsByKeyboard(page: Page): Promise<void> {
-  const tags = page.getByRole("combobox", { name: "Tags" });
+  const tags = page.getByRole("combobox", { name: "Add to Tags" });
   await tags.fill("hypert");
   await expect(page.getByRole("option", { name: /Hypertrophy/ })).toBeVisible();
   await tags.press("Enter");
-  await tags.fill("Volume landmarks");
-  await page.keyboard.press("ArrowDown");
-  await tags.press("Enter");
+  await textField(page, "New Tag").fill("Volume landmarks");
+  await page.keyboard.press("Enter");
 }
 
 /** Fills in a complete, valid study. */

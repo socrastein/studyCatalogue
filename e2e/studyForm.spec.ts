@@ -1,6 +1,6 @@
 /**
  * Browser tests for adding, editing and deleting a study: the whole form filled in by keyboard (including the tag
- * combobox), validation with the error summary, the edit page, the delete confirmation, and axe on the form with and
+ * picker), validation with the error summary, the edit page, the delete confirmation, and axe on the form with and
  * without errors showing.
  */
 import { expect, test, type Page } from "@playwright/test";
@@ -71,7 +71,7 @@ test("an organization in braces is read whole and marked as one", async ({
   ]);
 });
 
-test("the tag combobox adds an existing tag, creates a new one, and removes one", async ({
+test("the tag picker adds an existing tag, creates a new one, and removes one", async ({
   page,
 }) => {
   await addTagsByKeyboard(page);
@@ -83,7 +83,9 @@ test("the tag combobox adds an existing tag, creates a new one, and removes one"
 
   await chosen.getByRole("button", { name: "Remove Hypertrophy" }).click();
   await expect(chosen.getByRole("listitem")).toHaveText([/Volume landmarks/]);
-  await expect(page.getByRole("combobox", { name: "Tags" })).toBeFocused();
+  await expect(
+    page.getByRole("combobox", { name: "Add to Tags" }),
+  ).toBeFocused();
 });
 
 test("submitting an empty form lists every problem in a focused summary", async ({
@@ -116,10 +118,10 @@ test("a link in the error summary puts the cursor in its field", async ({
   await expect(textField(page, /^Year$/)).toBeFocused();
 });
 
-test("the form has no accessibility violations with suggestions open", async ({
+test("the form has no accessibility violations with the tag list open", async ({
   page,
 }) => {
-  await page.getByRole("combobox", { name: "Tags" }).fill("pro");
+  await page.getByRole("combobox", { name: "Add to Tags" }).fill("pro");
   await expect(page.getByRole("listbox")).toBeVisible();
   await expectNoAxeViolations(page);
 });

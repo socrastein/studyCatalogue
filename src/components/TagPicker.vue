@@ -1,203 +1,125 @@
 <!--
-  Choosing topic tags by typing: an ARIA 1.2 combobox (an input with a list of suggestions) above the chosen tags,
-  each shown as a chip with a remove button.
+  Choosing topic tags: a searchable drop-down (the library's DropdownSelect) that adds one tag at a time, above the
+  chosen tags, each shown as a chip with a remove button.
 
-  Keyboard: typing suggests matching tags (by name or alias), Up and Down move through the suggestions, Enter adds
-  the highlighted one, Escape closes the list or clears what was typed. With `allowCreate`, the last suggestion
-  offers to create a tag when nothing has exactly the typed name; the parent creates it and adds its id.
-  Additions and removals are announced in a status region.
+  The drop-down always lists every tag still available, in the order of the tag tree and each with its parents
+  (`tagPickerOptions`); typing narrows it by name, parent or alias. Choosing a row adds the tag and the drop-down is empty
+  again, so the next tag can be chosen straight away. Its keyboard behaviour is the library's: Down, Up or Enter opens
+  the list, Up and Down move through it, Enter picks, Escape closes.
 
-  The library's FormField draws the label and hint. Its combobox mode (a label named by id, for a custom drop-down) is
-  not used: this combobox is a native input, so `<label for>` names it, and the suggestion list takes the label's
-  words as its aria-label.
+  The library's drop-down cannot offer "create this tag" from what was typed (it does not report the typed text), so
+  with `allowCreate` a small separate field, "New Tag", sits under the chips: type a name, press Enter or "Add New Tag",
+  and the parent creates the tag (or finds the one with that name) and adds it. Additions and removals are announced in
+  a status region.
+
+  The library's FormField draws the label and hint in its combobox mode. The drop-down is named by `aria-label`, not
+  `aria-labelledby`, because of the Firefox crash under axe described in BrowseView.vue.
 -->
 <script setup lang="ts">
+import DropdownSelect from "lifting-school-ui/components/DropdownSelect.vue";
 import FormField from "lifting-school-ui/components/FormField.vue";
-import { computed, ref, watch } from "vue";
-import {
-  findTagByName,
-  matchingTags,
-  tagNameWithParents,
-  type Tag,
-} from "../catalogue/tags";
-
-/** The most suggestions shown at once; more than this is a list to scroll, not a suggestion. */
-const MAX_SUGGESTIONS = 8;
+import { computed, ref } from "vue";
+import { tagPickerOptions } from "../catalogue/tagPickerOptions";
+import { tagNameWithParents, type Tag } from "../catalogue/tags";
+import TextField from "./TextField.vue";
 
 const props = defineProps<{
   id: string;
   label: string;
   hint?: string;
-  /** Every tag in the catalogue. */
+  /** Every tag that may be chosen. */
   tags: readonly Tag[];
   allowCreate: boolean;
 }>();
 
 const emit = defineEmits<{
-  /** A new tag with this name should be created and added. */
+  /** A tag with this name should be created (or found, if it exists) and added. */
   create: [name: string];
 }>();
 
 const selectedIds = defineModel<string[]>({ required: true });
 
-type Option = { kind: "tag"; tag: Tag } | { kind: "create"; name: string };
-
-const query = ref("");
-const isOpen = ref(false);
-const activeIndex = ref(0);
+const newTagName = ref("");
 const announcement = ref("");
-const inputElement = ref<HTMLInputElement | null>(null);
+const rootElement = ref<HTMLElement | null>(null);
 
-const listboxId = computed(() => `${props.id}-suggestions`);
-const allTags = computed(() => [...props.tags]);
+const options = computed(() => tagPickerOptions(props.tags, selectedIds.value));
+
+/** Each tag's name with its parents, for drawing a row and a chip's context; the drop-down's own label is for matching. */
+const namesWithParents = computed(
+  () =>
+    new Map(
+      props.tags.map((tag) => [tag.id, tagNameWithParents(tag, props.tags)]),
+    ),
+);
 
 const selectedTags = computed(() =>
   selectedIds.value
-    .map((tagId) => allTags.value.find((tag) => tag.id === tagId))
+    .map((tagId) => props.tags.find((tag) => tag.id === tagId))
     .filter((tag) => tag !== undefined),
 );
 
-const options = computed<Option[]>(() => {
-  if (query.value.trim() === "") return [];
-  const unselected = allTags.value.filter(
-    (tag) => !selectedIds.value.includes(tag.id),
-  );
-  const suggestions = matchingTags(query.value, unselected).slice(
-    0,
-    MAX_SUGGESTIONS,
-  );
-  const tagOptions: Option[] = suggestions.map((tag) => ({ kind: "tag", tag }));
-  return canCreate()
-    ? [...tagOptions, { kind: "create", name: query.value.trim() }]
-    : tagOptions;
-});
+/** The drop-down's accessible name: the field's label (so the visible words are in it) plus what the control does. */
+const dropdownName = computed(() => `Add to ${props.label}`);
 
-const activeOptionId = computed(() =>
-  isOpen.value && options.value.length > 0
-    ? optionId(activeIndex.value)
-    : undefined,
-);
+const newTagFieldId = computed(() => `${props.id}-new`);
 
-// New suggestions start with the first one highlighted, so Enter adds the best match
-watch(options, () => {
-  activeIndex.value = 0;
-});
-
-/** Whether to offer creating a tag from the query: allowed here, and no tag has that exact name or alias. */
-function canCreate(): boolean {
-  return (
-    props.allowCreate && findTagByName(query.value, allTags.value) === undefined
-  );
+/** Adds the tag the drop-down reported; the drop-down stays focused and empty for the next one. */
+function addTag(tagId: string): void {
+  selectedIds.value = [...selectedIds.value, tagId];
+  const name = props.tags.find((tag) => tag.id === tagId)?.name ?? "";
+  announcement.value = `Added ${name}`;
 }
 
-/** The element id of one suggestion, for aria-activedescendant. */
-function optionId(index: number): string {
-  return `${props.id}-option-${index}`;
-}
-
-/** What a suggestion says: the tag with its parents, or the offer to create one. */
-function optionText(option: Option): string {
-  if (option.kind === "create") return `Create tag "${option.name}"`;
-  return tagNameWithParents(option.tag, allTags.value);
-}
-
-function onInput(): void {
-  isOpen.value = true;
-}
-
-/** Moves the highlight by `step` (1 down, -1 up), wrapping around the ends, and opens the list. */
-function moveHighlight(step: number): void {
-  isOpen.value = true;
-  const count = options.value.length;
-  if (count === 0) return;
-  activeIndex.value = (activeIndex.value + step + count) % count;
-}
-
-/** Enter adds the highlighted suggestion. It never submits the form while suggestions are showing. */
-function onEnter(event: KeyboardEvent): void {
-  const option = options.value[activeIndex.value];
-  if (!isOpen.value || option === undefined) return;
-  event.preventDefault();
-  choose(option);
-}
-
-/** Escape closes the list if it is open, otherwise clears what was typed. */
-function onEscape(): void {
-  if (isOpen.value && options.value.length > 0) {
-    isOpen.value = false;
-    return;
-  }
-  query.value = "";
-}
-
-/** Adds the chosen tag (or asks for a new one), clears the input and closes the list, keeping focus in the input. */
-function choose(option: Option): void {
-  if (option.kind === "create") {
-    emit("create", option.name);
-    announcement.value = `Created and added ${option.name}`;
-  } else {
-    selectedIds.value = [...selectedIds.value, option.tag.id];
-    announcement.value = `Added ${option.tag.name}`;
-  }
-  query.value = "";
-  isOpen.value = false;
-  inputElement.value?.focus();
-}
-
-/** Removes a chosen tag and returns focus to the input, since the chip's button is gone. */
-function remove(tag: Tag): void {
+/** Removes a chosen tag and returns focus to the drop-down, since the chip's button is gone. */
+function removeTag(tag: Tag): void {
   selectedIds.value = selectedIds.value.filter((tagId) => tagId !== tag.id);
   announcement.value = `Removed ${tag.name}`;
-  inputElement.value?.focus();
+  focusInside('[role="combobox"]');
+}
+
+/**
+ * Asks the parent to create the typed tag, then clears the box for the next one. A blank name creates nothing and says
+ * so; focus stays in the box either way, so the person can carry on typing.
+ */
+function createNewTag(): void {
+  const name = newTagName.value.trim();
+  if (name === "") {
+    announcement.value = "Type a name for the new tag first";
+  } else {
+    emit("create", name);
+    announcement.value = `Created and added ${name}`;
+    newTagName.value = "";
+  }
+  focusInside(`#${newTagFieldId.value}`);
+}
+
+/** Puts focus on the first element inside this component that matches the selector. */
+function focusInside(selector: string): void {
+  rootElement.value?.querySelector<HTMLElement>(selector)?.focus();
 }
 </script>
 
 <template>
-  <div class="tagCombobox">
-    <FormField :id="id" v-slot="field" :label="label" :hint="hint">
-      <div class="inputArea">
-        <input
-          v-bind="field"
-          ref="inputElement"
-          v-model="query"
-          class="input"
-          type="text"
-          role="combobox"
-          autocomplete="off"
-          aria-autocomplete="list"
-          :aria-expanded="isOpen && options.length > 0 ? 'true' : 'false'"
-          :aria-controls="listboxId"
-          :aria-activedescendant="activeOptionId"
-          @input="onInput"
-          @keydown.down.prevent="moveHighlight(1)"
-          @keydown.up.prevent="moveHighlight(-1)"
-          @keydown.enter="onEnter"
-          @keydown.esc="onEscape"
-          @blur="isOpen = false"
-        />
-        <ul
-          v-show="isOpen && options.length > 0"
-          :id="listboxId"
-          role="listbox"
-          :aria-label="label"
-          class="suggestions menu plainList"
-        >
-          <li
-            v-for="(option, index) in options"
-            :id="optionId(index)"
-            :key="option.kind === 'tag' ? option.tag.id : 'create'"
-            role="option"
-            :aria-selected="index === activeIndex ? 'true' : 'false'"
-            :class="{
-              isActive: index === activeIndex,
-              isCreate: option.kind === 'create',
-            }"
-            @mousedown.prevent="choose(option)"
-          >
-            {{ optionText(option) }}
-          </li>
-        </ul>
-      </div>
+  <div ref="rootElement" class="tagPicker">
+    <FormField :id="id" v-slot="field" :label="label" :hint="hint" is-combobox>
+      <!-- Named by aria-label, not aria-labelledby: see the note in BrowseView.vue. -->
+      <DropdownSelect
+        v-bind="field"
+        :labelled-by="undefined"
+        :label="dropdownName"
+        :combo-id="field.id"
+        :options="options"
+        value=""
+        placeholder="Choose or type to search"
+        size="regular"
+        searchable
+        @change="addTag"
+      >
+        <template #option="{ option }">
+          {{ namesWithParents.get(option.value) ?? option.label }}
+        </template>
+      </DropdownSelect>
     </FormField>
     <ul
       v-if="selectedTags.length > 0"
@@ -206,55 +128,33 @@ function remove(tag: Tag): void {
     >
       <li v-for="tag in selectedTags" :key="tag.id" class="chip badge">
         {{ tag.name }}
-        <button type="button" class="chipRemove" @click="remove(tag)">
+        <button type="button" class="chipRemove" @click="removeTag(tag)">
           <span aria-hidden="true">×</span>
           <span class="visuallyHidden">Remove {{ tag.name }}</span>
         </button>
       </li>
     </ul>
+    <div v-if="allowCreate" class="newTag">
+      <TextField
+        :id="newTagFieldId"
+        v-model="newTagName"
+        class="newTagName"
+        label="New Tag"
+        @keydown.enter.prevent="createNewTag"
+      />
+      <button type="button" class="btn btnSecondary" @click="createNewTag">
+        Add New Tag
+      </button>
+    </div>
     <p class="visuallyHidden" role="status">{{ announcement }}</p>
   </div>
 </template>
 
 <style scoped>
-.tagCombobox {
+.tagPicker {
   display: flex;
   flex-direction: column;
   gap: var(--space1);
-}
-
-.inputArea {
-  position: relative;
-}
-
-.input {
-  width: 100%;
-}
-
-/* The list floats over what follows, on the library's menu surface */
-.suggestions {
-  position: absolute;
-  z-index: 1;
-  top: 100%;
-  left: 0;
-  right: 0;
-  margin-top: var(--spaceHalf);
-}
-
-.suggestions li {
-  padding: var(--space1);
-  border-radius: var(--radius);
-  cursor: pointer;
-}
-
-/* The highlighted suggestion: the accent wash plus a bar at its start, so it is marked by more than colour */
-.suggestions li.isActive {
-  background: var(--accentSubtle);
-  box-shadow: inset 4px 0 0 var(--accentFull);
-}
-
-.suggestions li.isCreate {
-  font-style: italic;
 }
 
 .chips {
@@ -280,5 +180,17 @@ function remove(tag: Tag): void {
 
 .chipRemove:hover {
   background: var(--accentSubtle);
+}
+
+/* The name box and its button side by side, the button level with the box; wrapping on a phone */
+.newTag {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space1);
+}
+
+.newTagName {
+  flex: 1 1 12rem;
 }
 </style>

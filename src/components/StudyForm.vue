@@ -25,7 +25,7 @@ import DoiField from "./DoiField.vue";
 import ErrorSummary from "./ErrorSummary.vue";
 import CheckboxGroup from "./CheckboxGroup.vue";
 import RadioGroup from "./RadioGroup.vue";
-import TagCombobox from "./TagCombobox.vue";
+import TagPicker from "./TagPicker.vue";
 import TextField from "./TextField.vue";
 import { errorSummaryItems } from "./studyFormErrors";
 
@@ -161,11 +161,11 @@ function createTag(name: string): void {
 
     <section class="formSection panel" aria-labelledby="topics-heading">
       <h2 id="topics-heading" class="sectionTitle">Topics</h2>
-      <TagCombobox
+      <TagPicker
         id="study-tags"
         v-model="draft.tagIds"
         label="Tags"
-        hint="Type to find a tag, or to create a new one."
+        hint="Choose from the list, or type to narrow it."
         :tags="catalogue.state.catalogue.tags"
         allow-create
         @create="createTag"

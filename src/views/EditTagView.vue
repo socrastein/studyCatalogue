@@ -13,7 +13,7 @@ import { computed, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import { studyCountForTag } from "../catalogue/tagEdits";
 import { descendantIds, tagNameWithParents } from "../catalogue/tags";
-import TagCombobox from "../components/TagCombobox.vue";
+import TagPicker from "../components/TagPicker.vue";
 import TextField from "../components/TextField.vue";
 import { useConfirmation } from "../components/useConfirmation";
 import { useCatalogue } from "../stores/catalogueStore";
@@ -143,7 +143,7 @@ async function deleteThisTag(): Promise<void> {
           hint="Names that should also find this tag, separated by commas, e.g. muscle growth, muscle size"
           is-optional
         />
-        <TagCombobox
+        <TagPicker
           id="tag-parents"
           v-model="form.parentIds"
           label="Sits Under"
