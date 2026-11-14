@@ -2,10 +2,16 @@
  * Browser tests for Settings: downloading a backup, adding one to the catalogue, restoring one in its place, refusing
  * a file that is not a backup, and recovering from unreadable saved data.
  */
+import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { STORAGE_KEY } from "../src/stores/catalogueStore";
 import { expectNoAxeViolations } from "./expectNoAxeViolations";
-import { openWithStudies, studyDetails } from "./seedCatalogue";
+import { createDraftSummary } from "../src/catalogue/summary";
+import {
+  openWithStudies,
+  openWithSummaries,
+  studyDetails,
+} from "./seedCatalogue";
 
 /** The add-a-backup file input, found by id like `restoreInput`. */
 function addInput(page: Page) {
@@ -153,4 +159,46 @@ test("unreadable saved data is kept until the person starts over", async ({
   expect(
     await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY),
   ).toContain('"schemaVersion":2');
+});
+
+test("Export for the Website downloads the approved summaries and no abstracts, and says how many studies have one", async ({
+  page,
+}) => {
+  const when = new Date("2026-11-10T10:00:00.000Z");
+  const approved = {
+    ...createDraftSummary("Approved words.", "fullText", when),
+  };
+  approved.approvedAt = "2026-11-11T10:00:00.000Z";
+  await openWithSummaries(page, [
+    {
+      details: studyDetails({
+        title: "Approved study",
+        abstract: "The publisher abstract.",
+        doi: "10.1000/a",
+      }),
+      summary: approved,
+    },
+    {
+      details: studyDetails({ title: "Draft study", doi: "10.1000/b" }),
+      summary: createDraftSummary("Unapproved draft words.", "abstract", when),
+    },
+    { details: studyDetails({ title: "Plain study", doi: "10.1000/c" }) },
+  ]);
+  await page.goto("/settings");
+  await expect(
+    page.getByText("1 of 3 studies have an approved summary"),
+  ).toBeVisible();
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export for the Website" }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(
+    /^study-catalogue-website-\d{4}-\d{2}-\d{2}\.json$/,
+  );
+  const text = readFileSync(await download.path(), "utf8");
+
+  expect(text).toContain("Approved words.");
+  expect(text).not.toContain("The publisher abstract.");
+  expect(text).not.toContain("Unapproved draft words.");
+  expect(JSON.parse(text).studies).toHaveLength(3);
 });

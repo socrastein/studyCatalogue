@@ -13,13 +13,21 @@ import { useRouter } from "vue-router";
 import { mergeBackup, type BackupMergeSummary } from "../catalogue/backupMerge";
 import { newCatalogue, type Catalogue } from "../catalogue/catalogue";
 import { parseCatalogue, serializeCatalogue } from "../catalogue/serialization";
+import {
+  countApprovedSummaries,
+  serializeWebsiteExport,
+} from "../catalogue/websiteExport";
 import BackupFileField from "../components/BackupFileField.vue";
 import {
   changesAnything,
   mergeConfirmationDetail,
   mergeNotice,
 } from "../components/backupMergeText";
-import { backupFileName, downloadTextFile } from "../components/downloadFile";
+import {
+  backupFileName,
+  downloadTextFile,
+  websiteExportFileName,
+} from "../components/downloadFile";
 import { useConfirmation } from "../components/useConfirmation";
 import { useCatalogue } from "../stores/catalogueStore";
 import { showNoticeOnNextPage } from "../stores/notice";
@@ -43,6 +51,16 @@ function downloadBackup(): void {
   const text = serializeCatalogue(catalogue.state.catalogue);
   downloadTextFile(backupFileName(), text, "application/json");
 }
+
+/** Only approved summaries and the allow-listed fields go in (see catalogue/websiteExport.ts). */
+function exportForWebsite(): void {
+  const text = serializeWebsiteExport(catalogue.state.catalogue);
+  downloadTextFile(websiteExportFileName(), text, "application/json");
+}
+
+const approvedSummaryCount = computed(() =>
+  countApprovedSummaries(catalogue.state.catalogue.studies),
+);
 
 function downloadUnreadableData(): void {
   downloadTextFile(
@@ -146,6 +164,28 @@ async function startOver(): Promise<void> {
           Start a new catalogue
         </button>
       </div>
+    </section>
+
+    <section class="panel" aria-labelledby="export-heading">
+      <h2 id="export-heading" class="sectionTitle">Export for the Website</h2>
+      <p>
+        A file for the public site: each study's citation details, topics and
+        design, with its summary once you have approved it. Abstracts and
+        unapproved drafts are never included.
+      </p>
+      <p>
+        {{ approvedSummaryCount }} of
+        {{ catalogue.state.catalogue.studies.length }}
+        {{
+          catalogue.state.catalogue.studies.length === 1
+            ? "study has"
+            : "studies have"
+        }}
+        an approved summary; the others are exported without one.
+      </p>
+      <button type="button" class="btn btnSecondary" @click="exportForWebsite">
+        Export for the Website
+      </button>
     </section>
 
     <section class="panel" aria-labelledby="backup-heading">

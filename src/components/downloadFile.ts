@@ -15,6 +15,18 @@ export function backupFileName(date = new Date()): string {
 }
 
 /**
+ * The file name for a website export made on a given day, e.g. "study-catalogue-website-2026-11-14.json".
+ *
+ * @param date The day of the export; today unless a test fixes it.
+ */
+export function websiteExportFileName(date = new Date()): string {
+  return backupFileName(date).replace(
+    "study-catalogue-",
+    "study-catalogue-website-",
+  );
+}
+
+/**
  * Makes the browser download the text as a file.
  *
  * @param fileName The name the file is saved under.
