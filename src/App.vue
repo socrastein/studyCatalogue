@@ -71,9 +71,10 @@ watch(
     </template>
   </header>
   <main id="main" ref="mainElement">
+    <!-- Stays at the top of the window while scrolling: a failure far down a long list must not go unseen -->
     <p
       v-if="catalogue.state.saveProblem"
-      class="banner alert alertDanger"
+      class="banner stickyBanner alert alertDanger"
       role="alert"
     >
       {{ catalogue.state.saveProblem }}
@@ -158,6 +159,17 @@ watch(
   width: min(100%, 44rem);
   margin-bottom: 0;
   padding: var(--space1) var(--space2);
+}
+
+/* Sticks to the top edge of the window while the page scrolls under it. The wash is laid over a solid face so the page
+   does not show through; below the popups (60) and the toast (70). */
+.stickyBanner {
+  position: sticky;
+  top: var(--space1);
+  z-index: 40;
+  background:
+    linear-gradient(var(--dangerSubtle), var(--dangerSubtle)), var(--bgTop);
+  box-shadow: var(--shadowRaised);
 }
 
 .noticeBanner {

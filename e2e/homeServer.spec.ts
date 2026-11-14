@@ -193,3 +193,23 @@ test("the toast confirms that changes are saved once a failed save works again",
   await expect(banner).toHaveCount(0);
   await expectServerHolds(page, "Saved late", homeServer.url);
 });
+
+test("a failed save's banner stays in view while the page is scrolled", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await makeSavesFail(page);
+  await addStudy(page, "Never saved");
+  const banner = page
+    .getByRole("alert")
+    .filter({ hasText: "have not reached" });
+  await expect(banner).toBeVisible();
+  // No axe scan here: Firefox crashes ("Page crashed") whenever axe runs while a save problem is showing, with or
+  // without these changes (also on the commit before them). The banner is the same .alert markup axe passes elsewhere.
+
+  // A short window with the page scrolled to the bottom: the banner must still be on screen
+  await page.setViewportSize({ width: 800, height: 200 });
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  await expect(banner).toBeInViewport();
+});
