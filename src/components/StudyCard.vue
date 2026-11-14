@@ -1,5 +1,5 @@
 <!--
-  One study in the list: title, authors and year, journal, its design, participants and topics, the abstract on
+  One study in the list: title, authors and year, journal, its design, participants and topics, its summary when it has one, the abstract on
   request, and its actions: copy a citation (APA, MLA or a markdown link for Reddit), open the paper, edit. Topic tags link to the
   list filtered by that tag.
 -->
@@ -21,6 +21,7 @@ import {
   type FacetValue,
 } from "../catalogue/facets";
 import type { Study } from "../catalogue/study";
+import { summaryStatusText } from "../catalogue/summary";
 import type { Tag } from "../catalogue/tags";
 import { copyCitation } from "./copyCitation";
 
@@ -43,6 +44,7 @@ const CITATION_FORMATS = [
 ] as const;
 
 const headingId = computed(() => `study-${props.study.id}-title`);
+const summaryHeadingId = computed(() => `study-${props.study.id}-summary`);
 const paperLink = computed(() => studyLink(props.study));
 const studyTags = computed(() =>
   props.tags.filter((tag) => props.study.tagIds.includes(tag.id)),
@@ -103,6 +105,20 @@ async function copy(
         </dd>
       </template>
     </dl>
+
+    <section
+      v-if="study.summary"
+      class="summary"
+      :aria-labelledby="summaryHeadingId"
+    >
+      <h3 :id="summaryHeadingId" class="summaryTitle h6">
+        Summary
+        <span class="summaryStatus textMuted">
+          ({{ summaryStatusText(study.summary) }})
+        </span>
+      </h3>
+      <p>{{ study.summary.text }}</p>
+    </section>
 
     <!-- Each card starts folded -->
     <DisclosureSection
@@ -172,6 +188,19 @@ dt {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spaceHalf) var(--space2);
+}
+
+.summaryTitle {
+  font-weight: 700;
+}
+
+.summaryStatus {
+  font-weight: 400;
+}
+
+.summary p {
+  margin-top: var(--space1);
+  white-space: pre-line;
 }
 
 .abstract :deep(.disclosure) {

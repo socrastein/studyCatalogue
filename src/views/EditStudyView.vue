@@ -1,7 +1,8 @@
 <!--
-  The edit page for one study, found by the id in the URL: the study form filled in with its details, plus a delete
-  button that asks for confirmation first. Either way it returns to the study list with a confirmation. An id that
-  matches no study (deleted, or a mistyped link) gets a short page saying so, with a way back.
+  The edit page for one study, found by the id in the URL: the study form filled in with its details, a delete button
+  that asks for confirmation first (saving or deleting the study returns to the study list with a confirmation), and
+  below the form the study's summary to correct (StudySummaryEditor), which saves on its own and stays on the page. An
+  id that matches no study (deleted, or a mistyped link) gets a short page saying so, with a way back.
 -->
 <script setup lang="ts">
 import ConfirmDialog from "lifting-school-ui/components/ConfirmDialog.vue";
@@ -10,9 +11,10 @@ import { useRouter } from "vue-router";
 import type { StudyDetails } from "../catalogue/study";
 import { draftFromDetails } from "../catalogue/studyDraft";
 import StudyForm from "../components/StudyForm.vue";
+import StudySummaryEditor from "../components/StudySummaryEditor.vue";
 import { useConfirmation } from "../components/useConfirmation";
 import { useCatalogue } from "../stores/catalogueStore";
-import { showNoticeOnNextPage } from "../stores/notice";
+import { showNoticeNow, showNoticeOnNextPage } from "../stores/notice";
 
 const props = defineProps<{ id: string }>();
 
@@ -46,6 +48,33 @@ async function deleteStudy(): Promise<void> {
   showNoticeOnNextPage(`Deleted "${title}".`);
   await router.push("/");
 }
+
+/** Saves the summary's new words; the page stays, since the study's own fields may be half edited. */
+function saveSummary(text: string): void {
+  catalogue.editSummary(props.id, text);
+  showNoticeNow(`Saved the summary of "${study.value?.title ?? ""}".`);
+}
+
+/** Clears the summary's approval, so it waits in the review queue again; the page stays. */
+function sendSummaryBackToReview(): void {
+  catalogue.sendSummaryBackToReview(props.id);
+  showNoticeNow(
+    `Sent the summary of "${study.value?.title ?? ""}" back to review.`,
+  );
+}
+
+/** Asks first, then deletes the summary; the study and its abstract are not affected. */
+async function removeSummary(): Promise<void> {
+  const title = study.value?.title ?? "";
+  const isConfirmed = await confirm({
+    question: "Remove this summary?",
+    detail: `The summary of "${title}" will be deleted. The study and its abstract are not affected. This cannot be undone.`,
+    confirmLabel: "Remove Summary",
+  });
+  if (!isConfirmed) return;
+  catalogue.rejectSummary(props.id);
+  showNoticeNow(`Removed the summary of "${title}".`);
+}
 </script>
 
 <template>
@@ -67,6 +96,14 @@ async function deleteStudy(): Promise<void> {
         </button>
       </template>
     </StudyForm>
+    <StudySummaryEditor
+      :key="`${study.id}-summary`"
+      class="summaryEditor"
+      :study="study"
+      @save="saveSummary"
+      @send-back="sendSummaryBackToReview"
+      @remove="removeSummary"
+    />
     <ConfirmDialog
       v-if="pendingQuestion"
       v-bind="pendingQuestion"
@@ -84,6 +121,10 @@ async function deleteStudy(): Promise<void> {
 </template>
 
 <style scoped>
+.summaryEditor {
+  margin-top: var(--space3);
+}
+
 /* At the far end of the form's actions, away from Save */
 .deleteButton {
   margin-left: auto;
