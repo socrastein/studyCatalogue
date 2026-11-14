@@ -4,7 +4,9 @@
  * and the choice survives a reload. At phone width the links move into a menu that opens from a button.
  */
 import { expect, test, type Page } from "@playwright/test";
+import { createDraftSummary } from "../src/catalogue/summary";
 import { expectNoAxeViolations } from "./expectNoAxeViolations";
+import { openWithSummaries, studyDetails } from "./seedCatalogue";
 
 const PAGES = [
   { link: "Studies", path: "/", heading: "Studies" },
@@ -117,3 +119,48 @@ test.describe("at phone width", () => {
     await expectNoAxeViolations(page);
   });
 });
+
+/**
+ * The page title must sit fully below the header. The shared library also styles a class called `siteHeader` as a fixed
+ * bar, and the catalogue's own header once reused that name, which pulled it out of the page and hid half the title.
+ */
+const HEADER_WIDTHS = [
+  { name: "desktop", width: 1280 },
+  { name: "phone", width: 390 },
+];
+
+for (const { name, width } of HEADER_WIDTHS) {
+  for (const { pageName, path } of [
+    { pageName: "Studies", path: "/" },
+    { pageName: "Review Summaries", path: "/review" },
+  ]) {
+    test(`at ${name} width the ${pageName} title is fully below the header`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 844 });
+      // A draft must wait, or the review page has no heading to check
+      await openWithSummaries(page, [
+        {
+          details: studyDetails({ title: "A drafted study", doi: "10.1000/a" }),
+          summary: createDraftSummary(
+            "A draft.",
+            "abstract",
+            new Date("2026-11-10T10:00:00.000Z"),
+          ),
+        },
+      ]);
+      await page.goto(path);
+
+      const heading = page.getByRole("heading", { level: 1 });
+      await expect(heading).toBeVisible();
+      const headerBox = await page.locator("header").first().boundingBox();
+      const headingBox = await heading.boundingBox();
+      expect(headerBox).not.toBeNull();
+      expect(headingBox).not.toBeNull();
+      // Non-null: both asserted above
+      expect(headingBox!.y).toBeGreaterThanOrEqual(
+        headerBox!.y + headerBox!.height,
+      );
+    });
+  }
+}

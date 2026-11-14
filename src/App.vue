@@ -46,7 +46,7 @@ watch(
 
 <template>
   <a class="skipLink" href="#main">Skip to main content</a>
-  <header class="siteHeader">
+  <header class="catalogueHeader">
     <RouterLink to="/" class="siteName">{{ APP_NAME }}</RouterLink>
     <PhoneMenu v-if="isPhoneWidth" />
     <template v-else>
@@ -104,7 +104,7 @@ watch(
   top: var(--space1);
 }
 
-.siteHeader {
+.catalogueHeader {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
