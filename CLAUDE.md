@@ -13,12 +13,13 @@ Private for now, to be released later, so the global accessibility and usability
 | `npm run typecheck`    | TypeScript only                                                   |
 | `npm test`             | Unit tests once (Vitest); `npm run test:watch` to watch           |
 | `npm run test:browser` | Build, then Playwright browser tests in Firefox with axe (`e2e/`) |
-| `npm run format`       | Prettier, whole repo; `format:check` is the CI form               |
+| `npm run format`       | Prettier, whole repo; `format:check` only reports                 |
 | `npm run build:home`   | `build`, then bundle the home server into `dist-server/`          |
 | `npm run home:serve`   | Start the home server (needs `build:home` first); `home` = both   |
 
-CI (`.github/workflows/ci.yml`) runs format check, typecheck and unit tests on every push. Browser tests run locally:
-the specs for the area while working and with each commit, the full suite before a merge into `main`.
+There is no GitHub Actions workflow (removed 2026-11-16, Matt's call: no Actions on any repo); never add one. Format
+check, typecheck and unit tests run locally before every commit. Browser tests run locally too: the specs for the area
+while working and with each commit, the full suite before a merge into `main`.
 
 ## Layers (target design; dependencies point down only)
 
