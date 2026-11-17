@@ -16,6 +16,7 @@ import { newCatalogue, type Catalogue } from "../catalogue/catalogue";
 import { parseCatalogue, serializeCatalogue } from "../catalogue/serialization";
 import {
   countApprovedSummaries,
+  studiesForWebsite,
   serializeWebsiteExport,
 } from "../catalogue/websiteExport";
 import BackupFileField from "../components/BackupFileField.vue";
@@ -75,11 +76,20 @@ function exportForWebsite(): void {
   const text = serializeWebsiteExport(catalogue.state.catalogue);
   const fileName = websiteExportFileName();
   downloadTextFile(fileName, text, "application/json");
-  const studyCount = catalogue.state.catalogue.studies.length;
+  const studyCount = websiteStudyCount.value;
   void toast.value?.show(
     websiteExportMessage(fileName, studyCount, approvedSummaryCount.value),
   );
 }
+
+/** The studies the file will hold: those not kept off the website. */
+const websiteStudyCount = computed(
+  () => studiesForWebsite(catalogue.state.catalogue.studies).length,
+);
+
+const privateStudyCount = computed(
+  () => catalogue.state.catalogue.studies.length - websiteStudyCount.value,
+);
 
 const approvedSummaryCount = computed(() =>
   countApprovedSummaries(catalogue.state.catalogue.studies),
@@ -201,13 +211,18 @@ async function startOver(): Promise<void> {
       </p>
       <p>
         {{ approvedSummaryCount }} of
-        {{ catalogue.state.catalogue.studies.length }}
-        {{
-          catalogue.state.catalogue.studies.length === 1
-            ? "study has"
-            : "studies have"
-        }}
+        {{ websiteStudyCount }}
+        {{ websiteStudyCount === 1 ? "study has" : "studies have" }}
         an approved summary; the others are exported without one.
+      </p>
+      <p v-if="privateStudyCount > 0">
+        {{ privateStudyCount }}
+        {{
+          privateStudyCount === 1
+            ? "study is kept off the website and is left out"
+            : "studies are kept off the website and are left out"
+        }}
+        of the file entirely.
       </p>
       <button type="button" class="btn btnSecondary" @click="exportForWebsite">
         Export for the Website

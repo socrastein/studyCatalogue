@@ -5,7 +5,8 @@
  * Never spread a study or an author into the export.
  *
  * What is left out, on purpose: the publisher's abstract (the site shows Matt's approved summary in its place),
- * summaries that are still drafts, and the app's own bookkeeping (created and edited times, tag aliases).
+ * summaries that are still drafts, every study marked `isHiddenFromWebsite` (left out whole, and the flag itself is
+ * not exported either), and the app's own bookkeeping (created and edited times, tag aliases).
  */
 import type { Catalogue } from "./catalogue";
 import type { Author, Study } from "./study";
@@ -64,7 +65,7 @@ export function buildWebsiteExport(
     exportVersion: WEBSITE_EXPORT_VERSION,
     exportedAt: now.toISOString(),
     tags: catalogue.tags.map(exportTag),
-    studies: catalogue.studies.map(exportStudy),
+    studies: studiesForWebsite(catalogue.studies).map(exportStudy),
   };
 }
 
@@ -81,10 +82,25 @@ export function serializeWebsiteExport(
   return JSON.stringify(buildWebsiteExport(catalogue, now), null, 2);
 }
 
-/** How many of the studies carry an approved summary, so Settings can say what the file will hold. */
+/**
+ * How many of the studies the file will hold carry an approved summary, so Settings can say what the file will hold.
+ * A study kept off the website is not counted: it is not in the file.
+ *
+ * @param studies Every study in the catalogue.
+ */
 export function countApprovedSummaries(studies: readonly Study[]): number {
-  return studies.filter((study) => approvedSummaryOf(study) !== undefined)
-    .length;
+  return studiesForWebsite(studies).filter(
+    (study) => approvedSummaryOf(study) !== undefined,
+  ).length;
+}
+
+/**
+ * The studies the site may have: every one not kept off the website.
+ *
+ * @param studies Every study in the catalogue.
+ */
+export function studiesForWebsite(studies: readonly Study[]): Study[] {
+  return studies.filter((study) => !study.isHiddenFromWebsite);
 }
 
 function exportTag(tag: Tag): WebsiteTag {

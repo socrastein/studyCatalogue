@@ -19,6 +19,7 @@ import {
 } from "../catalogue/study";
 import {
   approveSummary,
+  approveSummaryKeepPrivate,
   editSummaryText,
   rejectSummary,
   sendSummaryBackToReview,
@@ -96,6 +97,9 @@ type StudyActions = {
 type SummaryActions = {
   /** Approves a study's draft summary (see `approveSummary` in summary.ts); does nothing when there is none. */
   approveSummary(studyId: string): void;
+
+  /** Approves a draft and keeps its study off the website (see `approveSummaryKeepPrivate` in summary.ts). */
+  approveSummaryKeepPrivate(studyId: string): void;
 
   /** Changes the words of a study's summary, draft or approved (see `editSummaryText` in summary.ts). */
   editSummary(studyId: string, text: string): void;
@@ -253,6 +257,10 @@ function summaryActions(state: StoreState, commit: Commit): SummaryActions {
   return {
     approveSummary(studyId) {
       changeStudy(studyId, (study) => approveSummary(study));
+    },
+
+    approveSummaryKeepPrivate(studyId) {
+      changeStudy(studyId, (study) => approveSummaryKeepPrivate(study));
     },
 
     editSummary(studyId, text) {

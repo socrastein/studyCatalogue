@@ -42,6 +42,10 @@ describe("emptyDraft", () => {
     expect(draft.subjects).toBe("humans");
     expect(draft.design).toBe("");
   });
+
+  it("shows a new study on the website", () => {
+    expect(emptyDraft().isHiddenFromWebsite).toBe(false);
+  });
 });
 
 describe("draftFromDetails and validateDraft", () => {
@@ -55,6 +59,13 @@ describe("draftFromDetails and validateDraft", () => {
     );
     expect(draft.volume).toBe("");
     expect(draft.doi).toBe("");
+  });
+
+  it("carry the keep-off-the-website choice both ways", () => {
+    const details = exampleStudyDetails({ isHiddenFromWebsite: true });
+    const draft = draftFromDetails(details);
+    expect(draft.isHiddenFromWebsite).toBe(true);
+    expect(detailsFor(draft)).toEqual(details);
   });
 
   it("copy the lists, so editing the draft never changes the saved study", () => {

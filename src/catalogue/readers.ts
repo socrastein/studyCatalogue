@@ -45,6 +45,17 @@ export function readString(value: unknown, where: string): string {
 }
 
 /**
+ * The value as a true-or-false setting.
+ *
+ * @param where What the value is, for the error message.
+ */
+export function readBoolean(value: unknown, where: string): boolean {
+  if (typeof value !== "boolean")
+    throw new ShapeError(`${where} should be true or false`);
+  return value;
+}
+
+/**
  * The value as a string, or null for a field that may be left empty.
  *
  * @param where What the value is, for the error message.

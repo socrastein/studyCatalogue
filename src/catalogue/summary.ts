@@ -105,6 +105,23 @@ export function approveSummary(study: Study, now = new Date()): Study {
 }
 
 /**
+ * The study with its draft approved and the study kept off the website: the summary is approved for this private
+ * catalogue only. A study without a summary, or with one already approved, is returned unchanged (nothing is hidden
+ * then either: the choice belongs to the review of a draft).
+ *
+ * @param study The study as saved.
+ * @param now The time of approval; the current time unless a test fixes it.
+ */
+export function approveSummaryKeepPrivate(
+  study: Study,
+  now = new Date(),
+): Study {
+  const approved = approveSummary(study, now);
+  if (approved === study) return study;
+  return { ...approved, isHiddenFromWebsite: true };
+}
+
+/**
  * The study with the summary's words changed. A draft stays a draft; an approved summary stays approved, since the
  * words are then Matt's own (he wrote them over, or fixed them, in the editor). A study without a summary is returned
  * unchanged.

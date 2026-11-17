@@ -7,6 +7,7 @@ import { createStudy } from "./study";
 import {
   approvalDateText,
   approveSummary,
+  approveSummaryKeepPrivate,
   createDraftSummary,
   editSummaryText,
   isAwaitingReview,
@@ -92,6 +93,31 @@ describe("approveSummary", () => {
     expect(approveSummary(none, LATER)).toBe(none);
     const approved = approveSummary(studyWithDraft(), LATER);
     expect(approveSummary(approved, new Date("2026-12-01"))).toBe(approved);
+  });
+});
+
+describe("approveSummaryKeepPrivate", () => {
+  it("approves the summary exactly as approveSummary does, and keeps the study off the website", () => {
+    const study = studyWithDraft();
+    const kept = approveSummaryKeepPrivate(study, LATER);
+    expect(kept).toEqual({
+      ...approveSummary(study, LATER),
+      isHiddenFromWebsite: true,
+    });
+  });
+
+  it("is not what plain approval does: approveSummary leaves the flag as it was", () => {
+    const study = studyWithDraft();
+    expect(approveSummary(study, LATER).isHiddenFromWebsite).toBe(false);
+    const alreadyHidden = { ...study, isHiddenFromWebsite: true };
+    expect(approveSummary(alreadyHidden, LATER).isHiddenFromWebsite).toBe(true);
+  });
+
+  it("returns a study with no summary, or an already approved one, unchanged", () => {
+    const none = createStudy(exampleStudyDetails(), CREATED);
+    expect(approveSummaryKeepPrivate(none, LATER)).toBe(none);
+    const approved = approveSummary(studyWithDraft(), LATER);
+    expect(approveSummaryKeepPrivate(approved, LATER)).toBe(approved);
   });
 });
 

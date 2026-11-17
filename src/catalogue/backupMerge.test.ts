@@ -320,3 +320,50 @@ describe("mergeBackup: summaries", () => {
     expect(merged.studies[0]?.summary?.approvedAt).toBe(MARCH);
   });
 });
+
+describe("mergeBackup: studies kept off the website", () => {
+  it("brings a hidden study in from a backup as hidden", () => {
+    const theirs = study("theirs", JANUARY, { isHiddenFromWebsite: true });
+    const { catalogue: merged } = mergeBackup(
+      catalogue([]),
+      catalogue([theirs]),
+    );
+    expect(merged.studies[0]?.isHiddenFromWebsite).toBe(true);
+  });
+
+  it("lets the newer edit decide: a newer hidden copy replaces a published one", () => {
+    const mine = study("same", JANUARY);
+    const theirs = study("same", MARCH, { isHiddenFromWebsite: true });
+    const { catalogue: merged } = mergeBackup(
+      catalogue([mine]),
+      catalogue([theirs]),
+    );
+    expect(merged.studies[0]?.isHiddenFromWebsite).toBe(true);
+  });
+
+  it("does not let an older published copy undo a newer hidden one", () => {
+    const mine = study("same", MARCH, { isHiddenFromWebsite: true });
+    const theirs = study("same", JANUARY);
+    const { catalogue: merged, summary } = mergeBackup(
+      catalogue([mine]),
+      catalogue([theirs]),
+    );
+    expect(merged.studies[0]?.isHiddenFromWebsite).toBe(true);
+    expect(summary.unchangedStudies).toBe(1);
+  });
+
+  it("keeps the flag when an older copy only fills in a missing summary", () => {
+    const mine = study("same", MARCH, { isHiddenFromWebsite: true });
+    const withDraft = withSummary(
+      study("same", JANUARY),
+      createDraftSummary("Draft.", "abstract", new Date(JANUARY)),
+      new Date(JANUARY),
+    );
+    const { catalogue: merged } = mergeBackup(
+      catalogue([mine]),
+      catalogue([withDraft]),
+    );
+    expect(merged.studies[0]?.summary?.text).toBe("Draft.");
+    expect(merged.studies[0]?.isHiddenFromWebsite).toBe(true);
+  });
+});

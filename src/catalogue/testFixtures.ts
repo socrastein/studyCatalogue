@@ -32,6 +32,7 @@ export function exampleStudyDetails(
     ageGroups: ["young-adults"],
     trainingStatuses: ["untrained", "trained"],
     sexes: ["male"],
+    isHiddenFromWebsite: false,
     ...overrides,
   };
 }

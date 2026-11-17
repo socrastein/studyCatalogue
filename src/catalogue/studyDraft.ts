@@ -39,6 +39,8 @@ export type StudyDraft = {
   ageGroups: AgeGroupId[];
   trainingStatuses: TrainingStatusId[];
   sexes: SexId[];
+  /** The form's "Show on the Website" switch, inverted: true keeps the study off the website. */
+  isHiddenFromWebsite: boolean;
 };
 
 /**
@@ -73,6 +75,8 @@ export function emptyDraft(): StudyDraft {
     ageGroups: [],
     trainingStatuses: [],
     sexes: [],
+    // A new study may be published, until Matt decides otherwise
+    isHiddenFromWebsite: false,
   };
 }
 
@@ -103,6 +107,7 @@ export function draftFromDetails(details: StudyDetails): StudyDraft {
     ageGroups: [...details.ageGroups],
     trainingStatuses: [...details.trainingStatuses],
     sexes: [...details.sexes],
+    isHiddenFromWebsite: details.isHiddenFromWebsite,
   };
 }
 

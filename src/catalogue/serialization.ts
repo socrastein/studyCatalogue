@@ -16,6 +16,7 @@ import {
 } from "./facets";
 import {
   readArray,
+  readBoolean,
   readFacetId,
   readFacetIds,
   readOptionalString,
@@ -123,6 +124,7 @@ function readStudy(value: unknown, index: number): Study {
     ...readBibliography(record, where),
     ...readFacets(record, where),
     ...readOptionalSummary(record, where),
+    isHiddenFromWebsite: readIsHiddenFromWebsite(record, where),
     tagIds: readStringList(record.tagIds, `${where}: tagIds`),
     id: readString(record.id, `${where}: id`),
     createdAt: readString(record.createdAt, `${where}: createdAt`),
@@ -137,6 +139,21 @@ function readOptionalSummary(
 ): { summary?: StudySummary } {
   if (record.summary === undefined) return {};
   return { summary: readSummary(record.summary, `${where}: summary`) };
+}
+
+/**
+ * Whether the study is kept off the website. Data saved before the field existed has none, and every such study was
+ * publishable, so an absent field is false on purpose; any other value that is not true or false is refused.
+ */
+function readIsHiddenFromWebsite(
+  record: Record<string, unknown>,
+  where: string,
+): boolean {
+  if (record.isHiddenFromWebsite === undefined) return false;
+  return readBoolean(
+    record.isHiddenFromWebsite,
+    `${where}: isHiddenFromWebsite`,
+  );
 }
 
 /** A summary: its text, where it was written from, and when it was drafted and (if at all) approved. */
@@ -166,7 +183,10 @@ function readNullableTimestamp(value: unknown, where: string): string | null {
 }
 
 /** The fields a citation is built from. */
-type Bibliography = Omit<StudyDetails, keyof Facets | "tagIds">;
+type Bibliography = Omit<
+  StudyDetails,
+  keyof Facets | "tagIds" | "isHiddenFromWebsite"
+>;
 
 /** A study's facet values (see facets.ts). */
 type Facets = Pick<

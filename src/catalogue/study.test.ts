@@ -9,6 +9,8 @@ import { exampleStudyDetails } from "./testFixtures";
 const CREATED = new Date("2026-11-01T10:00:00.000Z");
 const EDITED = new Date("2026-11-05T18:30:00.000Z");
 
+const LATER_EDIT = new Date("2026-11-06T09:00:00.000Z");
+
 describe("createStudy", () => {
   it("keeps the details and stamps creation and update with the same time", () => {
     const study = createStudy(exampleStudyDetails(), CREATED);
@@ -50,6 +52,21 @@ describe("updateStudy", () => {
       EDITED,
     );
     expect(edited.summary).toEqual(original.summary);
+  });
+
+  it("sets and clears isHiddenFromWebsite from the details, stamping the edit time", () => {
+    const original = createStudy(exampleStudyDetails(), CREATED);
+    expect(original.isHiddenFromWebsite).toBe(false);
+    const hidden = updateStudy(
+      original,
+      exampleStudyDetails({ isHiddenFromWebsite: true }),
+      EDITED,
+    );
+    expect(hidden.isHiddenFromWebsite).toBe(true);
+    expect(hidden.updatedAt).toBe("2026-11-05T18:30:00.000Z");
+    const shown = updateStudy(hidden, exampleStudyDetails(), LATER_EDIT);
+    expect(shown.isHiddenFromWebsite).toBe(false);
+    expect(shown.updatedAt).toBe("2026-11-06T09:00:00.000Z");
   });
 
   it("does not invent a summary for a study without one", () => {

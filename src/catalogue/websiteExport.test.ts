@@ -10,6 +10,7 @@ import { exampleStudyDetails } from "./testFixtures";
 import {
   buildWebsiteExport,
   countApprovedSummaries,
+  studiesForWebsite,
   serializeWebsiteExport,
   WEBSITE_EXPORT_VERSION,
 } from "./websiteExport";
@@ -178,9 +179,79 @@ describe("buildWebsiteExport", () => {
   });
 });
 
+describe("buildWebsiteExport and studies kept off the website", () => {
+  /** An approved study, hidden when `isHidden`. */
+  function approvedStudy(title: string, isHidden: boolean): Study {
+    return {
+      ...study("Words.", true),
+      title,
+      isHiddenFromWebsite: isHidden,
+    };
+  }
+
+  it("leaves a hidden study out entirely, approved summary or not", () => {
+    const catalogue = catalogueOf([
+      approvedStudy("Shown", false),
+      approvedStudy("Hidden", true),
+      { ...study(), title: "Hidden, no summary", isHiddenFromWebsite: true },
+    ]);
+    const { studies } = buildWebsiteExport(catalogue, NOW);
+    expect(studies.map(({ title }) => title)).toEqual(["Shown"]);
+  });
+
+  it("never writes the flag, nor its name, into the file", () => {
+    const catalogue = catalogueOf([
+      approvedStudy("Shown", false),
+      approvedStudy("Hidden", true),
+    ]);
+    const text = serializeWebsiteExport(catalogue, NOW);
+    expect(text).not.toContain("isHiddenFromWebsite");
+    expect(text).not.toContain("Hidden");
+  });
+
+  it("exports the same fields for a shown study as before", () => {
+    const { studies } = buildWebsiteExport(
+      catalogueOf([approvedStudy("Shown", false)]),
+      NOW,
+    );
+    expect(Object.keys(studies[0] ?? {})).toEqual([
+      ...EXPORTED_STUDY_FIELDS,
+      "summary",
+    ]);
+  });
+
+  it("still exports every tag, including one only hidden studies use (tags are not filtered)", () => {
+    const hidden = {
+      ...approvedStudy("Hidden", true),
+      tagIds: ["only-hidden"],
+    };
+    const catalogue: Catalogue = {
+      studies: [hidden],
+      tags: [
+        { id: "only-hidden", name: "Only Hidden", parentIds: [], aliases: [] },
+      ],
+    };
+    const { tags } = buildWebsiteExport(catalogue, NOW);
+    expect(tags.map(({ id }) => id)).toEqual(["only-hidden"]);
+  });
+});
+
 describe("countApprovedSummaries", () => {
+  it("does not count a study kept off the website, which the file leaves out", () => {
+    const hidden = { ...study("Approved.", true), isHiddenFromWebsite: true };
+    expect(countApprovedSummaries([hidden, study("Approved.", true)])).toBe(1);
+  });
+
   it("counts the approved ones, not drafts or studies with none", () => {
     const studies = [study(), study("Draft."), study("Approved.", true)];
     expect(countApprovedSummaries(studies)).toBe(1);
+  });
+});
+
+describe("studiesForWebsite", () => {
+  it("keeps the studies not hidden, in order, and drops the hidden ones", () => {
+    const shown = study();
+    const hidden = { ...study(), isHiddenFromWebsite: true };
+    expect(studiesForWebsite([hidden, shown])).toEqual([shown]);
   });
 });

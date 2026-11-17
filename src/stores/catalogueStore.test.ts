@@ -196,6 +196,20 @@ describe("summaries", () => {
     expect(saved?.summary?.approvedAt).not.toBeNull();
   });
 
+  it("are approved and kept off the website together, and both are saved", () => {
+    const { store, id } = storeWithDraft();
+    store.approveSummaryKeepPrivate(id);
+    const saved = savedCatalogue().studies[0];
+    expect(saved?.summary?.approvedAt).not.toBeNull();
+    expect(saved?.isHiddenFromWebsite).toBe(true);
+  });
+
+  it("are approved without hiding the study by the plain approval", () => {
+    const { store, id } = storeWithDraft();
+    store.approveSummary(id);
+    expect(savedCatalogue().studies[0]?.isHiddenFromWebsite).toBe(false);
+  });
+
   it("keep their approval when the words are edited, and are saved", () => {
     const { store, id } = storeWithDraft();
     store.approveSummary(id);

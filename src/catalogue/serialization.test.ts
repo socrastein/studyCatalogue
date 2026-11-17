@@ -127,6 +127,36 @@ describe("a version 1 catalogue", () => {
   });
 });
 
+describe("a study's isHiddenFromWebsite", () => {
+  it("reads as false when the saved study has no such field (data from before it existed)", () => {
+    const text = corruptedText((data) => {
+      delete data.studies[0].isHiddenFromWebsite;
+    });
+    const result = parseCatalogue(text);
+    if (result.kind !== "parsed") throw new Error("expected it to load");
+    expect(result.catalogue.studies[0]?.isHiddenFromWebsite).toBe(false);
+  });
+
+  it("survives saving and reading when true", () => {
+    const catalogue = exampleCatalogue();
+    const hidden = { ...catalogue.studies[0]!, isHiddenFromWebsite: true };
+    const saved = serializeCatalogue({ ...catalogue, studies: [hidden] });
+    expect(parseCatalogue(saved)).toEqual({
+      kind: "parsed",
+      catalogue: { ...catalogue, studies: [hidden] },
+    });
+  });
+
+  it("is refused when it is not true or false, naming the study and field", () => {
+    const text = corruptedText((data) => {
+      data.studies[0].isHiddenFromWebsite = "yes";
+    });
+    expect(problemWith(text)).toContain(
+      "study 1: isHiddenFromWebsite should be true or false",
+    );
+  });
+});
+
 describe("parseCatalogue rejects", () => {
   it("text that is not JSON", () => {
     expect(problemWith("{not json")).toBe("The data is not valid JSON.");

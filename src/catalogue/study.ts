@@ -53,6 +53,12 @@ export type StudyDetails = {
   trainingStatuses: readonly TrainingStatusId[];
   /** Empty when not reported; both for a mixed sample. */
   sexes: readonly SexId[];
+  /**
+   * True when the study is kept off the public website: it stays in this private catalogue, but the website exports
+   * leave it out entirely, approved summary or not. False for a study that may be published. Data saved before this
+   * field existed has none, and reads as false (serialization.ts).
+   */
+  isHiddenFromWebsite: boolean;
 };
 
 export type Study = StudyDetails & {
