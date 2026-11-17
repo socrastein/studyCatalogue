@@ -127,6 +127,29 @@ describe("a version 1 catalogue", () => {
   });
 });
 
+describe("schema versions", () => {
+  it("writes the current catalogue as version 3", () => {
+    const data = JSON.parse(serializeCatalogue(exampleCatalogue()));
+    expect(data.schemaVersion).toBe(3);
+    expect(SCHEMA_VERSION).toBe(3);
+  });
+
+  it("still reads version 2 data, which has no isHiddenFromWebsite, as shown", () => {
+    const text = corruptedText((data) => {
+      data.schemaVersion = 2;
+      delete data.studies[0].isHiddenFromWebsite;
+    });
+    const result = parseCatalogue(text);
+    if (result.kind !== "parsed") throw new Error("expected it to load");
+    expect(result.catalogue.studies[0]?.isHiddenFromWebsite).toBe(false);
+  });
+
+  it("refuses version 4 as saved by a newer version of the app", () => {
+    const text = corruptedText((data) => (data.schemaVersion = 4));
+    expect(problemWith(text)).toContain("saved by a newer version of the app");
+  });
+});
+
 describe("a study's isHiddenFromWebsite", () => {
   it("reads as false when the saved study has no such field (data from before it existed)", () => {
     const text = corruptedText((data) => {
@@ -171,7 +194,7 @@ describe("parseCatalogue rejects", () => {
 
   it("data with no schema version", () => {
     const text = corruptedText((data) => delete data.schemaVersion);
-    expect(problemWith(text)).toContain("format version should be 1");
+    expect(problemWith(text)).toContain("format version should be 1, 2 or 3");
   });
 
   it("a summary with a source other than abstract or fullText", () => {

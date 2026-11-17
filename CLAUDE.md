@@ -75,7 +75,12 @@ allows git dependencies for this project's own `package.json` only). `src/main.t
   merges pick the newer copy.
 - A full-text draft names the PDF it was written from (`summary.sourceFile`), shown on the review screen and never
   exported. Skip on that screen only reorders the queue for the visit; nothing is saved.
-- Saved format is schema v2; v1 data still loads unchanged (`serialization.ts`).
+- Saved format is schema v3; v1 and v2 data still load unchanged (`serialization.ts`). v3 added `isHiddenFromWebsite`: the
+  version rose even though old data still reads, so an older build refuses v3 data instead of silently dropping the flag
+  and making a hidden study publishable on its next save. Deploy the home server before the app.
+- `isHiddenFromWebsite` (default false; absent in old data) keeps a study in this private catalogue but off the site: both
+  export paths (`websiteExport.ts` and the site's `studies:export`) leave a hidden study out entirely, and the flag itself is
+  never exported. It is set by "Approve, Keep Private" on the review screen or the study form's "Show on the Website" switch.
 - "Export for the Website" (`catalogue/websiteExport.ts`) is an explicit allow-list: a field is published only if the
   export names it, so a field added to `Study` stays private by default. Never spread a study into the export, and never
   export the abstract or an unapproved summary. A test pins the exact field list.

@@ -111,7 +111,7 @@ describe("saving the catalogue", () => {
   it("refuses an invalid catalogue with 400 and the reason, and saves nothing", async () => {
     const body = JSON.stringify({
       baseRevision: 0,
-      catalogue: { schemaVersion: 2, studies: [{ title: 1 }], tags: [] },
+      catalogue: { schemaVersion: 3, studies: [{ title: 1 }], tags: [] },
     });
     const response = await fetch(`${ORIGIN}/api/catalogue`, {
       method: "PUT",

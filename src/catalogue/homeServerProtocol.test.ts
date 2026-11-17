@@ -58,7 +58,7 @@ describe("a save request", () => {
   it("is refused when the catalogue is not valid, saying why", () => {
     const result = readSaveRequest({
       baseRevision: 0,
-      catalogue: { schemaVersion: 2, studies: [{}], tags: [] },
+      catalogue: { schemaVersion: 3, studies: [{}], tags: [] },
     });
     expect(result).toMatchObject({ kind: "invalid" });
     if (result.kind === "invalid") expect(result.problem).toContain("study 1");

@@ -34,11 +34,15 @@ import type { Tag } from "./tags";
  * The version of the saved format. Raise it, and migrate older versions on read, whenever the format changes.
  *
  * Version 2 added a study's optional `summary` (summary.ts). Version 1 data has none, and reads exactly as it did.
+ *
+ * Version 3 added a study's `isHiddenFromWebsite`. Older data has none, and reads as false. The version rose although
+ * older data still reads: a build that knows only version 2 ignores the field, and its next save would silently make a
+ * hidden study publishable again, so it must refuse version 3 data ("saved by a newer version") instead.
  */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 /** Every version this code can read: the current one, and the older ones that read as they are. */
-const READABLE_VERSIONS: readonly number[] = [1, 2];
+const READABLE_VERSIONS: readonly number[] = [1, 2, 3];
 
 /** The result of reading saved or imported text: the catalogue, or why it could not be read. */
 export type ParseResult =
@@ -100,8 +104,14 @@ function checkSchemaVersion(version: unknown): void {
     );
   }
   throw new ShapeError(
-    `its format version should be ${READABLE_VERSIONS.join(" or ")}`,
+    `its format version should be ${describeReadableVersions()}`,
   );
+}
+
+/** The readable versions as words for the message: "1, 2 or 3". */
+function describeReadableVersions(): string {
+  const earlier = READABLE_VERSIONS.slice(0, -1).join(", ");
+  return `${earlier} or ${READABLE_VERSIONS[READABLE_VERSIONS.length - 1]}`;
 }
 
 /** One tag; `index` counts from 0, the message from 1. */
