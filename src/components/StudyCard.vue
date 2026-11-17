@@ -1,5 +1,5 @@
 <!--
-  One study in the list: title, authors and year, journal, its design, participants and topics, its summary when it has one, the abstract on
+  One study in the list: title, authors and year, journal, its design, participants and topics, a "Private" badge when it is kept off the website, its summary when it has one, the abstract on
   request, and its actions: copy a citation (APA, MLA or a markdown link for Reddit), open the paper, edit. Topic tags link to the
   list filtered by that tag.
 -->
@@ -75,6 +75,10 @@ async function copy(
 <template>
   <article class="studyCard card" :aria-labelledby="headingId">
     <h2 :id="headingId" class="h6">{{ study.title }}</h2>
+    <!-- The word is the cue, not the badge's colour -->
+    <p v-if="study.isHiddenFromWebsite" class="privateNotice">
+      <span class="badge">Private</span>
+    </p>
     <p class="byline textMuted">
       {{ shortAuthorMention(study.authors) }} ({{ study.year }}).
       <i>{{ study.journal }}</i>

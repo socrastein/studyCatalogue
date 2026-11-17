@@ -1,7 +1,8 @@
 <!--
   One study's draft summary up for review: the study's citation, the draft beside the abstract it may have been written
-  from (so Matt can check one against the other), where the draft came from, and the three things he can do with it:
-  approve it, edit its words (then approve), or reject it, which deletes it. Rejecting asks first, since a draft that
+  from (so Matt can check one against the other), where the draft came from, and what he can do with it:
+  approve it (for the site as well, or for this private catalogue only), edit its words (then approve), or reject it,
+  which deletes it. Rejecting asks first, since a draft that
   took a language model's effort cannot be got back; the page does that, so this card only says what was chosen.
 -->
 <script setup lang="ts">
@@ -20,6 +21,8 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   approve: [];
+  /** Approve the draft, and keep the study out of the website's catalogue. */
+  approveKeepPrivate: [];
   /** Put this draft at the end of the queue for this visit. */
   skip: [];
   /** The edited words, not empty. */
@@ -117,6 +120,13 @@ defineExpose({
         Approve
       </button>
       <button
+        type="button"
+        class="btn btnSecondary"
+        @click="emit('approveKeepPrivate')"
+      >
+        Approve, Keep Private
+      </button>
+      <button
         id="review-edit-button"
         type="button"
         class="btn btnSecondary"
@@ -180,7 +190,7 @@ defineExpose({
   gap: var(--space1);
 }
 
-/* At the far end, away from Approve */
+/* At the far end, away from the approvals */
 .rejectButton {
   margin-left: auto;
 }

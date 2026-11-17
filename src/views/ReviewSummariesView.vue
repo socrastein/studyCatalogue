@@ -1,6 +1,6 @@
 <!--
   Review Summaries: the draft summaries waiting for Matt, one study at a time, so each is read against its abstract and
-  citation. Approving, editing and rejecting happen on the card (SummaryReviewCard); this page keeps the queue and the
+  citation. Approving (with or without keeping the study off the website), editing and rejecting happen on the card (SummaryReviewCard); this page keeps the queue and the
   count, asks before a draft is deleted, and says what happened in the page's status region. The link to it is in the
   navigation only while drafts wait, but the address always works and then says there is nothing to review.
 -->
@@ -52,6 +52,16 @@ async function approve(): Promise<void> {
   await reportAndMoveOn(`Approved the summary of "${study.title}".`);
 }
 
+/** Approves the draft for this private catalogue only: the study is also kept off the website. */
+async function approveKeepPrivate(): Promise<void> {
+  const study = current.value;
+  if (study === undefined) return;
+  catalogue.approveSummaryKeepPrivate(study.id);
+  await reportAndMoveOn(
+    `Approved the summary of "${study.title}" and kept it off the website.`,
+  );
+}
+
 /** Puts the draft at the end of the queue for this visit, and moves on to the next. */
 async function skip(): Promise<void> {
   const study = current.value;
@@ -101,6 +111,7 @@ async function reject(): Promise<void> {
         :study="current"
         :can-skip="awaitingReview.length > 1"
         @approve="approve"
+        @approve-keep-private="approveKeepPrivate"
         @skip="skip"
         @save-text="saveText"
         @reject="reject"

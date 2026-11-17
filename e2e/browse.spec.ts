@@ -247,3 +247,36 @@ test("the list can be sorted, and the order stays in the URL alongside the filte
   await expect(page).toHaveURL("/?q=2&sort=author");
   await expectNoAxeViolations(page);
 });
+
+test.describe("studies kept off the website", () => {
+  test.beforeEach(async ({ page }) => {
+    await openWithStudies(page, [
+      studyDetails({ title: "Shown on the site", doi: "10.1000/shown" }),
+      studyDetails({
+        title: "Kept private",
+        doi: "10.1000/private",
+        isHiddenFromWebsite: true,
+      }),
+    ]);
+  });
+
+  test("only the hidden study's card carries the word Private", async ({
+    page,
+  }) => {
+    const hiddenCard = page.getByRole("article", { name: "Kept private" });
+    const shownCard = page.getByRole("article", { name: "Shown on the site" });
+    await expect(
+      hiddenCard.getByText("Private", { exact: true }),
+    ).toBeVisible();
+    await expect(shownCard.getByText("Private", { exact: true })).toHaveCount(
+      0,
+    );
+  });
+
+  test("the list with the badge has no accessibility violations", async ({
+    page,
+  }) => {
+    await expect(page.getByText("Private", { exact: true })).toBeVisible();
+    await expectNoAxeViolations(page);
+  });
+});

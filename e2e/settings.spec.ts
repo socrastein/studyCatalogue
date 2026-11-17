@@ -220,6 +220,49 @@ test("Export for the Website downloads the approved summaries and no abstracts, 
   );
 });
 
+test("Export for the Website leaves a study kept off the website out of the file, and Settings says so", async ({
+  page,
+}) => {
+  const approved = createDraftSummary(
+    "Approved words.",
+    "fullText",
+    new Date("2026-11-10T10:00:00.000Z"),
+  );
+  approved.approvedAt = "2026-11-11T10:00:00.000Z";
+  await openWithSummaries(page, [
+    {
+      details: studyDetails({ title: "Shown study", doi: "10.1000/a" }),
+      summary: approved,
+    },
+    {
+      details: studyDetails({
+        title: "Private study",
+        doi: "10.1000/b",
+        isHiddenFromWebsite: true,
+      }),
+      summary: approved,
+    },
+  ]);
+  await page.goto("/settings");
+  await expect(
+    page.getByText("1 of 1 study has an approved summary"),
+  ).toBeVisible();
+  await expect(
+    page.getByText("1 study is kept off the website and is left out"),
+  ).toBeVisible();
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export for the Website" }).click();
+  const download = await downloadPromise;
+  const text = readFileSync(await download.path(), "utf8");
+
+  expect(JSON.parse(text).studies).toHaveLength(1);
+  expect(text).toContain("Shown study");
+  expect(text).not.toContain("Private study");
+  expect(text).not.toContain("isHiddenFromWebsite");
+  await expectNoAxeViolations(page);
+});
+
 test("each download button says where the file goes and confirms what it started", async ({
   page,
 }) => {

@@ -4,6 +4,7 @@
   field and in a summary at the top, which takes focus. A valid submit emits the study details for the page to save.
 -->
 <script setup lang="ts">
+import ToggleSwitch from "lifting-school-ui/components/ToggleSwitch.vue";
 import { computed, nextTick, reactive, ref, toRaw, watch } from "vue";
 import {
   AGE_GROUPS,
@@ -48,6 +49,17 @@ const summary = ref<InstanceType<typeof ErrorSummary> | null>(null);
 
 /** Says which chosen tags were taken off the study because they no longer exist; "" while none were. */
 const droppedTagsNotice = ref("");
+
+/**
+ * The "Show on the Website" switch. The study stores the opposite (`isHiddenFromWebsite`), so that an old study without
+ * the field reads as shown; the switch is the positive question a person can answer.
+ */
+const showsOnWebsite = computed({
+  get: () => !draft.isHiddenFromWebsite,
+  set: (isShown: boolean) => {
+    draft.isHiddenFromWebsite = !isShown;
+  },
+});
 
 const summaryItems = computed(() => errorSummaryItems(errors.value));
 
@@ -247,6 +259,19 @@ function createTag(name: string): void {
         legend="Sex"
         :values="SEXES"
       />
+    </section>
+
+    <section class="formSection panel" aria-labelledby="website-heading">
+      <h2 id="website-heading" class="sectionTitle">Website</h2>
+      <ToggleSwitch
+        id="study-shows-on-website"
+        v-model="showsOnWebsite"
+        label="Show on the Website"
+      />
+      <p class="textMuted">
+        Turn this off to keep the study in this private catalogue only. Export
+        for the Website then leaves it out, approved summary or not.
+      </p>
     </section>
 
     <div class="formActions">

@@ -4,7 +4,10 @@
  * without errors showing.
  */
 import { expect, test, type Page } from "@playwright/test";
+import { parseCatalogue } from "../src/catalogue/serialization";
+import { STORAGE_KEY } from "../src/stores/catalogueStore";
 import { expectNoAxeViolations } from "./expectNoAxeViolations";
+import { openWithStudies, studyDetails } from "./seedCatalogue";
 import { addTagsByKeyboard, fillInStudy, textField } from "./studyFormSteps";
 
 /** Adds a complete study and opens its edit page from the study list. */
@@ -174,4 +177,71 @@ test("an edit link to a missing study says it was not found", async ({
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "Study Not Found",
   );
+});
+
+/** The switch on the study form that says whether the website may show the study. */
+function websiteSwitch(page: Page) {
+  return page.getByRole("switch", { name: "Show on the Website" });
+}
+
+/** Flips the switch by clicking its label, as a mouse user does: the input itself is hidden behind the track. */
+async function clickWebsiteSwitch(page: Page): Promise<void> {
+  await page.getByText("Show on the Website", { exact: true }).click();
+}
+
+/** Whether the first saved study is kept off the website, as saved in the browser right now. */
+async function isFirstSavedStudyHidden(page: Page): Promise<boolean> {
+  const text = await page.evaluate(
+    (key) => localStorage.getItem(key),
+    STORAGE_KEY,
+  );
+  const result = parseCatalogue(text ?? "");
+  if (result.kind !== "parsed") throw new Error("nothing readable saved");
+  const first = result.catalogue.studies[0];
+  if (first === undefined) throw new Error("no study saved");
+  return first.isHiddenFromWebsite;
+}
+
+test("a new study shows on the website by default: the switch is on, and the saved study is not hidden", async ({
+  page,
+}) => {
+  await expect(websiteSwitch(page)).toBeChecked();
+  await fillInStudy(page, "Shown by default");
+  await page.getByRole("button", { name: "Add Study" }).click();
+  await expect(page).toHaveURL("/");
+  expect(await isFirstSavedStudyHidden(page)).toBe(false);
+});
+
+test("turning the switch off by keyboard saves a new study as kept off the website", async ({
+  page,
+}) => {
+  await fillInStudy(page, "Kept private from the start");
+  await websiteSwitch(page).focus();
+  await page.keyboard.press("Space");
+  await expect(websiteSwitch(page)).not.toBeChecked();
+  await page.getByRole("button", { name: "Add Study" }).click();
+  await expect(page).toHaveURL("/");
+  expect(await isFirstSavedStudyHidden(page)).toBe(true);
+});
+
+test("the choice can be changed later: a hidden study's edit page shows the switch off, and turning it on saves it as shown", async ({
+  page,
+}) => {
+  await openWithStudies(page, [
+    studyDetails({ title: "Hidden study", isHiddenFromWebsite: true }),
+  ]);
+  await page.getByRole("link", { name: "Edit Hidden study" }).click();
+  await expect(websiteSwitch(page)).not.toBeChecked();
+  await clickWebsiteSwitch(page);
+  await page.getByRole("button", { name: "Save Changes" }).click();
+  await expect(page).toHaveURL("/");
+  expect(await isFirstSavedStudyHidden(page)).toBe(false);
+});
+
+test("the form with the switch off has no accessibility violations", async ({
+  page,
+}) => {
+  await clickWebsiteSwitch(page);
+  await expect(websiteSwitch(page)).not.toBeChecked();
+  await expectNoAxeViolations(page);
 });

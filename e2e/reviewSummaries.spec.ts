@@ -149,7 +149,9 @@ test("there is no Skip while only one draft waits", async ({ page }) => {
     },
   ]);
   await page.goto("/review");
-  await expect(page.getByRole("button", { name: "Approve" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Approve", exact: true }),
+  ).toBeVisible();
   await expect(page.getByRole("button", { name: "Skip" })).toHaveCount(0);
 });
 
@@ -183,7 +185,7 @@ test("Approve saves the approval and moves on to the next draft, announcing it",
 }) => {
   await openWithTwoDrafts(page);
   await page.goto("/review");
-  await page.getByRole("button", { name: "Approve" }).click();
+  await page.getByRole("button", { name: "Approve", exact: true }).click();
 
   await expect(
     page.getByText("1 summary left to review", { exact: true }),
@@ -199,6 +201,71 @@ test("Approve saves the approval and moves on to the next draft, announcing it",
     studies.get("First drafted study")?.summary?.approvedAt,
   ).not.toBeNull();
   expect(studies.get("Second drafted study")?.summary?.approvedAt).toBeNull();
+  // The plain approval leaves the study publishable
+  expect(studies.get("First drafted study")?.isHiddenFromWebsite).toBe(false);
+});
+
+test("Approve, Keep Private approves the summary and keeps the study off the website, then moves on to the next draft", async ({
+  page,
+}) => {
+  await openWithTwoDrafts(page);
+  await page.goto("/review");
+  await page.getByRole("button", { name: "Approve, Keep Private" }).click();
+
+  await expect(
+    page.getByText("1 summary left to review", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("status").first()).toContainText(
+    'Approved the summary of "First drafted study" and kept it off the website.',
+  );
+  // The card's focus behaviour after an action: the next study's title
+  await expect(
+    page.getByRole("heading", { name: "Second drafted study" }),
+  ).toBeFocused();
+  const studies = await savedStudies(page);
+  const first = studies.get("First drafted study");
+  expect(first?.summary?.approvedAt).not.toBeNull();
+  expect(first?.isHiddenFromWebsite).toBe(true);
+  // Only the study that was approved is touched
+  const second = studies.get("Second drafted study");
+  expect(second?.summary?.approvedAt).toBeNull();
+  expect(second?.isHiddenFromWebsite).toBe(false);
+});
+
+test("both approvals are reachable by keyboard, in order, and Enter on the second keeps the study private", async ({
+  page,
+}) => {
+  await openWithTwoDrafts(page);
+  await page.goto("/review");
+  await page.getByRole("button", { name: "Approve", exact: true }).focus();
+  await page.keyboard.press("Tab");
+  await expect(
+    page.getByRole("button", { name: "Approve, Keep Private" }),
+  ).toBeFocused();
+  await page.keyboard.press("Enter");
+
+  await expect(
+    page.getByRole("heading", { name: "Second drafted study" }),
+  ).toBeFocused();
+  expect(
+    (await savedStudies(page)).get("First drafted study")?.isHiddenFromWebsite,
+  ).toBe(true);
+});
+
+test("approving the last draft with Keep Private says none are left, and moves focus to the page heading", async ({
+  page,
+}) => {
+  await openWithSummaries(page, [
+    {
+      details: studyDetails({ title: "Only one" }),
+      summary: createDraftSummary("Only draft.", "abstract", WHEN),
+    },
+  ]);
+  await page.goto("/review");
+  await page.getByRole("button", { name: "Approve, Keep Private" }).click();
+
+  await expect(page.getByRole("status").first()).toContainText("None left.");
+  await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
 });
 
 test("approving the last draft says none are left, and the link goes", async ({
@@ -211,7 +278,7 @@ test("approving the last draft says none are left, and the link goes", async ({
     },
   ]);
   await page.goto("/review");
-  await page.getByRole("button", { name: "Approve" }).click();
+  await page.getByRole("button", { name: "Approve", exact: true }).click();
 
   await expect(
     page.getByText("No summaries are waiting for review."),
@@ -315,6 +382,18 @@ test.describe("accessibility", () => {
     await openWithTwoDrafts(page);
     await page.goto("/review");
     await expect(page.getByRole("heading", { level: 2 })).toBeVisible();
+    await expectNoAxeViolations(page);
+  });
+
+  test("the next card after Approve, Keep Private has no violations", async ({
+    page,
+  }) => {
+    await openWithTwoDrafts(page);
+    await page.goto("/review");
+    await page.getByRole("button", { name: "Approve, Keep Private" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Second drafted study" }),
+    ).toBeFocused();
     await expectNoAxeViolations(page);
   });
 
