@@ -1,6 +1,6 @@
 <!--
   One study in the list: title, authors and year, journal, its design, participants and topics, a "Private" badge when it is kept off the website, its summary when it has one, the abstract on
-  request, and its actions: copy a citation (APA, MLA or a markdown link for Reddit), open the paper, edit. Topic tags link to the
+  request, and its actions: copy a citation (APA, MLA, a markdown link for Reddit, or that link with the summary below it), open the paper, edit. Topic tags link to the
   list filtered by that tag.
 -->
 <script setup lang="ts">
@@ -11,6 +11,7 @@ import { shortAuthorMention } from "../catalogue/citations/authorNames";
 import { studyLink, type Citation } from "../catalogue/citations/citation";
 import { formatMla } from "../catalogue/citations/mla";
 import { formatMarkdownLink } from "../catalogue/citations/markdownLink";
+import { formatMarkdownWithSummary } from "../catalogue/citations/markdownWithSummary";
 import {
   AGE_GROUPS,
   facetLabel,
@@ -41,6 +42,12 @@ const CITATION_FORMATS = [
   { label: "MLA", name: "MLA", format: formatMla },
   // "MD" is short so all three buttons fit on one line on a phone; the name is what is spoken and shown in the toast.
   { label: "MD", name: "Markdown", format: formatMarkdownLink },
+  // The link, then the summary in quotes; disabled for a study without one (its format gives null)
+  {
+    label: "MD+",
+    name: "Markdown with summary",
+    format: formatMarkdownWithSummary,
+  },
 ] as const;
 
 const headingId = computed(() => `study-${props.study.id}-title`);
@@ -62,9 +69,15 @@ function populationText(
 /** Copies the study's citation in one format and reports the outcome. */
 async function copy(
   name: string,
-  format: (study: Study) => Citation,
+  format: (study: Study) => Citation | null,
 ): Promise<void> {
-  const wasCopied = await copyCitation(format(props.study));
+  const citation = format(props.study);
+  // The button is disabled when there is nothing to copy; this only answers a click that got through anyway
+  if (citation === null) {
+    emit("copied", `No summary yet, so there is no ${name} to copy.`);
+    return;
+  }
+  const wasCopied = await copyCitation(citation);
   emit(
     "copied",
     wasCopied ? `${name} copied to clipboard.` : `Could not copy ${name}.`,
@@ -146,6 +159,10 @@ async function copy(
           type="button"
           class="btn btnSecondary btnSm"
           :aria-label="`${citation.label}, copy ${citation.name} citation`"
+          :disabled="citation.format(study) === null"
+          :title="
+            citation.format(study) === null ? 'No summary yet' : undefined
+          "
           @click="copy(citation.name, citation.format)"
         >
           {{ citation.label }}

@@ -274,3 +274,32 @@ test.describe("on the Edit Study page", () => {
     ).toHaveValue("Newer words.");
   });
 });
+
+test.describe("the MD+ citation (the markdown link with the summary in quotes)", () => {
+  test("copies for a study with a draft summary, as for an approved one", async ({
+    page,
+  }) => {
+    await openWithThreeStudies(page);
+    const draft = page.getByRole("article", {
+      name: "Study with draft summary",
+    });
+    await draft
+      .getByRole("button", { name: "MD+, copy Markdown with summary citation" })
+      .click();
+    await expect(
+      page.getByText("Markdown with summary copied to clipboard."),
+    ).toBeVisible();
+  });
+
+  test("is disabled, saying why, for a study with no summary", async ({
+    page,
+  }) => {
+    await openWithThreeStudies(page);
+    const none = page.getByRole("article", { name: "Study with no summary" });
+    const mdPlus = none.getByRole("button", {
+      name: "MD+, copy Markdown with summary citation",
+    });
+    await expect(mdPlus).toBeDisabled();
+    await expect(mdPlus).toHaveAttribute("title", "No summary yet");
+  });
+});
