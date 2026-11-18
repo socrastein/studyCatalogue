@@ -40,6 +40,7 @@ export function changesAnything(summary: BackupMergeSummary): boolean {
   return changes > 0;
 }
 
+/** The merged catalogue, and what the merge did to it. */
 export type BackupMergeResult = {
   catalogue: Catalogue;
   summary: BackupMergeSummary;
@@ -77,11 +78,21 @@ function matchBackupTags(
   const mapping = new Map<string, string>();
   for (const backupTag of backupTags) {
     const sameId = currentTags.find((tag) => tag.id === backupTag.id);
+    // A tag with the same name or alias is the same tag even under another id: the same tag may have been
+    // created on another machine, which gave it its own id
     const sameName = findTagByName(backupTag.name, currentTags);
     const match = sameId ?? sameName;
     mapping.set(backupTag.id, match?.id ?? backupTag.id);
   }
   return mapping;
+}
+
+/**
+ * The catalogue tag id a backup tag maps to. A backup tag with no match keeps its own id (see `matchBackupTags`), so it
+ * is folded into the tag it becomes.
+ */
+function catalogueIdOf(tagIds: TagIdMapping, backupTagId: string): string {
+  return tagIds.get(backupTagId) ?? backupTagId;
 }
 
 /**
@@ -95,9 +106,9 @@ function mergeTags(
   tagIds: TagIdMapping,
 ): Tag[] {
   const isNew = (tag: Tag) => !currentTags.some(({ id }) => id === tag.id);
-  const newTags = backupTags.filter(
-    (tag) => tagIds.get(tag.id) === tag.id && isNew(tag),
-  );
+  // A backup tag with no match here keeps its own id (see matchBackupTags), so it is a new tag to add
+  const hasNoMatch = (tag: Tag) => tagIds.get(tag.id) === tag.id;
+  const newTags = backupTags.filter((tag) => hasNoMatch(tag) && isNew(tag));
   let tags = [
     ...currentTags,
     ...newTags.map((tag) => ({ ...tag, parentIds: [] })),
@@ -114,7 +125,7 @@ function foldInBackupTag(
   backupTag: Tag,
   tagIds: TagIdMapping,
 ): Tag[] {
-  const targetId = tagIds.get(backupTag.id) ?? backupTag.id;
+  const targetId = catalogueIdOf(tagIds, backupTag.id);
   let merged = tags.map((tag) =>
     tag.id === targetId ? withBackupNames(tag, backupTag) : tag,
   );
@@ -183,23 +194,26 @@ function mergeStudies(
 }
 
 /**
- * Puts one backup study into `studies`, changing that list in place: added at the end when it is new, put in place
- * of the copy already there when it was edited later, otherwise left out.
+ * Puts one backup study into `studies`, changing that list in place, and says what happened. A new study is added at
+ * the end. A backup copy edited later replaces the copy here. Otherwise the copy here is kept, except that a summary it
+ * lacks is filled from the backup copy, which the outcome reports as "updated".
  */
 function placeStudy(studies: Study[], incoming: Study): StudyOutcome {
-  const index = studies.findIndex((study) => isSameStudy(study, incoming));
-  const existing = studies[index];
+  const existingIndex = studies.findIndex((study) =>
+    isSameStudy(study, incoming),
+  );
+  const existing = studies[existingIndex];
   if (existing === undefined) {
     studies.push(incoming);
     return "added";
   }
   if (isEditedLater(incoming, existing)) {
-    studies[index] = keepingIdentity(incoming, existing);
+    studies[existingIndex] = keepingIdentity(incoming, existing);
     return "updated";
   }
   if (existing.summary === undefined && incoming.summary !== undefined) {
     // This copy is the newer, but has no summary to lose: the older copy's fills the gap
-    studies[index] = { ...existing, summary: incoming.summary };
+    studies[existingIndex] = { ...existing, summary: incoming.summary };
     return "updated";
   }
   return "unchanged";
@@ -242,6 +256,7 @@ function isEditedLater(incoming: Study, existing: Study): boolean {
  * summary the two copies' summaries settle on (see `settledSummary`).
  */
 function keepingIdentity(newer: Study, existing: Study): Study {
+  // The newer copy's own summary is left out of the details: the settled one below replaces it
   const { summary: _newerSummary, ...details } = newer;
   const summary = settledSummary(newer.summary, existing.summary);
   return {

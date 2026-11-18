@@ -11,6 +11,16 @@ export const DAILY_SNAPSHOT_DAYS = 60;
 
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
+/** The length of a UTC day as text, "YYYY-MM-DD" (ten characters), which starts both a version name and an ISO time. */
+const DAY_TEXT_LENGTH = "YYYY-MM-DD".length;
+
+/**
+ * The shape `versionFileName` makes: a UTC date, the time with hyphens for colons, the revision and ".json". The time
+ * part is loose (digits and hyphens) on purpose, so it matches whatever `versionFileName` wrote.
+ */
+const VERSION_FILE_NAME_PATTERN =
+  /^\d{4}-\d{2}-\d{2}T[\d-]+\.\d{3}Z-r\d+\.json$/;
+
 /**
  * The name of the version file for a save. Names sort by time, which is how `versionsToDelete` orders them, e.g.
  * "2026-11-14T08-30-00.123Z-r12.json".
@@ -40,7 +50,7 @@ export function versionsToDelete(fileNames: string[], now: Date): string[] {
 
 /** Whether the name has the shape `versionFileName` makes. */
 function isVersionFileName(name: string): boolean {
-  return /^\d{4}-\d{2}-\d{2}T[\d-]+\.\d{3}Z-r\d+\.json$/.test(name);
+  return VERSION_FILE_NAME_PATTERN.test(name);
 }
 
 /** For each day that is still within the daily window, the newest version saved on it. */
@@ -48,21 +58,29 @@ function newestVersionOfEachRecentDay(
   versionsNewestFirst: string[],
   now: Date,
 ): Set<string> {
+  // The window starts at midnight (UTC) of the day DAILY_SNAPSHOT_DAYS - 1 days ago, so today plus the 59 before it
   const oldestDay = dayOf(
     new Date(now.getTime() - (DAILY_SNAPSHOT_DAYS - 1) * MILLISECONDS_PER_DAY),
   );
   const kept = new Set<string>();
   const daysSeen = new Set<string>();
+  // The list is newest first, so the first version met for a day is the newest one saved on it
   for (const name of versionsNewestFirst) {
-    const day = name.slice(0, "YYYY-MM-DD".length);
+    const day = dayOfVersionFileName(name);
     const isNewestOfItsDay = !daysSeen.has(day);
     daysSeen.add(day);
+    // Days are "YYYY-MM-DD", which sort correctly as text, so >= compares calendar days
     if (isNewestOfItsDay && day >= oldestDay) kept.add(name);
   }
   return kept;
 }
 
+/** The UTC calendar day a version file was saved on, read from the start of its name. */
+function dayOfVersionFileName(name: string): string {
+  return name.slice(0, DAY_TEXT_LENGTH);
+}
+
 /** The UTC calendar day of a time, e.g. "2026-11-14". */
 function dayOf(time: Date): string {
-  return time.toISOString().slice(0, "YYYY-MM-DD".length);
+  return time.toISOString().slice(0, DAY_TEXT_LENGTH);
 }
