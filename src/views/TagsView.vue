@@ -22,36 +22,46 @@ const tags = computed(() => catalogue.state.catalogue.tags);
 const studies = computed(() => catalogue.state.catalogue.studies);
 
 /**
- * Adds the typed name as a top-level tag, unless it is blank or a tag already has that name or alias. A new tag is
- * confirmed in words under the form (announced to screen readers), and focus stays in the box, cleared for the next
- * name, because several tags are usually added in a row. The confirmation stays until the next add or error.
+ * Adds the typed name as a top-level tag, or refuses it under the box when the name is blank or a tag already has it as
+ * a name or alias. The confirmation is announced to screen readers and stays until the next add or error. Focus stays
+ * in the box, cleared for the next name, because several tags are usually added in a row.
  */
 async function addTag(): Promise<void> {
   const name = newTagName.value.trim();
-  const existing = findTagByName(name, tags.value);
+  const problem = newTagProblem(name);
   confirmation.value = "";
-  if (name === "") {
-    newTagError.value = "Enter a name for the new tag.";
-    return;
-  }
-  if (existing) {
-    newTagError.value = `A tag called "${existing.name}" already exists.`;
-    return;
-  }
+  newTagError.value = problem ?? "";
+  if (problem !== null) return;
   const tag = catalogue.findOrCreateTag(name);
-  newTagError.value = "";
   newTagName.value = "";
   confirmation.value = `Added the tag "${tag.name}". It is in the list below.`;
   // The list is drawn again with the new tag once Vue has run its update
   await nextTick();
-  keepFocusInBoxAndRevealTag(tag.id);
+  const nameBox = focusNewTagBox();
+  revealTag(tag.id, nameBox);
 }
 
-/** Puts focus back in the name box (a click on Add Tag moved it to the button), then reveals the new tag's row. */
-function keepFocusInBoxAndRevealTag(tagId: string): void {
+/**
+ * Why the typed name cannot become a new tag, for the message under the box.
+ *
+ * @param name The name as typed, already trimmed.
+ * @returns The message to show, or null when the name is free to use.
+ */
+function newTagProblem(name: string): string | null {
+  if (name === "") return "Enter a name for the new tag.";
+  const existing = findTagByName(name, tags.value);
+  if (existing) return `A tag called "${existing.name}" already exists.`;
+  return null;
+}
+
+/**
+ * Puts focus back in the name box, since a click on Add Tag moved it to the button. Returns the box so the caller can
+ * check it is still in view; null when the box is not on the page.
+ */
+function focusNewTagBox(): HTMLElement | null {
   const nameBox = document.getElementById(NEW_TAG_BOX_ID);
   nameBox?.focus();
-  revealTag(tagId, nameBox);
+  return nameBox;
 }
 
 /**

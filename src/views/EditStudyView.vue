@@ -25,11 +25,21 @@ const { question: pendingQuestion, ask: confirm, answer } = useConfirmation();
 /** Confirms a summary action at the bottom of the window: the summary is far down the page, out of sight of the top. */
 const toast = ref<InstanceType<typeof StatusToast> | null>(null);
 
+/** The study the address names, or undefined when none matches (deleted, or a mistyped link). */
 const study = computed(() =>
   catalogue.state.catalogue.studies.find(
     (candidate) => candidate.id === props.id,
   ),
 );
+
+/**
+ * Shows a message in the bottom toast.
+ *
+ * @param message The sentence to show, in words the person can read.
+ */
+function showToast(message: string): void {
+  void toast.value?.show(message);
+}
 
 /** Saves the edited details, then shows the list with a confirmation. */
 async function saveStudy(details: StudyDetails): Promise<void> {
@@ -55,13 +65,13 @@ async function deleteStudy(): Promise<void> {
 /** Saves the summary's new words; the page stays, since the study's own fields may be half edited. */
 function saveSummary(text: string): void {
   catalogue.editSummary(props.id, text);
-  toast.value?.show("Summary saved.");
+  showToast("Summary saved.");
 }
 
 /** Clears the summary's approval, so it waits in the review queue again; the page stays. */
 function sendSummaryBackToReview(): void {
   catalogue.sendSummaryBackToReview(props.id);
-  toast.value?.show("Summary sent back to review.");
+  showToast("Summary sent back to review.");
 }
 
 /** Asks first, then deletes the summary; the study and its abstract are not affected. */
@@ -74,7 +84,7 @@ async function removeSummary(): Promise<void> {
   });
   if (!isConfirmed) return;
   catalogue.rejectSummary(props.id);
-  toast.value?.show("Summary removed.");
+  showToast("Summary removed.");
 }
 </script>
 

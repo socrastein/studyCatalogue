@@ -26,12 +26,17 @@ const router = useRouter();
 const { question: pendingQuestion, ask: confirm, answer } = useConfirmation();
 
 const tags = computed(() => catalogue.state.catalogue.tags);
+/** The tag the address names, or undefined when none matches (merged or deleted, or a mistyped link). */
 const tag = computed(() =>
   tags.value.find((candidate) => candidate.id === props.id),
 );
+/** The tag's name as saved. "" only once the tag is gone, when the page shows "Tag Not Found" instead of the actions. */
+const tagName = computed(() => tag.value?.name ?? "");
+/** How many studies use this tag. */
 const usage = computed(() =>
   studyCountForTag(catalogue.state.catalogue.studies, props.id),
 );
+/** e.g. "1 study", "12 studies". */
 const usageText = computed(
   () => `${usage.value} ${usage.value === 1 ? "study" : "studies"}`,
 );
@@ -104,7 +109,7 @@ async function merge(): Promise<void> {
   }
   if (!(await confirmMergingInto(target.label))) return;
   // Read before merging: the merged tag is gone afterwards
-  const name = tag.value?.name ?? "";
+  const name = tagName.value;
   const refusal = catalogue.mergeTags(props.id, target.id);
   mergeRefusal.value = refusal ?? "";
   if (refusal !== null) return;
@@ -114,7 +119,7 @@ async function merge(): Promise<void> {
 
 /** Asks whether to merge this tag into the target, saying what happens to the studies that use it. */
 function confirmMergingInto(targetLabel: string): Promise<boolean> {
-  const name = tag.value?.name ?? "";
+  const name = tagName.value;
   return confirm({
     question: `Merge into "${targetLabel}"?`,
     detail: `The ${usageText.value} tagged "${name}" will be tagged "${targetLabel}" instead, and "${name}" will become another name for it.`,
@@ -124,7 +129,7 @@ function confirmMergingInto(targetLabel: string): Promise<boolean> {
 
 /** After confirmation, deletes this tag. */
 async function deleteThisTag(): Promise<void> {
-  const name = tag.value?.name ?? "";
+  const name = tagName.value;
   const isConfirmed = await confirm({
     question: `Delete the tag "${name}"?`,
     detail: `It will be removed from ${usageText.value}, and any subtopics will move up a level. This cannot be undone.`,

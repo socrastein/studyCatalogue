@@ -49,6 +49,15 @@ const restoreProblem = ref("");
 
 const loadProblem = computed(() => catalogue.state.loadProblem);
 
+/**
+ * Shows a message in the bottom toast.
+ *
+ * @param message The sentence to show, in words the person can read.
+ */
+function showToast(message: string): void {
+  void toast.value?.show(message);
+}
+
 /** Where the catalogue is kept, as the line under the Backups heading names it. */
 const storageName = computed(() =>
   catalogue.state.storageLocation === "homeServer"
@@ -68,25 +77,29 @@ function downloadBackup(): void {
   const text = serializeCatalogue(catalogue.state.catalogue);
   const fileName = backupFileName();
   downloadTextFile(fileName, text, "application/json");
-  void toast.value?.show(backupDownloadMessage(fileName));
+  showToast(backupDownloadMessage(fileName));
 }
 
-/** Only approved summaries and the allow-listed fields go in (see catalogue/websiteExport.ts). */
+/**
+ * Starts the download of the website export and confirms it in the toast. Only approved summaries and the
+ * allow-listed fields go in (see catalogue/websiteExport.ts).
+ */
 function exportForWebsite(): void {
   const text = serializeWebsiteExport(catalogue.state.catalogue);
   const fileName = websiteExportFileName();
   downloadTextFile(fileName, text, "application/json");
   const studyCount = websiteStudyCount.value;
-  void toast.value?.show(
+  showToast(
     websiteExportMessage(fileName, studyCount, approvedSummaryCount.value),
   );
 }
 
-/** The studies the file will hold: those not kept off the website. */
+/** The studies the website file will hold: those not kept off the website. */
 const websiteStudyCount = computed(
   () => studiesForWebsite(catalogue.state.catalogue.studies).length,
 );
 
+/** The studies kept off the website, which the website file leaves out entirely. */
 const privateStudyCount = computed(
   () => catalogue.state.catalogue.studies.length - websiteStudyCount.value,
 );
@@ -97,9 +110,10 @@ const approvedSummaryCount = computed(() =>
 
 /** Starts the download of the saved text that could not be read and confirms it in the toast. */
 function downloadUnreadableData(): void {
+  const problem = loadProblem.value;
   const fileName = "study-catalogue-unreadable.txt";
-  downloadTextFile(fileName, loadProblem.value?.rawText ?? "", "text/plain");
-  void toast.value?.show(unreadableDownloadMessage(fileName));
+  downloadTextFile(fileName, problem?.rawText ?? "", "text/plain");
+  showToast(unreadableDownloadMessage(fileName));
 }
 
 /** Reads the chosen backup and, after confirmation, adds its studies and tags to the catalogue. */

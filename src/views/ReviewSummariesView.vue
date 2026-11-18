@@ -35,21 +35,33 @@ function remainingText(count: number): string {
   return `${count} ${count === 1 ? "summary" : "summaries"} left to review`;
 }
 
-/** Says what was done and how many remain, then moves focus to the next study (or the page heading when done). */
-async function reportAndMoveOn(done: string): Promise<void> {
-  const remaining = awaitingReview.value.length;
-  const tail = remaining === 0 ? "None left." : `${remainingText(remaining)}.`;
-  showNoticeNow(`${done} ${tail}`);
+/** The end of a status line after an action: "None left." when the queue is empty, else how many remain. */
+function remainingSentence(remaining: number): string {
+  return remaining === 0 ? "None left." : `${remainingText(remaining)}.`;
+}
+
+/** Says what was done, then how many drafts remain, in the status region. */
+function reportOutcome(done: string): void {
+  showNoticeNow(`${done} ${remainingSentence(awaitingReview.value.length)}`);
+}
+
+/**
+ * Moves focus to the next study's title, or to the page heading when the queue is empty. Waits for the card to redraw
+ * first, so the title it focuses is the next study's.
+ */
+async function moveFocusToNext(): Promise<void> {
   await nextTick();
-  if (remaining > 0) card.value?.focusTitle();
+  if (awaitingReview.value.length > 0) card.value?.focusTitle();
   else document.querySelector<HTMLElement>("main h1")?.focus();
 }
 
+/** Approves the draft and leaves the study's website setting as it is; the page moves on to the next draft. */
 async function approve(): Promise<void> {
   const study = current.value;
   if (study === undefined) return;
   catalogue.approveSummary(study.id);
-  await reportAndMoveOn(`Approved the summary of "${study.title}".`);
+  reportOutcome(`Approved the summary of "${study.title}".`);
+  await moveFocusToNext();
 }
 
 /** Approves the draft for this private catalogue only: the study is also kept off the website. */
@@ -57,9 +69,10 @@ async function approveKeepPrivate(): Promise<void> {
   const study = current.value;
   if (study === undefined) return;
   catalogue.approveSummaryKeepPrivate(study.id);
-  await reportAndMoveOn(
+  reportOutcome(
     `Approved the summary of "${study.title}" and kept it off the website.`,
   );
+  await moveFocusToNext();
 }
 
 /** Puts the draft at the end of the queue for this visit, and moves on to the next. */
@@ -96,7 +109,8 @@ async function reject(): Promise<void> {
   });
   if (!isConfirmed) return;
   catalogue.rejectSummary(study.id);
-  await reportAndMoveOn(`Rejected the draft summary of "${study.title}".`);
+  reportOutcome(`Rejected the draft summary of "${study.title}".`);
+  await moveFocusToNext();
 }
 </script>
 
