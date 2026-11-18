@@ -20,19 +20,28 @@ const props = defineProps<{
   ancestorIds: readonly string[];
 }>();
 
+/** The tags to list at this level, sorted by name, leaving out any already on the path from the top (a loop). */
 const children = computed(() => {
   const directChildren = props.tags.filter((tag) =>
-    props.parentId === null
-      ? tag.parentIds.length === 0
-      : tag.parentIds.includes(props.parentId),
+    isDirectChildOf(tag, props.parentId),
   );
+  // A tag already on the path above would nest forever, so it is not listed again here
   const outsideLoops = directChildren.filter(
     (tag) => !props.ancestorIds.includes(tag.id),
   );
-  return [...outsideLoops].sort((first, second) =>
+  return outsideLoops.sort((first, second) =>
     first.name.localeCompare(second.name),
   );
 });
+
+/**
+ * Whether a tag sits directly beneath the given parent. A null parent means the top level, where a tag has no parents;
+ * a tag with several parents is a child of each of them.
+ */
+function isDirectChildOf(tag: Tag, parentId: string | null): boolean {
+  if (parentId === null) return tag.parentIds.length === 0;
+  return tag.parentIds.includes(parentId);
+}
 
 /** e.g. "1 study", "12 studies". */
 function usageText(tag: Tag): string {

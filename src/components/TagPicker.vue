@@ -101,13 +101,21 @@ function createNewTag(): void {
     props.tags,
     selectedIds.value,
   );
-  newTagError.value = newTagErrorText(request);
-  newTagResult.value = newTagResultText(request);
-  if (request.kind === "createsNewTag" || request.kind === "addsExistingTag") {
+  showNewTagAnswer(request);
+  // Both kinds carry the tag's name to the parent; the other two kinds create nothing
+  const addsTagToStudy =
+    request.kind === "createsNewTag" || request.kind === "addsExistingTag";
+  if (addsTagToStudy) {
     emit("create", request.tagName);
     newTagName.value = "";
   }
   focusInside(`#${newTagFieldId.value}`);
+}
+
+/** Shows what a request means under the New Tag box: its visible error, and the line saying what was done. */
+function showNewTagAnswer(request: NewTagRequest): void {
+  newTagError.value = newTagErrorText(request);
+  newTagResult.value = newTagResultText(request);
 }
 
 /** The error under the New Tag box for a request that does nothing; "" when the request goes ahead. */

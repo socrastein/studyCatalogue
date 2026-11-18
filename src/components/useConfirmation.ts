@@ -23,7 +23,9 @@ export type ConfirmationQuestion = {
 export type Confirmation = {
   /** The question being asked, or null while none is. */
   question: Readonly<ShallowRef<ConfirmationQuestion | null>>;
+  /** Shows the question in the dialog and resolves with the answer (true to go ahead). */
   ask: (question: ConfirmationQuestion) => Promise<boolean>;
+  /** Called by the dialog's events: closes it and resolves the question being asked with the answer. */
   answer: (isConfirmed: boolean) => void;
 };
 
@@ -38,6 +40,12 @@ export function useConfirmation(): Confirmation {
   // Resolves the promise of the question being asked; asking again before an answer settles the earlier one as "no"
   let settle: (isConfirmed: boolean) => void = () => {};
 
+  /**
+   * Shows a question in the dialog. A question still waiting is settled as "no" first, so the page that asked it never
+   * hangs on a promise nobody will resolve.
+   *
+   * @returns A promise that resolves with the answer to this question.
+   */
   function ask(newQuestion: ConfirmationQuestion): Promise<boolean> {
     settle(false);
     question.value = newQuestion;
@@ -46,6 +54,10 @@ export function useConfirmation(): Confirmation {
     });
   }
 
+  /**
+   * Closes the dialog and resolves the question being asked with the answer. With no question open it only closes the
+   * dialog, which is already closed.
+   */
   function answer(isConfirmed: boolean): void {
     question.value = null;
     settle(isConfirmed);

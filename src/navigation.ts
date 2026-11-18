@@ -1,3 +1,8 @@
+/*
+ * The main navigation's links and the phone breakpoint, shared by the header (App.vue) and the phone menu
+ * (components/PhoneMenu.vue). Plain data and functions with no Vue, so the link rules are tested in Node (navigation.test.ts).
+ */
+
 /** One link of the main navigation. */
 export type NavLink = { name: string; path: string };
 
@@ -25,13 +30,20 @@ export function navLinks(waitingCount: number): readonly NavLink[] {
     name: `Review Summaries (${waitingCount})`,
     path: "/review",
   };
+  // Settings is the last main link, so the review link goes in just before it
   const beforeSettings = NAV_LINKS.slice(0, -1);
   const settings = NAV_LINKS.slice(-1);
   return [...beforeSettings, reviewLink, ...settings];
 }
 
 /**
- * Widths at which the header swaps its row of links for the phone menu: under 768px the links and the theme button
- * no longer fit on one line beside the site name. The same breakpoint as liftingApp's header.
+ * The widest screen, in CSS pixels, that gets the phone menu. At 768px the links and the theme button no longer fit on one
+ * line beside the site name, so the menu takes over one pixel below that. The same breakpoint as liftingApp's header.
  */
-export const PHONE_WIDTH_QUERY = "(max-width: 767px)";
+const PHONE_MAX_WIDTH_PX = 767;
+
+/**
+ * The media query that is true at phone widths: App.vue passes it to `useMediaQuery` to swap the header's row of links
+ * for the phone menu.
+ */
+export const PHONE_WIDTH_QUERY = `(max-width: ${PHONE_MAX_WIDTH_PX}px)`;
