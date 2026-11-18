@@ -55,41 +55,65 @@ export async function openCatalogueFile(
   options: CatalogueFileOptions = {},
 ): Promise<CatalogueFile> {
   const now = options.now ?? (() => new Date());
-  const dataPath = join(dataDirectory, DATA_FILE_NAME);
-  const versionsPath = join(dataDirectory, VERSIONS_FOLDER_NAME);
-  await mkdir(versionsPath, { recursive: true });
+  const settings = {
+    dataPath: join(dataDirectory, DATA_FILE_NAME),
+    versionsPath: join(dataDirectory, VERSIONS_FOLDER_NAME),
+    now,
+    fileSystem: options.fileSystem,
+  };
+  await mkdir(settings.versionsPath, { recursive: true });
+  return {
+    read: () => readStoredCopy(settings.dataPath),
+    save: createSaveQueue(settings),
+  };
+}
 
-  /** The end of the queue of saves, so each waits for the one before. */
+/** What one save depends on: where to write, the clock for version names, and the file system the write goes through. */
+type SaveSettings = {
+  dataPath: string;
+  versionsPath: string;
+  now: () => Date;
+  fileSystem?: AtomicWriteFileSystem;
+};
+
+/**
+ * Saves as a queue: each save runs after every earlier one, whether they worked or not, so the check and the write
+ * cannot interleave.
+ */
+function createSaveQueue(
+  settings: SaveSettings,
+): (baseRevision: number, catalogue: Catalogue) => Promise<SaveResult> {
+  /** The end of the queue, so each save waits for the one before. */
   let previousSave: Promise<unknown> = Promise.resolve();
-
-  /** Runs this save after every earlier one, whether they worked or not. */
-  function queueSave(
+  return function save(
     baseRevision: number,
     catalogue: Catalogue,
   ): Promise<SaveResult> {
-    const thisSave = previousSave.then(() => saveNow(baseRevision, catalogue));
+    const thisSave = previousSave.then(() =>
+      saveNow(settings, baseRevision, catalogue),
+    );
     previousSave = thisSave.catch(() => undefined);
     return thisSave;
-  }
-
-  /** The check, write and version copy of one save. */
-  async function saveNow(
-    baseRevision: number,
-    catalogue: Catalogue,
-  ): Promise<SaveResult> {
-    const current = await readStoredCopy(dataPath);
-    if (current.revision !== baseRevision) return { kind: "conflict", current };
-    const saved = { revision: current.revision + 1, catalogue };
-    const text = numberedCatalogueText(saved);
-    await writeFileAtomically(dataPath, text, options.fileSystem);
-    await keepVersion(versionsPath, { revision: saved.revision, text }, now());
-    return { kind: "saved", revision: saved.revision };
-  }
-
-  return {
-    read: () => readStoredCopy(dataPath),
-    save: queueSave,
   };
+}
+
+/** The check, write and version copy of one save. */
+async function saveNow(
+  settings: SaveSettings,
+  baseRevision: number,
+  catalogue: Catalogue,
+): Promise<SaveResult> {
+  const current = await readStoredCopy(settings.dataPath);
+  if (current.revision !== baseRevision) return { kind: "conflict", current };
+  const saved = { revision: current.revision + 1, catalogue };
+  const text = numberedCatalogueText(saved);
+  await writeFileAtomically(settings.dataPath, text, settings.fileSystem);
+  await keepVersion(
+    settings.versionsPath,
+    { revision: saved.revision, text },
+    settings.now(),
+  );
+  return { kind: "saved", revision: saved.revision };
 }
 
 /** The copy in the data file; revision 0 and a new catalogue when there is no file. */
