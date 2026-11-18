@@ -43,13 +43,19 @@ export function createFakeHomeServer(
         catalogue: newCatalogueFromOtherDevice,
       };
     },
-    fetch: async (_input, init) => {
-      if (server.isOffline) throw new TypeError("NetworkError");
-      if (init?.method === "PUT") return answerSave(server, String(init.body));
-      return json(200, numberedCatalogueText(server.copy));
-    },
+    fetch: (_input, init) => fakeFetch(server, init),
   };
   return server;
+}
+
+/** The fake server's answer to a request: an error while offline, a save's answer for a PUT, else the current copy. */
+async function fakeFetch(
+  server: FakeHomeServer,
+  init?: RequestInit,
+): Promise<Response> {
+  if (server.isOffline) throw new TypeError("NetworkError");
+  if (init?.method === "PUT") return answerSave(server, String(init.body));
+  return json(200, numberedCatalogueText(server.copy));
 }
 
 /** The answer to a save: stored when the base revision is current, else the current copy with 409. */
