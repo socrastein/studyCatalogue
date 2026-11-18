@@ -88,6 +88,8 @@ function readWithRevision<Message>(
   try {
     const record = readRecord(value, "the message");
     const revision = readRevision(record[revisionField], revisionField);
+    // A missing catalogue becomes null so the parser reports "the catalogue should be an object"; JSON.stringify of
+    // undefined is undefined, which would surface as a misleading "not valid JSON".
     const parsed = parseCatalogue(JSON.stringify(record.catalogue ?? null));
     if (parsed.kind === "invalid")
       return { kind: "invalid", problem: parsed.problem };

@@ -66,8 +66,7 @@ export function studiesInReviewOrder(
   skippedIds: readonly string[],
 ): Study[] {
   const waiting = studiesAwaitingReview(studies);
-  const isSkipped = (study: Study) => skippedIds.includes(study.id);
-  const notSkipped = waiting.filter((study) => !isSkipped(study));
+  const notSkipped = waiting.filter((study) => !skippedIds.includes(study.id));
   const skipped = skippedIds
     .map((id) => waiting.find((study) => study.id === id))
     .filter((study) => study !== undefined);
@@ -75,11 +74,11 @@ export function studiesInReviewOrder(
 }
 
 /**
- * The study with a summary put on it, replacing any it had (a new draft replaces an approved summary as well, and is
- * itself unapproved: the approval was of the old words).
+ * The study with a summary put on it, replacing any it had. The summary is stored exactly as given: a new draft
+ * (createDraftSummary) replaces an approved summary and is itself unapproved, because the approval was of the old words.
  *
  * @param study The study as saved.
- * @param summary The summary to put on it.
+ * @param summary The summary to put on it, as it should be stored.
  * @param now The time of the change; the current time unless a test fixes it.
  */
 export function withSummary(

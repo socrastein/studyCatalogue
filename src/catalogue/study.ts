@@ -61,6 +61,7 @@ export type StudyDetails = {
   isHiddenFromWebsite: boolean;
 };
 
+/** A saved study: its details, its id, its timestamps and, once drafted, its summary. */
 export type Study = StudyDetails & {
   /**
    * The short summary shown on the public site in place of the abstract, once approved (see summary.ts). Absent until

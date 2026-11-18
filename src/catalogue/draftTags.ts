@@ -74,9 +74,21 @@ function nameOfVanishedTag(
  */
 export function droppedTagsMessage(droppedTagNames: readonly string[]): string {
   const quoted = droppedTagNames.map((name) => `"${name}"`);
+  const names = joinWithAnd(quoted);
   const isOne = quoted.length === 1;
-  const names = isOne
-    ? quoted.join("")
-    : `${quoted.slice(0, -1).join(", ")} and ${quoted.at(-1)}`;
-  return `Removed ${names} from this study because ${isOne ? "that tag no longer exists" : "those tags no longer exist"}.`;
+  const reason = isOne
+    ? "that tag no longer exists"
+    : "those tags no longer exist";
+  return `Removed ${names} from this study because ${reason}.`;
+}
+
+/**
+ * The items as an English list: one item as it is, two as "A and B", more as "A, B and C".
+ *
+ * @param items The items to list; at least one.
+ */
+function joinWithAnd(items: readonly string[]): string {
+  // One or two items need no commas, and join(" and ") gives one item back unchanged.
+  if (items.length <= 2) return items.join(" and ");
+  return `${items.slice(0, -1).join(", ")} and ${items.at(-1)}`;
 }

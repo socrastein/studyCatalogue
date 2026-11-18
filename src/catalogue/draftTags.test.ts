@@ -69,6 +69,12 @@ describe("droppedTagsMessage", () => {
     );
   });
 
+  it("joins two tags with and, without a comma", () => {
+    expect(droppedTagsMessage(["Sleep", "Zinc"])).toBe(
+      'Removed "Sleep" and "Zinc" from this study because those tags no longer exist.',
+    );
+  });
+
   it("lists several tags", () => {
     expect(droppedTagsMessage(["Sleep", "Protein", "Zinc"])).toBe(
       'Removed "Sleep", "Protein" and "Zinc" from this study because those tags no longer exist.',

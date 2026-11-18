@@ -192,7 +192,7 @@ function readNullableTimestamp(value: unknown, where: string): string | null {
   return readString(value, where);
 }
 
-/** The fields a citation is built from. */
+/** A study's bibliographic fields: what a citation is built from, plus the abstract, which citations do not use. */
 type Bibliography = Omit<
   StudyDetails,
   keyof Facets | "tagIds" | "isHiddenFromWebsite"
