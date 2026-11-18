@@ -29,6 +29,9 @@ const READ_TIMEOUT_MILLISECONDS = 5000;
 /** HTTP status codes from 500 up mean the server itself failed (RFC 9110, 15.6): a proxy in front of a dead home server answers 502. */
 const FIRST_SERVER_ERROR_STATUS = 500;
 
+/** HTTP 409 Conflict (RFC 9110, 15.5.10): the server's copy moved on, so its answer is the copy to merge with. */
+const CONFLICT_STATUS = 409;
+
 /** What the app's own address answered when asked for the catalogue. */
 export type ServerAnswer =
   | { kind: "copy"; copy: NumberedCatalogue }
@@ -41,6 +44,9 @@ export type ServerAnswer =
  * Asks the app's own address for the catalogue, and tells apart an address that is not a home server (it answered
  * something else) from one that did not answer at all: the first is normal on a dev server, the second means a home
  * server that is down.
+ *
+ * @param fetchFunction The browser's `fetch`, or a fake in tests.
+ * @returns What the address answered. Never throws: every failure is a `noAnswer` or `notAHomeServer` value.
  */
 export async function askForServerCopy(
   fetchFunction: FetchFunction,
@@ -56,6 +62,7 @@ export async function askForServerCopy(
     // Read as text before parsing: a connection that drops here is no answer, but text that is not JSON is another site
     return answerFromText(await response.text());
   } catch {
+    // The error's text is not kept: the caller's warning already says that the home server did not answer
     return { kind: "noAnswer" };
   }
 }
@@ -66,6 +73,7 @@ function answerFromText(text: string): ServerAnswer {
     const copy = numberedCatalogueFrom(JSON.parse(text));
     return copy === null ? { kind: "notAHomeServer" } : { kind: "copy", copy };
   } catch {
+    // Not JSON at all: the address answered with some other kind of page, so it is not a home server
     return { kind: "notAHomeServer" };
   }
 }
@@ -73,6 +81,7 @@ function answerFromText(text: string): ServerAnswer {
 /**
  * The server's copy of the catalogue.
  *
+ * @param fetchFunction The browser's `fetch`, or a fake in tests.
  * @returns null for anything but a well-formed answer: a static host or dev server (whose answer is a 404 or the
  *   app's own page), no connection, a timeout, or an unreadable body.
  */
@@ -86,8 +95,10 @@ export async function readServerCopy(
 /**
  * Asks the server to replace its copy.
  *
+ * @param fetchFunction The browser's `fetch`, or a fake in tests.
  * @param baseRevision The revision of the server copy the catalogue was made from.
  * @param catalogue The catalogue to store.
+ * @returns The new revision when saved, the server's current copy on a conflict, or the reason it failed.
  */
 export async function putServerCopy(
   fetchFunction: FetchFunction,
@@ -109,7 +120,7 @@ export async function putServerCopy(
 
 /** The outcome a server's answer to a save stands for. */
 async function describeSaveAnswer(response: Response): Promise<SaveOutcome> {
-  if (response.status === 409) {
+  if (response.status === CONFLICT_STATUS) {
     const current = numberedCatalogueFrom(await response.json());
     if (current === null)
       return { kind: "failed", reason: "the server's answer was unreadable" };

@@ -118,6 +118,10 @@ function showInUrl(newFilters: StudyFilters, newOrder: SortOrder): void {
   void router.replace({ query: browseQuery(newFilters, newOrder) });
 }
 
+/**
+ * Empties every filter, which the URL then records. The sort order is kept: Sort is how results are shown, not which
+ * results are shown.
+ */
 function clearFilters(): void {
   filters.value = emptyFilters();
 }

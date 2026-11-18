@@ -12,6 +12,7 @@ import { createBrowserStorage } from "./browserStorage";
 import {
   createCatalogueStoreOn,
   installCatalogueStore,
+  type CatalogueStore,
 } from "./catalogueStore";
 import type { CatalogueStorage } from "./catalogueStorage";
 import { readonly, ref } from "vue";
@@ -93,18 +94,27 @@ const homeServerMissing = ref(false);
 export const isHomeServerMissing = readonly(homeServerMissing);
 
 /**
- * Chooses the storage, installs the app's store on it, and has the store refresh whenever the page becomes visible
- * again or the network comes back, so a second device sees what the first changed and a failed save is retried.
+ * Chooses the storage, installs the app's store on it and sets the missing-home-server warning, before the app mounts.
+ * The store then refreshes when the page or the network comes back (see `refreshWhenUsable`).
  */
 export async function startCatalogue(): Promise<void> {
-  const { storage, isHomeServerMissing: isMissing } =
-    await chooseCatalogueStorage(
-      (input, init) => fetch(input, init),
-      localStorage,
-    );
-  homeServerMissing.value = isMissing;
-  const store = createCatalogueStoreOn(storage);
+  const choice = await chooseCatalogueStorage(
+    (input, init) => fetch(input, init),
+    localStorage,
+  );
+  homeServerMissing.value = choice.isHomeServerMissing;
+  const store = createCatalogueStoreOn(choice.storage);
   installCatalogueStore(store);
+  refreshWhenUsable(store);
+}
+
+/**
+ * Refreshes the store whenever the page becomes visible again or the network comes back, so a second device sees what
+ * the first changed and a failed save is retried.
+ *
+ * @param store The app's store, refreshed on each of those events.
+ */
+function refreshWhenUsable(store: CatalogueStore): void {
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") void store.refresh();
   });
