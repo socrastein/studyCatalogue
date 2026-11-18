@@ -6,6 +6,17 @@ import { readFile, stat } from "node:fs/promises";
 import { extname, join, normalize, sep } from "node:path";
 import type { ServerResponse } from "node:http";
 
+/** The HTTP status codes this file sends (RFC 9110, section 15). */
+const HTTP_STATUS = {
+  ok: 200,
+  notFound: 404,
+  serviceUnavailable: 503,
+} as const;
+
+/** A year in seconds: the longest a hashed file is kept, since its name changes whenever its content does. */
+const ONE_YEAR_IN_SECONDS = 365 * 24 * 60 * 60;
+
+/** The `Content-Type` for each extension the app ships. An extension not listed is sent as opaque bytes (below). */
 const CONTENT_TYPES: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
@@ -27,6 +38,7 @@ const CONTENT_TYPES: Record<string, string> = {
  * @param urlPath The request path, e.g. "/assets/index-abc.js" or "/settings".
  * @returns The status sent: 200, or 404 for a missing file with an extension (so a broken asset link fails loudly
  *   instead of being answered with a page), or 503 when the app has not been built.
+ * @throws Any file-system error other than a missing file (say, a symbolic-link loop); the request handler answers 500.
  */
 export async function serveStaticFile(
   response: ServerResponse,
@@ -36,18 +48,26 @@ export async function serveStaticFile(
   const filePath = fileInside(distDirectory, urlPath);
   if (filePath !== null && (await isFile(filePath)))
     return sendFile(response, filePath);
-  const looksLikeAFile = extname(urlPath) !== "";
-  if (looksLikeAFile) return sendText(response, 404, "Not found");
+  if (pathLooksLikeAFile(urlPath))
+    return sendText(response, HTTP_STATUS.notFound, "Not found");
   const indexPath = join(distDirectory, "index.html");
   if (await isFile(indexPath)) return sendFile(response, indexPath);
   return sendText(
     response,
-    503,
+    HTTP_STATUS.serviceUnavailable,
     "The app has not been built yet: run npm run build.",
   );
 }
 
-/** The file path for a URL path, or null when it would climb out of the folder (".." tricks). */
+/** Whether the URL path ends in an extension, so it names a file rather than a page of the app (/about has none). */
+function pathLooksLikeAFile(urlPath: string): boolean {
+  return extname(urlPath) !== "";
+}
+
+/**
+ * The file path for a URL path, or null when it would climb out of the folder (".." tricks) or is not a usable
+ * name at all (a malformed percent-encoding, or a NUL byte, which no file name can hold).
+ */
 function fileInside(distDirectory: string, urlPath: string): string | null {
   let decoded: string;
   try {
@@ -69,27 +89,37 @@ async function isFile(path: string): Promise<boolean> {
   }
 }
 
-/** Sends a file with its content type. */
+/** Sends a file with its content type and cache policy. */
 async function sendFile(
   response: ServerResponse,
   filePath: string,
 ): Promise<number> {
   const body = await readFile(filePath);
-  const contentType =
-    CONTENT_TYPES[extname(filePath)] ?? "application/octet-stream";
-  // Vite puts a hash in the name of every file under assets/, so those never change; anything else (index.html,
-  // the favicon) is re-checked, so a new build is picked up
-  const isHashed = filePath.includes(`${sep}assets${sep}`);
-  const cacheControl = isHashed
-    ? "public, max-age=31536000, immutable"
-    : "no-cache";
-  response.writeHead(200, {
-    "Content-Type": contentType,
+  response.writeHead(HTTP_STATUS.ok, {
+    "Content-Type": contentTypeOf(filePath),
     "Content-Length": body.length,
-    "Cache-Control": cacheControl,
+    "Cache-Control": cacheControlOf(filePath),
   });
   response.end(body);
-  return 200;
+  return HTTP_STATUS.ok;
+}
+
+/**
+ * The content type for the file's extension. An unlisted extension gets "application/octet-stream", which browsers
+ * download rather than render: a safe default for a file this server does not recognise.
+ */
+function contentTypeOf(filePath: string): string {
+  return CONTENT_TYPES[extname(filePath)] ?? "application/octet-stream";
+}
+
+/**
+ * Vite puts a hash in the name of every file under assets/, so those are cached for a year and never re-checked.
+ * Anything else (index.html, the favicon) is "no-cache": the browser re-checks it, so a new build is picked up.
+ */
+function cacheControlOf(filePath: string): string {
+  const isHashed = filePath.includes(`${sep}assets${sep}`);
+  if (isHashed) return `public, max-age=${ONE_YEAR_IN_SECONDS}, immutable`;
+  return "no-cache";
 }
 
 /** Sends a plain-text answer. */
