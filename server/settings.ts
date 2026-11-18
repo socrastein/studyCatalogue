@@ -21,6 +21,15 @@ export type ServerSettings = {
 /** The port the home server listens on unless told otherwise. */
 export const DEFAULT_PORT = 5185;
 
+/** The folder the catalogue and its versions live in unless told otherwise: this app's data in the home folder. */
+const DEFAULT_DATA_DIR = join(homedir(), ".local", "share", "studyCatalogue");
+
+/**
+ * The address the home server listens on unless told otherwise: every network interface, so the devices on the
+ * home network can reach it.
+ */
+const DEFAULT_HOST = "0.0.0.0";
+
 /**
  * The largest save accepted, 32 MiB. A study with an abstract is about 3 KB of JSON, so this holds ten thousand
  * studies with room to spare, while still stopping a runaway upload.
@@ -44,23 +53,24 @@ export function readSettings(
   /** The flag's value, else the environment variable's, else undefined. */
   const choice = (flag: string, variable: string): string | undefined =>
     flags.get(flag) ?? environment[variable];
+  return readSettingsFrom(choice, defaultDistDirectory);
+}
+
+/** The settings: each one is its flag, else its environment variable, else its default. */
+function readSettingsFrom(
+  choice: (flag: string, variable: string) => string | undefined,
+  defaultDistDirectory: string,
+): ServerSettings {
+  const dataDir = choice("data-dir", DATA_DIR_VARIABLE) ?? DEFAULT_DATA_DIR;
+  const distDir = choice("dist-dir", DIST_DIR_VARIABLE) ?? defaultDistDirectory;
   return {
-    dataDirectory: resolve(
-      choice("data-dir", "STUDY_CATALOGUE_DATA_DIR") ??
-        join(homedir(), ".local", "share", "studyCatalogue"),
-    ),
-    port: readWholeNumber(
-      "port",
-      choice("port", "STUDY_CATALOGUE_PORT"),
-      DEFAULT_PORT,
-    ),
-    host: choice("host", "STUDY_CATALOGUE_HOST") ?? "0.0.0.0",
-    distDirectory: resolve(
-      choice("dist-dir", "STUDY_CATALOGUE_DIST_DIR") ?? defaultDistDirectory,
-    ),
+    dataDirectory: resolve(dataDir),
+    port: readWholeNumber("port", choice("port", PORT_VARIABLE), DEFAULT_PORT),
+    host: choice("host", HOST_VARIABLE) ?? DEFAULT_HOST,
+    distDirectory: resolve(distDir),
     bodyLimitBytes: readWholeNumber(
       "body-limit-bytes",
-      choice("body-limit-bytes", "STUDY_CATALOGUE_BODY_LIMIT_BYTES"),
+      choice("body-limit-bytes", BODY_LIMIT_VARIABLE),
       DEFAULT_BODY_LIMIT_BYTES,
     ),
   };
@@ -73,6 +83,13 @@ const KNOWN_FLAGS = [
   "dist-dir",
   "body-limit-bytes",
 ];
+
+/** The settings' environment variables: each flag also has a variable, and the flag wins over it. */
+const DATA_DIR_VARIABLE = "STUDY_CATALOGUE_DATA_DIR";
+const PORT_VARIABLE = "STUDY_CATALOGUE_PORT";
+const HOST_VARIABLE = "STUDY_CATALOGUE_HOST";
+const DIST_DIR_VARIABLE = "STUDY_CATALOGUE_DIST_DIR";
+const BODY_LIMIT_VARIABLE = "STUDY_CATALOGUE_BODY_LIMIT_BYTES";
 
 /** The flags as name to value, for `--name value` and `--name=value`. */
 function readFlags(argv: string[]): Map<string, string> {
