@@ -156,32 +156,18 @@ export function createCatalogueStore(storage: Storage): CatalogueStore {
 export function createCatalogueStoreOn(
   storage: CatalogueStorage,
 ): CatalogueStore {
-  const state = reactive<StoreState>(loadState(storage));
-  const events = saveEventsFor(state);
-
-  /** Saves the current catalogue, unless unreadable saved data must be kept. */
-  function save(): void {
-    if (state.loadProblem) return;
-    storage.save(state.catalogue, events);
-  }
-
-  /** Makes the given catalogue the current one and saves it: the one way every action changes the catalogue. */
-  function commit(catalogue: Catalogue): void {
-    state.catalogue = catalogue;
-    save();
-  }
-
+  const ctx = createStoreContext(storage);
   return {
-    state: readonly(state),
-    ...studyActions(state, commit),
-    ...summaryActions(state, commit),
-    ...tagActions(state, commit),
+    state: readonly(ctx.state),
+    ...studyActions(ctx),
+    ...summaryActions(ctx),
+    ...tagActions(ctx),
     replaceCatalogue(catalogue) {
       // Cleared first, so the commit's save may overwrite the unreadable data the person has chosen to replace
-      state.loadProblem = null;
-      commit(catalogue);
+      ctx.state.loadProblem = null;
+      ctx.commit(catalogue);
     },
-    refresh: () => storage.refresh(events),
+    refresh: () => storage.refresh(ctx.events),
   };
 }
 
@@ -211,98 +197,146 @@ function nowSavedText(state: StoreState): string {
     : "Your changes are now saved in this browser.";
 }
 
-/** Commits a changed catalogue; see `commit` in createCatalogueStore. */
+/** The one way every action changes the catalogue and saves it. */
 type Commit = (catalogue: Catalogue) => void;
 
-/** The actions that add, edit and delete studies. */
-function studyActions(state: StoreState, commit: Commit): StudyActions {
+/** What the actions share: the state, the save's events, and the one way to commit. */
+type StoreContext = {
+  state: StoreState;
+  events: SaveEvents;
+  commit: Commit;
+};
+
+/**
+ * The state the store starts from and the way its actions save: the state is loaded from the storage, and every
+ * commit saves through it.
+ */
+function createStoreContext(storage: CatalogueStorage): StoreContext {
+  const state = reactive<StoreState>(loadState(storage));
+  const events = saveEventsFor(state);
   return {
-    addStudy(details) {
-      const study = createStudy(details);
-      const studies = [...state.catalogue.studies, study];
-      commit({ ...state.catalogue, studies });
-      return study;
-    },
-
-    editStudy(id, details) {
-      const existing = state.catalogue.studies.find((study) => study.id === id);
-      if (existing === undefined) return undefined;
-      const updated = updateStudy(existing, details);
-      const studies = state.catalogue.studies.map((study) =>
-        study.id === id ? updated : study,
-      );
-      commit({ ...state.catalogue, studies });
-      return updated;
-    },
-
-    deleteStudy(id) {
-      const studies = state.catalogue.studies.filter(
-        (study) => study.id !== id,
-      );
-      commit({ ...state.catalogue, studies });
+    state,
+    events,
+    commit(catalogue) {
+      state.catalogue = catalogue;
+      saveCatalogue(storage, state, events);
     },
   };
+}
+
+/** Saves the current catalogue, unless unreadable saved data must be kept. */
+function saveCatalogue(
+  storage: CatalogueStorage,
+  state: StoreState,
+  events: SaveEvents,
+): void {
+  if (state.loadProblem) return;
+  storage.save(state.catalogue, events);
+}
+
+/** The actions that add, edit and delete studies. */
+function studyActions(ctx: StoreContext): StudyActions {
+  return {
+    addStudy: (details) => addStudyNow(ctx, details),
+    editStudy: (id, details) => editStudyNow(ctx, id, details),
+    deleteStudy: (id) => deleteStudyNow(ctx, id),
+  };
+}
+
+/** A new study in the catalogue, saved; the study returned carries its new id. */
+function addStudyNow(ctx: StoreContext, details: StudyDetails): Study {
+  const study = createStudy(details);
+  ctx.commit({
+    ...ctx.state.catalogue,
+    studies: [...ctx.state.catalogue.studies, study],
+  });
+  return study;
+}
+
+/** The study with the given id, its details replaced and saved; undefined when no study has that id. */
+function editStudyNow(
+  ctx: StoreContext,
+  id: string,
+  details: StudyDetails,
+): Study | undefined {
+  const existing = ctx.state.catalogue.studies.find((study) => study.id === id);
+  if (existing === undefined) return undefined;
+  const updated = updateStudy(existing, details);
+  ctx.commit({
+    ...ctx.state.catalogue,
+    studies: ctx.state.catalogue.studies.map((study) =>
+      study.id === id ? updated : study,
+    ),
+  });
+  return updated;
+}
+
+/** The catalogue without the study with the given id, saved. */
+function deleteStudyNow(ctx: StoreContext, id: string): void {
+  ctx.commit({
+    ...ctx.state.catalogue,
+    studies: ctx.state.catalogue.studies.filter((study) => study.id !== id),
+  });
 }
 
 /** The actions on studies' summaries. */
-function summaryActions(state: StoreState, commit: Commit): SummaryActions {
-  /** Replaces the study with the changed one; does nothing when no study has that id. */
-  function changeStudy(id: string, change: (study: Study) => Study): void {
-    const studies = state.catalogue.studies.map((study) =>
-      study.id === id ? change(study) : study,
-    );
-    commit({ ...state.catalogue, studies });
-  }
-
+function summaryActions(ctx: StoreContext): SummaryActions {
   return {
     approveSummary(studyId) {
-      changeStudy(studyId, (study) => approveSummary(study));
+      changeStudy(ctx, studyId, (study) => approveSummary(study));
     },
-
     approveSummaryKeepPrivate(studyId) {
-      changeStudy(studyId, (study) => approveSummaryKeepPrivate(study));
+      changeStudy(ctx, studyId, (study) => approveSummaryKeepPrivate(study));
     },
-
     editSummary(studyId, text) {
-      changeStudy(studyId, (study) => editSummaryText(study, text));
+      changeStudy(ctx, studyId, (study) => editSummaryText(study, text));
     },
-
     sendSummaryBackToReview(studyId) {
-      changeStudy(studyId, (study) => sendSummaryBackToReview(study));
+      changeStudy(ctx, studyId, (study) => sendSummaryBackToReview(study));
     },
-
     rejectSummary(studyId) {
-      changeStudy(studyId, (study) => rejectSummary(study));
+      changeStudy(ctx, studyId, (study) => rejectSummary(study));
     },
   };
 }
 
+/**
+ * Replaces the study with the given id through the change and saves the catalogue. The change receives the study
+ * and returns the changed one, so the domain function (summary.ts) does the changing.
+ */
+function changeStudy(
+  ctx: StoreContext,
+  id: string,
+  change: (study: Study) => Study,
+): void {
+  const studies = ctx.state.catalogue.studies.map((study) =>
+    study.id === id ? change(study) : study,
+  );
+  ctx.commit({ ...ctx.state.catalogue, studies });
+}
+
 /** The actions on tags. */
-function tagActions(state: StoreState, commit: Commit): TagActions {
+function tagActions(ctx: StoreContext): TagActions {
   return {
-    findOrCreateTag(name) {
-      const existing = findTagByName(name, state.catalogue.tags);
-      if (existing) return existing;
-      const tag = createTag(name);
-      commit({ ...state.catalogue, tags: [...state.catalogue.tags, tag] });
-      return tag;
-    },
-
-    editTag(tagId, changes) {
-      return commitTagEdit(commit, editTag(state.catalogue, tagId, changes));
-    },
-
-    mergeTags(mergedId, keptId) {
-      return commitTagEdit(
-        commit,
-        mergeTags(state.catalogue, mergedId, keptId),
-      );
-    },
-
-    deleteTag(tagId) {
-      commit(deleteTag(state.catalogue, tagId));
-    },
+    findOrCreateTag: (name) => findOrCreateTagNow(ctx, name),
+    editTag: (tagId, changes) =>
+      commitTagEdit(ctx, editTag(ctx.state.catalogue, tagId, changes)),
+    mergeTags: (mergedId, keptId) =>
+      commitTagEdit(ctx, mergeTags(ctx.state.catalogue, mergedId, keptId)),
+    deleteTag: (tagId) => ctx.commit(deleteTag(ctx.state.catalogue, tagId)),
   };
+}
+
+/** The tag with the given name, creating it as a top-level tag if none exists. */
+function findOrCreateTagNow(ctx: StoreContext, name: string): Tag {
+  const existing = findTagByName(name, ctx.state.catalogue.tags);
+  if (existing) return existing;
+  const tag = createTag(name);
+  ctx.commit({
+    ...ctx.state.catalogue,
+    tags: [...ctx.state.catalogue.tags, tag],
+  });
+  return tag;
 }
 
 /**
@@ -310,9 +344,12 @@ function tagActions(state: StoreState, commit: Commit): TagActions {
  *
  * @returns null when committed; the problem when refused.
  */
-function commitTagEdit(commit: Commit, result: TagEditResult): string | null {
+function commitTagEdit(
+  ctx: StoreContext,
+  result: TagEditResult,
+): string | null {
   if (result.kind === "refused") return result.problem;
-  commit(result.catalogue);
+  ctx.commit(result.catalogue);
   return null;
 }
 
