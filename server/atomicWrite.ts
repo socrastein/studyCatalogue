@@ -13,9 +13,6 @@ export type AtomicWriteFileSystem = {
 
 const nodeFileSystem: AtomicWriteFileSystem = { rename };
 
-/** Base 36 writes a number with digits and letters only, so the temporary name stays short and safe in a file name. */
-const RANDOM_NAME_RADIX = 36;
-
 /** `Math.random().toString(36)` begins with "0.", which the temporary name leaves out. */
 const RANDOM_DIGITS_START = 2;
 
@@ -33,9 +30,8 @@ export async function writeFileAtomically(
   fileSystem: AtomicWriteFileSystem = nodeFileSystem,
 ): Promise<void> {
   // The process id and a random part keep two writers from sharing a temporary name
-  const randomPart = Math.random()
-    .toString(RANDOM_NAME_RADIX)
-    .slice(RANDOM_DIGITS_START);
+  // Base 36 writes digits and letters only, so the name stays short and safe in a file name
+  const randomPart = Math.random().toString(36).slice(RANDOM_DIGITS_START);
   const suffix = `${process.pid}-${randomPart}`;
   const temporaryPath = join(dirname(path), `.${basename(path)}.${suffix}.tmp`);
   try {

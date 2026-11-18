@@ -16,17 +16,6 @@ import type { CatalogueFile } from "./catalogueFile";
 import { BodyTooLargeError, readBody } from "./readBody";
 import { serveStaticFile } from "./staticFiles";
 
-/** The HTTP status codes this file sends (RFC 9110, section 15). */
-const HTTP_STATUS = {
-  ok: 200,
-  badRequest: 400,
-  notFound: 404,
-  methodNotAllowed: 405,
-  conflict: 409,
-  payloadTooLarge: 413,
-  internalServerError: 500,
-} as const;
-
 /** What the handler needs: the stored catalogue, the built app, the size limit and where to log. */
 export type RequestHandlerParts = {
   catalogueFile: CatalogueFile;
@@ -70,7 +59,7 @@ async function answer(
   if (path === CATALOGUE_API_PATH)
     return answerCatalogue(parts, request, response);
   if (path.startsWith("/api/"))
-    return sendError(response, HTTP_STATUS.notFound, "No such API address");
+    return sendError(response, 404, "No such API address");
   const isReading = request.method === "GET" || request.method === "HEAD";
   if (!isReading) return refuseMethod(response);
   return serveStaticFile(response, parts.distDirectory, path);
@@ -84,7 +73,7 @@ async function answerCatalogue(
 ): Promise<number> {
   if (request.method === "GET") {
     const current = await parts.catalogueFile.read();
-    return sendJson(response, HTTP_STATUS.ok, numberedCatalogueText(current));
+    return sendJson(response, 200, numberedCatalogueText(current));
   }
   if (request.method === "PUT") return answerSave(parts, request, response);
   return refuseMethod(response);
@@ -100,15 +89,11 @@ async function answerSave(
   if (body === null) {
     // The rest of the upload is not read, so the connection is closed after the answer
     response.setHeader("Connection", "close");
-    return sendError(
-      response,
-      HTTP_STATUS.payloadTooLarge,
-      "The catalogue is too large to save",
-    );
+    return sendError(response, 413, "The catalogue is too large to save");
   }
   const parsed = readSaveRequest(parseJson(body));
   if (parsed.kind === "invalid")
-    return sendError(response, HTTP_STATUS.badRequest, parsed.problem);
+    return sendError(response, 400, parsed.problem);
   return saveAndAnswer(parts, parsed.message, response);
 }
 
@@ -124,14 +109,10 @@ async function saveAndAnswer(
   );
   if (result.kind === "saved") {
     const body = JSON.stringify({ revision: result.revision });
-    return sendJson(response, HTTP_STATUS.ok, body);
+    return sendJson(response, 200, body);
   }
   // A stale save: the client merges its copy onto this one and tries again
-  return sendJson(
-    response,
-    HTTP_STATUS.conflict,
-    numberedCatalogueText(result.current),
-  );
+  return sendJson(response, 409, numberedCatalogueText(result.current));
 }
 
 /** The request body, or null when it is larger than the limit. */
@@ -162,22 +143,14 @@ function answerServerError(response: ServerResponse, error: unknown): number {
   // Once the headers are out the status cannot be changed, so the connection is cut and the client sees the failure
   if (response.headersSent) {
     response.destroy();
-    return HTTP_STATUS.internalServerError;
+    return 500;
   }
-  return sendError(
-    response,
-    HTTP_STATUS.internalServerError,
-    "The server could not do that",
-  );
+  return sendError(response, 500, "The server could not do that");
 }
 
 /** Answers 405 for a method the address does not accept. */
 function refuseMethod(response: ServerResponse): number {
-  return sendError(
-    response,
-    HTTP_STATUS.methodNotAllowed,
-    "Method not allowed",
-  );
+  return sendError(response, 405, "Method not allowed");
 }
 
 /** Sends a JSON error in the form `{ "error": message }` and says its status. */

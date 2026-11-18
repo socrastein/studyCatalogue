@@ -29,9 +29,6 @@ const READ_TIMEOUT_MILLISECONDS = 5000;
 /** HTTP status codes from 500 up mean the server itself failed (RFC 9110, 15.6): a proxy in front of a dead home server answers 502. */
 const FIRST_SERVER_ERROR_STATUS = 500;
 
-/** HTTP 409 Conflict (RFC 9110, 15.5.10): the server's copy moved on, so its answer is the copy to merge with. */
-const CONFLICT_STATUS = 409;
-
 /** What the app's own address answered when asked for the catalogue. */
 export type ServerAnswer =
   | { kind: "copy"; copy: NumberedCatalogue }
@@ -120,7 +117,8 @@ export async function putServerCopy(
 
 /** The outcome a server's answer to a save stands for. */
 async function describeSaveAnswer(response: Response): Promise<SaveOutcome> {
-  if (response.status === CONFLICT_STATUS) {
+  // 409 Conflict: the server's copy moved on, so its answer is the copy to merge with
+  if (response.status === 409) {
     const current = numberedCatalogueFrom(await response.json());
     if (current === null)
       return { kind: "failed", reason: "the server's answer was unreadable" };

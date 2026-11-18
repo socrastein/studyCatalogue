@@ -6,13 +6,6 @@ import { readFile, stat } from "node:fs/promises";
 import { extname, join, normalize, sep } from "node:path";
 import type { ServerResponse } from "node:http";
 
-/** The HTTP status codes this file sends (RFC 9110, section 15). */
-const HTTP_STATUS = {
-  ok: 200,
-  notFound: 404,
-  serviceUnavailable: 503,
-} as const;
-
 /** A year in seconds: the longest a hashed file is kept, since its name changes whenever its content does. */
 const ONE_YEAR_IN_SECONDS = 365 * 24 * 60 * 60;
 
@@ -48,13 +41,12 @@ export async function serveStaticFile(
   const filePath = fileInside(distDirectory, urlPath);
   if (filePath !== null && (await isFile(filePath)))
     return sendFile(response, filePath);
-  if (pathLooksLikeAFile(urlPath))
-    return sendText(response, HTTP_STATUS.notFound, "Not found");
+  if (pathLooksLikeAFile(urlPath)) return sendText(response, 404, "Not found");
   const indexPath = join(distDirectory, "index.html");
   if (await isFile(indexPath)) return sendFile(response, indexPath);
   return sendText(
     response,
-    HTTP_STATUS.serviceUnavailable,
+    503,
     "The app has not been built yet: run npm run build.",
   );
 }
@@ -95,13 +87,13 @@ async function sendFile(
   filePath: string,
 ): Promise<number> {
   const body = await readFile(filePath);
-  response.writeHead(HTTP_STATUS.ok, {
+  response.writeHead(200, {
     "Content-Type": contentTypeOf(filePath),
     "Content-Length": body.length,
     "Cache-Control": cacheControlOf(filePath),
   });
   response.end(body);
-  return HTTP_STATUS.ok;
+  return 200;
 }
 
 /**
