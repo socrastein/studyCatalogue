@@ -87,31 +87,22 @@ async function sendFile(
   filePath: string,
 ): Promise<number> {
   const body = await readFile(filePath);
+  // An unlisted extension is downloaded rather than rendered: a safe default for a file this server does not recognise
+  const contentType =
+    CONTENT_TYPES[extname(filePath)] ?? "application/octet-stream";
+  // Vite puts a hash in the name of every file under assets/, so those never change; anything else (index.html,
+  // the favicon) is re-checked, so a new build is picked up
+  const isHashed = filePath.includes(`${sep}assets${sep}`);
+  const cacheControl = isHashed
+    ? `public, max-age=${ONE_YEAR_IN_SECONDS}, immutable`
+    : "no-cache";
   response.writeHead(200, {
-    "Content-Type": contentTypeOf(filePath),
+    "Content-Type": contentType,
     "Content-Length": body.length,
-    "Cache-Control": cacheControlOf(filePath),
+    "Cache-Control": cacheControl,
   });
   response.end(body);
   return 200;
-}
-
-/**
- * The content type for the file's extension. An unlisted extension gets "application/octet-stream", which browsers
- * download rather than render: a safe default for a file this server does not recognise.
- */
-function contentTypeOf(filePath: string): string {
-  return CONTENT_TYPES[extname(filePath)] ?? "application/octet-stream";
-}
-
-/**
- * Vite puts a hash in the name of every file under assets/, so those are cached for a year and never re-checked.
- * Anything else (index.html, the favicon) is "no-cache": the browser re-checks it, so a new build is picked up.
- */
-function cacheControlOf(filePath: string): string {
-  const isHashed = filePath.includes(`${sep}assets${sep}`);
-  if (isHashed) return `public, max-age=${ONE_YEAR_IN_SECONDS}, immutable`;
-  return "no-cache";
 }
 
 /** Sends a plain-text answer. */
