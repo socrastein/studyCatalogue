@@ -107,8 +107,8 @@ function exportTag(tag: Tag): WebsiteTag {
   return { id: tag.id, name: tag.name, parentIds: [...tag.parentIds] };
 }
 
-function exportStudy(study: Study): WebsiteStudy {
-  const summary = approvedSummaryOf(study);
+/** The study's fields as the site gets them, before its summary: every field named, none spread. */
+function exportStudyFields(study: Study): Omit<WebsiteStudy, "summary"> {
   return {
     id: study.id,
     title: study.title,
@@ -126,8 +126,14 @@ function exportStudy(study: Study): WebsiteStudy {
     ageGroups: [...study.ageGroups],
     trainingStatuses: [...study.trainingStatuses],
     sexes: [...study.sexes],
-    ...(summary === undefined ? {} : { summary }),
   };
+}
+
+/** The study as the site gets it, with its approved summary when it has one. */
+function exportStudy(study: Study): WebsiteStudy {
+  const fields = exportStudyFields(study);
+  const summary = approvedSummaryOf(study);
+  return summary === undefined ? fields : { ...fields, summary };
 }
 
 /** An author's own fields: a person's names, or an organization's name. */
