@@ -1,6 +1,7 @@
 <!--
   The main navigation on phone-width screens: a Menu button that opens a panel with the page links and the sliding
-  light/dark switch (the library's ThemeSlider, the business site's control), following liftingApp's phone menu. The header shows it instead of its row of links (App.vue).
+  light/dark switch (the library's ThemeSlider, the business site's control), following liftingApp's phone menu. The
+  header shows it instead of its row of links (App.vue).
 
   It is a disclosure: the button keeps the name "Menu" and reports whether the panel is open (aria-expanded), and the
   panel follows it in the page, so Tab goes from the button into the links. The links are real links, so the current
@@ -26,6 +27,9 @@ const route = useRoute();
 const awaitingReview = useSummariesAwaitingReview();
 const links = computed(() => navLinks(awaitingReview.value.length));
 
+/**
+ * Hides the panel. A click outside, a chosen link and a page change all close it through this function.
+ */
 function close(): void {
   isOpen.value = false;
 }

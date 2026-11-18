@@ -1,7 +1,8 @@
 <!--
-  One study in the list: title, authors and year, journal, its design, participants and topics, a "Private" badge when it is kept off the website, its summary when it has one, the abstract on
-  request, and its actions: copy a citation (APA, MLA, a markdown link for Reddit, or that link with the summary below it), open the paper, edit. Topic tags link to the
-  list filtered by that tag.
+  One study in the list: title, authors and year, journal, its design, participants and topics, a "Private" badge when
+  it is kept off the website, its summary when it has one, the abstract on request, and its actions: copy a citation
+  (APA, MLA, a markdown link for Reddit, or that link with the summary below it), open the paper, edit. Topic tags link
+  to the list filtered by that tag.
 -->
 <script setup lang="ts">
 import DisclosureSection from "lifting-school-ui/components/DisclosureSection.vue";
@@ -37,6 +38,9 @@ const emit = defineEmits<{
   copied: [message: string];
 }>();
 
+/** Turns a study into one citation format's text, or null when the study has nothing to cite in that format. */
+type CitationFormatter = (study: Study) => Citation | null;
+
 const CITATION_FORMATS = [
   { label: "APA", name: "APA", format: formatApa },
   { label: "MLA", name: "MLA", format: formatMla },
@@ -66,11 +70,16 @@ function populationText(
   return ids.map((id) => facetLabel(values, id)).join(", ");
 }
 
+/**
+ * Whether the study has a citation in this format. A format gives null when the study lacks what it needs (the
+ * summary, for MD+), and that format's button is then disabled.
+ */
+function hasCitation(format: CitationFormatter): boolean {
+  return format(props.study) !== null;
+}
+
 /** Copies the study's citation in one format and reports the outcome. */
-async function copy(
-  name: string,
-  format: (study: Study) => Citation | null,
-): Promise<void> {
+async function copy(name: string, format: CitationFormatter): Promise<void> {
   const citation = format(props.study);
   // The button is disabled when there is nothing to copy; this only answers a click that got through anyway
   if (citation === null) {
@@ -159,10 +168,8 @@ async function copy(
           type="button"
           class="btn btnSecondary btnSm"
           :aria-label="`${citation.label}, copy ${citation.name} citation`"
-          :disabled="citation.format(study) === null"
-          :title="
-            citation.format(study) === null ? 'No summary yet' : undefined
-          "
+          :disabled="!hasCitation(citation.format)"
+          :title="hasCitation(citation.format) ? undefined : 'No summary yet'"
           @click="copy(citation.name, citation.format)"
         >
           {{ citation.label }}

@@ -59,6 +59,7 @@ const sexes = listFilter("sexes");
 
 const isFiltered = computed(() => hasActiveFilters(filters.value));
 
+/** Empties every filter, the search text included, so the list shows every study again. */
 function clearFilters(): void {
   filters.value = emptyFilters();
 }
