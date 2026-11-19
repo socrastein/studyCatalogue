@@ -1,8 +1,8 @@
 /**
  * The study search: what a study's search text holds, and whether it holds every word typed. This is the rule of the
- * website's Study Catalog (shared/studyCatalog/studySearch.ts), so both find the same studies: every typed word must
- * appear somewhere in the study's title, authors, journal, summary or topic names. The abstract and the year are not
- * searched. Case and accents do not matter ("Cote" finds "Côté"). filterStudies.ts uses it for the browse page.
+ * website's Study Catalog (shared/studyCatalog/studySearch.ts), widened for this private catalogue, which keeps its
+ * abstracts: every typed word must appear somewhere in the study's title, authors, journal, year, abstract, summary,
+ * topic names or topic aliases. Case and accents do not matter ("Cote" finds "Côté"). filterStudies.ts uses it.
  */
 import { fullName } from "./citations/authorNames";
 import type { Study } from "./study";
@@ -10,24 +10,25 @@ import type { Tag } from "./tags";
 import { foldForMatching } from "./textMatching";
 
 /**
- * Everything a search looks in for one study, folded for matching: its title, authors, journal, summary text and the
- * names of its topics.
+ * Everything a search looks in for one study, folded for matching: its title, authors, journal, year, abstract, summary
+ * text, and the names and aliases of its topics.
  *
  * @param study The study to search.
- * @param tags Every tag in the catalogue, to find the names of the study's topics. Topic aliases are not searched.
+ * @param tags Every tag in the catalogue, to find the names and aliases of the study's topics.
  * @returns One text. Its fields are joined by line breaks, which no typed word contains, so a word cannot match
  *   across two fields.
  */
 export function searchTextOf(study: Study, tags: readonly Tag[]): string {
-  const topicNames = tags
-    .filter((tag) => study.tagIds.includes(tag.id))
-    .map((tag) => tag.name);
+  const topics = tags.filter((tag) => study.tagIds.includes(tag.id));
+  const topicNames = topics.flatMap((tag) => [tag.name, ...tag.aliases]);
   // A study has no summary until one is drafted: its text is then empty, and the study is found by its other fields
   const summaryText = study.summary?.text ?? "";
   const parts = [
     study.title,
     ...study.authors.map(fullName),
     study.journal,
+    String(study.year),
+    study.abstract,
     summaryText,
     ...topicNames,
   ];

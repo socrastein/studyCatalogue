@@ -86,7 +86,7 @@ describe("searchTextOf", () => {
     expect(isFound(study, "timing little")).toBe(true);
   });
 
-  it("holds the names of the study's topics, but not the topics' aliases", () => {
+  it("holds the names and the aliases of the study's topics", () => {
     const hypertrophy = TAGS.find(
       (tag) => tag.id === "exercise-science/hypertrophy",
     );
@@ -98,15 +98,15 @@ describe("searchTextOf", () => {
     const withAlias: Tag = { ...hypertrophy, aliases: ["muscle growth"] };
     expect(
       matchesSearch(searchTextOf(study, [withAlias]), "muscle growth"),
-    ).toBe(false);
+    ).toBe(true);
   });
 
-  it("does not hold the abstract or the year", () => {
+  it("holds the abstract and the year", () => {
     const study = studyWith({
       abstract: "A review of zebrafish fins.",
       year: 2017,
     });
-    expect(isFound(study, "zebrafish")).toBe(false);
-    expect(isFound(study, "2017")).toBe(false);
+    expect(isFound(study, "zebrafish")).toBe(true);
+    expect(isFound(study, "2017")).toBe(true);
   });
 });
