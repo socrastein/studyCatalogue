@@ -8,26 +8,27 @@ export type NavLink = { name: string; path: string };
 
 /**
  * The main navigation's links, in order: the header shows them in a row on wider screens, and the phone menu
- * (`components/PhoneMenu.vue`) lists them in its panel. Each `name` matches the heading of the page it opens, apart
- * from the review link, which adds a count (see `navLinks`).
+ * (`components/PhoneMenu.vue`) lists them in its panel. Each `name` is a short form of its page's heading (the Add
+ * link opens "Add a Study", the Review link "Review Summaries"), kept short so the row fits; the review link also adds
+ * a count (see `navLinks`).
  */
 export const NAV_LINKS: readonly NavLink[] = [
   { name: "Studies", path: "/" },
-  { name: "Add a Study", path: "/studies/new" },
+  { name: "Add", path: "/studies/new" },
   { name: "Tags", path: "/tags" },
   { name: "Settings", path: "/settings" },
 ];
 
 /**
- * The links to show now: the main ones, with "Review Summaries" before Settings while drafts wait for review, and its
- * count after the name so the number is there before the page is opened. With none waiting there is no such link.
+ * The links to show now: the main ones, with "Review" before Settings while drafts wait for review, and its count
+ * after the name so the number is there before the page is opened. With none waiting there is no such link.
  *
  * @param waitingCount How many studies have a draft summary awaiting review.
  */
 export function navLinks(waitingCount: number): readonly NavLink[] {
   if (waitingCount === 0) return NAV_LINKS;
   const reviewLink = {
-    name: `Review Summaries (${waitingCount})`,
+    name: `Review (${waitingCount})`,
     path: "/review",
   };
   // Settings is the last main link, so the review link goes in just before it

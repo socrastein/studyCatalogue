@@ -10,7 +10,7 @@ import { openWithSummaries, studyDetails } from "./seedCatalogue";
 
 const PAGES = [
   { link: "Studies", path: "/", heading: "Studies" },
-  { link: "Add a Study", path: "/studies/new", heading: "Add a Study" },
+  { link: "Add", path: "/studies/new", heading: "Add a Study" },
   { link: "Tags", path: "/tags", heading: "Tags" },
   { link: "Settings", path: "/settings", heading: "Settings" },
 ];

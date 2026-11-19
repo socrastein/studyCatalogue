@@ -181,9 +181,7 @@ test.describe("on the Edit Study page", () => {
   }) => {
     await openWithThreeStudies(page);
     const nav = page.getByRole("navigation", { name: "Main" });
-    await expect(
-      nav.getByRole("link", { name: "Review Summaries (1)" }),
-    ).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Review (1)" })).toBeVisible();
     await openEditPage(page, "Study with approved summary");
     const section = summarySection(page);
     await section.getByRole("button", { name: "Send Back to Review" }).click();
@@ -193,9 +191,7 @@ test.describe("on the Edit Study page", () => {
     await expect(
       section.getByRole("button", { name: "Send Back to Review" }),
     ).toHaveCount(0);
-    await expect(
-      nav.getByRole("link", { name: "Review Summaries (2)" }),
-    ).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Review (2)" })).toBeVisible();
   });
 
   test("removing it asks first, and Cancel keeps it", async ({ page }) => {

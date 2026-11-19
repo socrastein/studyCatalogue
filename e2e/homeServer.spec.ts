@@ -30,7 +30,7 @@ async function openSecondDevice(
 async function addStudy(page: Page, title: string): Promise<void> {
   await page
     .getByRole("navigation", { name: "Main" })
-    .getByRole("link", { name: "Add a Study" })
+    .getByRole("link", { name: "Add", exact: true })
     .click();
   await fillInStudy(page, title);
   // A study with another title but the same DOI is taken for the same study by a merge, so each gets its own DOI
@@ -315,11 +315,11 @@ test("a home server that stops answering is warned about, and Try Again checks i
   await expect(warning).toHaveCount(0);
 });
 
-/** Opens the Add a Study form through the nav link (no page load, so the page keeps the copy it has) and chooses a tag. */
+/** Opens the Add a Study form through the nav link "Add" (no page load, so the page keeps the copy it has) and chooses a tag. */
 async function openFormWithTag(page: Page, tagName: string): Promise<void> {
   await page
     .getByRole("navigation", { name: "Main" })
-    .getByRole("link", { name: "Add a Study" })
+    .getByRole("link", { name: "Add", exact: true })
     .click();
   const tags = page.getByRole("combobox", { name: "Add to Tags" });
   await tags.fill(tagName);
@@ -380,7 +380,7 @@ test("two devices that made the same tag leave the open form with one chip, not 
   // The PC makes "Shared name" first and it reaches the server
   await page
     .getByRole("navigation", { name: "Main" })
-    .getByRole("link", { name: "Add a Study" })
+    .getByRole("link", { name: "Add", exact: true })
     .click();
   await textField(page, "New Tag").fill("Shared name");
   await page.getByRole("button", { name: "Add New Tag" }).click();
@@ -394,7 +394,7 @@ test("two devices that made the same tag leave the open form with one chip, not 
   // laptop's tag instead of the PC's
   await laptop
     .getByRole("navigation", { name: "Main" })
-    .getByRole("link", { name: "Add a Study" })
+    .getByRole("link", { name: "Add", exact: true })
     .click();
   await textField(laptop, "New Tag").fill("Shared name");
   await laptop.getByRole("button", { name: "Add New Tag" }).click();

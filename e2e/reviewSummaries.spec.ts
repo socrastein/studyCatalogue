@@ -162,21 +162,21 @@ test("the nav link counts the drafts, and is there only while drafts wait", asyn
   await page.goto("/");
   const navigation = page.getByRole("navigation", { name: "Main" });
   await expect(
-    navigation.getByRole("link", { name: "Review Summaries (2)" }),
+    navigation.getByRole("link", { name: "Review (2)" }),
   ).toBeVisible();
 
   // Nothing to review: no link
   await openWithSummaries(page, [{ details: studyDetails({}) }]);
-  await expect(
-    navigation.getByRole("link", { name: /Review Summaries/ }),
-  ).toHaveCount(0);
+  await expect(navigation.getByRole("link", { name: /^Review/ })).toHaveCount(
+    0,
+  );
 });
 
 test("on a phone the link is in the menu", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openWithTwoDrafts(page);
   await page.getByRole("button", { name: "Menu" }).click();
-  await page.getByRole("link", { name: "Review Summaries (2)" }).click();
+  await page.getByRole("link", { name: "Review (2)" }).click();
   await expect(page).toHaveURL("/review");
 });
 
@@ -287,7 +287,7 @@ test("approving the last draft says none are left, and the link goes", async ({
   await expect(
     page
       .getByRole("navigation", { name: "Main" })
-      .getByRole("link", { name: /Review Summaries/ }),
+      .getByRole("link", { name: /^Review/ }),
   ).toHaveCount(0);
 });
 

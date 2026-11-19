@@ -10,13 +10,13 @@ describe("navLinks", () => {
     expect(navLinks(0).map((link) => link.path)).not.toContain("/review");
   });
 
-  it("adds Review Summaries with the count before Settings while drafts wait", () => {
+  it("adds Review with the count before Settings while drafts wait", () => {
     const links = navLinks(3);
     expect(links.map((link) => link.name)).toEqual([
       "Studies",
-      "Add a Study",
+      "Add",
       "Tags",
-      "Review Summaries (3)",
+      "Review (3)",
       "Settings",
     ]);
     expect(links.find((link) => link.path === "/review")).toBeDefined();
