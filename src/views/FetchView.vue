@@ -53,7 +53,7 @@ function toFetchText(count: number): string {
 
     <section
       v-else-if="state.kind === 'unavailable'"
-      class="card fetchCard"
+      class="raisedPanel fetchSection"
       aria-label="The Papers Folder Could Not Be Checked"
     >
       <h2 class="sectionTitle">The Papers Folder Could Not Be Checked</h2>
@@ -67,7 +67,7 @@ function toFetchText(count: number): string {
 
       <section
         v-if="state.matches.studiesWithoutPaper.length > 0"
-        class="card fetchCard"
+        class="raisedPanel fetchSection"
         aria-label="Studies to Fetch"
       >
         <h2 class="sectionTitle">Studies to Fetch</h2>
@@ -75,6 +75,7 @@ function toFetchText(count: number): string {
           <li
             v-for="study in state.matches.studiesWithoutPaper"
             :key="study.id"
+            class="card fetchItem"
           >
             <p class="listItemTitle">{{ study.title }}</p>
             <p class="textMuted">{{ shortAuthorMention(study.authors) }}</p>
@@ -88,7 +89,7 @@ function toFetchText(count: number): string {
 
       <section
         v-if="state.matches.unmatchedFiles.length > 0"
-        class="card fetchCard"
+        class="raisedPanel fetchSection"
         aria-label="Files Not Matched"
       >
         <h2 class="sectionTitle">Files Not Matched</h2>
@@ -97,7 +98,11 @@ function toFetchText(count: number): string {
           fetched.
         </p>
         <ol class="plainList">
-          <li v-for="file in state.matches.unmatchedFiles" :key="file.fileName">
+          <li
+            v-for="file in state.matches.unmatchedFiles"
+            :key="file.fileName"
+            class="card fetchItem"
+          >
             <p class="listItemTitle">{{ file.fileName }}</p>
             <p class="textMuted">{{ unmatchedFileReason(file) }}</p>
           </li>
@@ -121,11 +126,36 @@ function toFetchText(count: number): string {
   gap: var(--space2);
 }
 
-/* The library's card has no padding of its own; the text needs the same inset as the other pages' cards */
-.fetchCard {
+/*
+ * Each section is a raised panel (the mid surface) holding one card per study or file: the library's layering, never a
+ * card on a card. Neither class has padding of its own, so both get the inset here, the panel's wider than its cards'.
+ */
+.fetchSection {
   display: flex;
   flex-direction: column;
   gap: var(--space2);
-  padding: var(--space2) var(--space3) var(--space3);
+  padding: var(--space2);
+}
+
+.fetchItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spaceHalf);
+  padding: var(--space2);
+}
+
+/* Wider insets once the screen has room: on a phone they would squeeze the text into a narrow column */
+@media (min-width: 40rem) {
+  .fetchSection {
+    padding: var(--space3);
+  }
+
+  .fetchItem {
+    padding: var(--space2) var(--space3);
+  }
+}
+
+.fetchItem p {
+  margin: 0;
 }
 </style>
