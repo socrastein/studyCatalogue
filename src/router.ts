@@ -10,6 +10,7 @@ import TagsView from "./views/TagsView.vue";
 import EditTagView from "./views/EditTagView.vue";
 import ReviewSummariesView from "./views/ReviewSummariesView.vue";
 import SettingsView from "./views/SettingsView.vue";
+import FetchView from "./views/FetchView.vue";
 
 /** Shown in every tab title after the page's own title, e.g. "Tags - Study Catalogue". */
 export const APP_NAME = "Study Catalogue";
@@ -37,6 +38,7 @@ export const router = createRouter({
       meta: { title: "Edit Study" },
     },
     { path: "/tags", component: TagsView, meta: { title: "Tags" } },
+    { path: "/fetch", component: FetchView, meta: { title: "Fetch" } },
     {
       path: "/tags/:id/edit",
       name: "editTag",

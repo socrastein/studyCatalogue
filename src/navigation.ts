@@ -16,6 +16,7 @@ export const NAV_LINKS: readonly NavLink[] = [
   { name: "Studies", path: "/" },
   { name: "Add", path: "/studies/new" },
   { name: "Tags", path: "/tags" },
+  { name: "Fetch", path: "/fetch" },
   { name: "Settings", path: "/settings" },
 ];
 

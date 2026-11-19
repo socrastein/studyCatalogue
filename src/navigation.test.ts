@@ -16,6 +16,7 @@ describe("navLinks", () => {
       "Studies",
       "Add",
       "Tags",
+      "Fetch",
       "Review (3)",
       "Settings",
     ]);

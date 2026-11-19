@@ -172,3 +172,18 @@ function firstAuthorName(study: Study): string {
 function compareText(first: string, second: string): number {
   return comparableText(first).localeCompare(comparableText(second));
 }
+
+/**
+ * Why a file is listed as not matched, in a sentence for the Fetch page. An ambiguous file names the studies it could
+ * be, by title, so Matt can see which one to correct.
+ *
+ * @param file A file the matching could not place.
+ */
+export function unmatchedFileReason(file: UnmatchedFile): string {
+  if (file.kind === "notPaperName")
+    return "The name is not in the form (Surname, Year) Short Title.pdf.";
+  if (file.kind === "noStudy")
+    return "No study has this first author and year.";
+  const titles = file.candidates.map((study) => study.title).join("; ");
+  return `It could be any of: ${titles}.`;
+}

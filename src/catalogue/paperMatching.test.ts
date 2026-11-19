@@ -3,7 +3,7 @@
  * between studies that share both, and a file that cannot be placed is reported with the reason, never dropped.
  */
 import { describe, expect, it } from "vitest";
-import { matchPapers } from "./paperMatching";
+import { matchPapers, unmatchedFileReason } from "./paperMatching";
 import { createStudy, type Author, type Study } from "./study";
 import { exampleStudyDetails } from "./testFixtures";
 
@@ -193,5 +193,25 @@ describe("matching papers to studies", () => {
       studiesWithoutPaper: [first],
       unmatchedFiles: [],
     });
+  });
+});
+
+describe("the reason a file is not matched", () => {
+  it("says what is wrong with the name, the author and year, or the candidates", () => {
+    const first = studyWithSurname("Watson", 2017, "LIFTMOR RCT");
+    const second = studyWithSurname("Watson", 2017, "Strength Gains");
+    expect(
+      unmatchedFileReason({ kind: "notPaperName", fileName: "scan.pdf" }),
+    ).toBe("The name is not in the form (Surname, Year) Short Title.pdf.");
+    expect(
+      unmatchedFileReason({ kind: "noStudy", fileName: "(Lee, 2019) X.pdf" }),
+    ).toBe("No study has this first author and year.");
+    expect(
+      unmatchedFileReason({
+        kind: "ambiguous",
+        fileName: "(Watson, 2017) Training.pdf",
+        candidates: [first, second],
+      }),
+    ).toBe("It could be any of: LIFTMOR RCT; Strength Gains.");
   });
 });

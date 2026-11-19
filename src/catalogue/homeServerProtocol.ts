@@ -14,6 +14,9 @@ import { readRecord, ShapeError } from "./readers";
 /** The address, on the app's own origin, where the home server keeps the catalogue. */
 export const CATALOGUE_API_PATH = "/api/catalogue";
 
+/** The address, on the app's own origin, where the home server lists the PDF names in the papers folder. */
+export const PAPERS_API_PATH = "/api/papers";
+
 /** The server's copy: the catalogue and the number of the save that made it (0 before the first save). */
 export type NumberedCatalogue = { revision: number; catalogue: Catalogue };
 

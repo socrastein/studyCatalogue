@@ -9,6 +9,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import {
   CATALOGUE_API_PATH,
+  PAPERS_API_PATH,
   numberedCatalogueText,
   readSaveRequest,
   type SaveRequest,
@@ -28,9 +29,6 @@ export type RequestHandlerParts = {
   papersDirectory: string;
   log: (line: string) => void;
 };
-
-/** The address of the papers list: the PDF names in Matt's papers folder (papers.ts). */
-const PAPERS_API_PATH = "/api/papers";
 
 /**
  * The handler to give to `http.createServer`.

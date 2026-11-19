@@ -1,0 +1,121 @@
+<!--
+  Fetch: the studies with no PDF in Matt's papers folder, so he knows what to fetch next, with the PDFs that could not be
+  matched to a study listed below them. The home server does the scan of the folder (server/papers.ts); matching is
+  paperMatching.ts. Outside the home server (a dev server) the page says so and lists nothing: it cannot tell which
+  papers are on file, and an empty list would say they are not.
+-->
+<script setup lang="ts">
+import { computed, onMounted, ref } from "vue";
+import { shortAuthorMention } from "../catalogue/citations/authorNames";
+import { doiUrl } from "../catalogue/doi";
+import {
+  matchPapers,
+  unmatchedFileReason,
+  type PaperMatches,
+} from "../catalogue/paperMatching";
+import { useCatalogue } from "../stores/catalogueStore";
+import { askForPaperFiles } from "../stores/papersClient";
+
+/** What the page shows: still checking the folder, the folder could not be checked, or the matches. */
+type FetchState =
+  | { kind: "checking" }
+  | { kind: "unavailable"; reason: string }
+  | { kind: "ready"; matches: PaperMatches };
+
+const catalogue = useCatalogue();
+const studies = computed(() => catalogue.state.catalogue.studies);
+const state = ref<FetchState>({ kind: "checking" });
+
+onMounted(async () => {
+  const answer = await askForPaperFiles(fetch);
+  state.value =
+    answer.kind === "listed"
+      ? {
+          kind: "ready",
+          matches: matchPapers(studies.value, answer.fileNames),
+        }
+      : { kind: "unavailable", reason: answer.reason };
+});
+
+/** The count line: "172 studies to fetch", "1 study to fetch", or that every study has a PDF. */
+function toFetchText(count: number): string {
+  if (count === 0) return "Every study has a PDF in the papers folder.";
+  return `${count} ${count === 1 ? "study" : "studies"} to fetch`;
+}
+</script>
+
+<template>
+  <h1 tabindex="-1" class="pageTitle h3">Fetch</h1>
+  <div class="fetchPage">
+    <p v-if="state.kind === 'checking'" role="status">
+      Checking the papers folder...
+    </p>
+
+    <section
+      v-else-if="state.kind === 'unavailable'"
+      class="panel"
+      aria-label="The Papers Folder Could Not Be Checked"
+    >
+      <h2 class="sectionTitle">The Papers Folder Could Not Be Checked</h2>
+      <p>{{ state.reason }}</p>
+    </section>
+
+    <template v-else>
+      <p role="status">
+        {{ toFetchText(state.matches.studiesWithoutPaper.length) }}
+      </p>
+
+      <section
+        v-if="state.matches.studiesWithoutPaper.length > 0"
+        class="panel"
+        aria-label="Studies to Fetch"
+      >
+        <h2 class="sectionTitle">Studies to Fetch</h2>
+        <ol class="plainList">
+          <li
+            v-for="study in state.matches.studiesWithoutPaper"
+            :key="study.id"
+          >
+            <p class="listItemTitle">{{ study.title }}</p>
+            <p class="textMuted">{{ shortAuthorMention(study.authors) }}</p>
+            <p v-if="study.doi !== null">
+              <a :href="doiUrl(study.doi)">{{ study.doi }}</a>
+            </p>
+            <p v-else>No DOI</p>
+          </li>
+        </ol>
+      </section>
+
+      <section
+        v-if="state.matches.unmatchedFiles.length > 0"
+        class="panel"
+        aria-label="Files Not Matched"
+      >
+        <h2 class="sectionTitle">Files Not Matched</h2>
+        <p class="textMuted">
+          These PDFs did not match exactly one study, so no study shows them as
+          fetched.
+        </p>
+        <ol class="plainList">
+          <li v-for="file in state.matches.unmatchedFiles" :key="file.fileName">
+            <p class="listItemTitle">{{ file.fileName }}</p>
+            <p class="textMuted">{{ unmatchedFileReason(file) }}</p>
+          </li>
+        </ol>
+      </section>
+    </template>
+  </div>
+</template>
+
+<style scoped>
+.fetchPage {
+  width: min(100%, 60rem);
+  display: grid;
+  gap: var(--space3);
+}
+
+.fetchPage ol {
+  display: grid;
+  gap: var(--space2);
+}
+</style>
