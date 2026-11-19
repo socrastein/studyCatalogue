@@ -92,20 +92,34 @@ function chooseCandidate(
       file: { kind: "noStudy", fileName: parsed.fileName },
     };
   }
-  const scored = candidates.map((study) => ({
-    study,
-    sharedWords: sharedTitleWordCount(parsed.shortTitle, study.title),
-  }));
-  const bestScore = Math.max(...scored.map((entry) => entry.sharedWords));
-  const best = scored.filter((entry) => entry.sharedWords === bestScore);
+  const best = studiesSharingMostTitleWords(parsed.shortTitle, candidates);
   const [onlyBest] = best;
   // A lone candidate is always the best, so only several tied candidates fall through to ambiguous
   if (best.length === 1 && onlyBest !== undefined)
-    return { kind: "matched", study: onlyBest.study };
+    return { kind: "matched", study: onlyBest };
   return {
     kind: "unmatched",
     file: { kind: "ambiguous", fileName: parsed.fileName, candidates },
   };
+}
+
+/**
+ * The candidates whose titles share the most words with the file's short title: all of them when they tie.
+ *
+ * @param shortTitle The title words from the file's name.
+ * @param candidates The studies to compare, in catalogue order.
+ */
+function studiesSharingMostTitleWords(
+  shortTitle: string,
+  candidates: readonly Study[],
+): Study[] {
+  const sharedCounts = candidates.map((study) =>
+    sharedTitleWordCount(shortTitle, study.title),
+  );
+  const bestCount = Math.max(...sharedCounts);
+  return candidates.filter(
+    (_study, index) => sharedCounts[index] === bestCount,
+  );
 }
 
 /**

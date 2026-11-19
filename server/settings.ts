@@ -71,20 +71,27 @@ function readSettingsFrom(
 ): ServerSettings {
   const dataDir = choice("data-dir", DATA_DIR_VARIABLE) ?? DEFAULT_DATA_DIR;
   const distDir = choice("dist-dir", DIST_DIR_VARIABLE) ?? defaultDistDirectory;
-  const papersDir =
-    choice("papers-dir", PAPERS_DIR_VARIABLE) ?? DEFAULT_PAPERS_DIRECTORY;
   return {
     dataDirectory: resolve(dataDir),
     port: readWholeNumber("port", choice("port", PORT_VARIABLE), DEFAULT_PORT),
     host: choice("host", HOST_VARIABLE) ?? DEFAULT_HOST,
     distDirectory: resolve(distDir),
-    bodyLimitBytes: readWholeNumber(
-      "body-limit-bytes",
-      choice("body-limit-bytes", BODY_LIMIT_VARIABLE),
-      DEFAULT_BODY_LIMIT_BYTES,
+    bodyLimitBytes: readBodyLimit(choice),
+    papersDirectory: resolve(
+      choice("papers-dir", PAPERS_DIR_VARIABLE) ?? DEFAULT_PAPERS_DIRECTORY,
     ),
-    papersDirectory: resolve(papersDir),
   };
+}
+
+/** The largest save accepted: the body-limit setting as a whole number, else the default. */
+function readBodyLimit(
+  choice: (flag: string, variable: string) => string | undefined,
+): number {
+  return readWholeNumber(
+    "body-limit-bytes",
+    choice("body-limit-bytes", BODY_LIMIT_VARIABLE),
+    DEFAULT_BODY_LIMIT_BYTES,
+  );
 }
 
 const KNOWN_FLAGS = [

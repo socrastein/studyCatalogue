@@ -42,30 +42,44 @@ export async function askForPaperFiles(
 }
 
 /**
- * The answer a response stands for. Its body is read as text first, so a body cut off half way is a reason, not a throw.
+ * The answer a response stands for: the names, or the reason the response is not the list.
  *
  * @param response The home server's response to the list request.
  */
 async function answerFrom(response: Response): Promise<PaperFilesAnswer> {
-  let text: string;
-  try {
-    text = await response.text();
-  } catch {
+  const body = await readJsonBody(response);
+  if (body === undefined)
     return { kind: "unavailable", reason: NO_HOME_SERVER_REASON };
-  }
-  let body: unknown;
-  try {
-    body = JSON.parse(text);
-  } catch {
-    // Not JSON: a dev server's page, or another site, answering the address
-    return { kind: "unavailable", reason: NO_HOME_SERVER_REASON };
-  }
   if (!response.ok)
     return {
       kind: "unavailable",
       reason: refusalReason(body, response.status),
     };
+  return listAnswer(body);
+}
+
+/**
+ * The response's body as JSON. Undefined when it cannot be read or is not JSON, which is what a dev server's page or
+ * another site looks like at this address.
+ *
+ * @param response The response whose body to read.
+ */
+async function readJsonBody(response: Response): Promise<unknown> {
+  try {
+    return JSON.parse(await response.text());
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * The list answer as the page's answer: the names, or the reason it is not the list.
+ *
+ * @param body The parsed answer to a successful request.
+ */
+function listAnswer(body: unknown): PaperFilesAnswer {
   const fileNames = fileNamesFrom(body);
+  // Not the list: refused as a whole, so the page never lists nothing for an answer it could not read
   if (fileNames === null) {
     return {
       kind: "unavailable",
@@ -82,13 +96,17 @@ async function answerFrom(response: Response): Promise<PaperFilesAnswer> {
  * @param status The HTTP status of the refusal.
  */
 function refusalReason(body: unknown, status: number): string {
-  const message =
-    body !== null && typeof body === "object" && "error" in body
-      ? body.error
-      : undefined;
-  return typeof message === "string"
-    ? message
-    : `The home server answered with status ${status}.`;
+  return errorTextOf(body) ?? `The home server answered with status ${status}.`;
+}
+
+/**
+ * The `error` text of a refusal's body, or undefined when the body has none.
+ *
+ * @param body The parsed error body.
+ */
+function errorTextOf(body: unknown): string | undefined {
+  if (!isObject(body) || !("error" in body)) return undefined;
+  return typeof body.error === "string" ? body.error : undefined;
 }
 
 /**
@@ -98,8 +116,7 @@ function refusalReason(body: unknown, status: number): string {
  * @returns The names; null when the answer is not in that form.
  */
 function fileNamesFrom(body: unknown): string[] | null {
-  if (body === null || typeof body !== "object" || !("files" in body))
-    return null;
+  if (!isObject(body) || !("files" in body)) return null;
   if (!Array.isArray(body.files)) return null;
   const fileNames: string[] = [];
   for (const name of body.files) {
@@ -108,4 +125,13 @@ function fileNamesFrom(body: unknown): string[] | null {
     fileNames.push(name);
   }
   return fileNames;
+}
+
+/**
+ * Whether a parsed JSON value is an object (an array or a plain object), so its fields can be looked at.
+ *
+ * @param value Any parsed JSON value.
+ */
+function isObject(value: unknown): value is object {
+  return value !== null && typeof value === "object";
 }
