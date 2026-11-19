@@ -53,7 +53,7 @@ function toFetchText(count: number): string {
 
     <section
       v-else-if="state.kind === 'unavailable'"
-      class="panel"
+      class="card fetchCard"
       aria-label="The Papers Folder Could Not Be Checked"
     >
       <h2 class="sectionTitle">The Papers Folder Could Not Be Checked</h2>
@@ -67,7 +67,7 @@ function toFetchText(count: number): string {
 
       <section
         v-if="state.matches.studiesWithoutPaper.length > 0"
-        class="panel"
+        class="card fetchCard"
         aria-label="Studies to Fetch"
       >
         <h2 class="sectionTitle">Studies to Fetch</h2>
@@ -88,7 +88,7 @@ function toFetchText(count: number): string {
 
       <section
         v-if="state.matches.unmatchedFiles.length > 0"
-        class="panel"
+        class="card fetchCard"
         aria-label="Files Not Matched"
       >
         <h2 class="sectionTitle">Files Not Matched</h2>
@@ -112,10 +112,20 @@ function toFetchText(count: number): string {
   width: min(100%, 60rem);
   display: grid;
   gap: var(--space3);
+  /* A DOI or a long file name has no spaces to wrap at, so it may break anywhere rather than push the page sideways */
+  overflow-wrap: anywhere;
 }
 
 .fetchPage ol {
   display: grid;
   gap: var(--space2);
+}
+
+/* The library's card has no padding of its own; the text needs the same inset as the other pages' cards */
+.fetchCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space2);
+  padding: var(--space2) var(--space3) var(--space3);
 }
 </style>
