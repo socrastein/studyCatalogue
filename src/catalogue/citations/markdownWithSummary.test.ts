@@ -5,7 +5,7 @@ import { exampleStudy } from "./citationFixtures";
 import type { Study } from "../study";
 
 describe("formatMarkdownWithSummary", () => {
-  it("produces a plain-text Markdown link, an empty line, and the summary in quotes", () => {
+  it("produces a plain-text Markdown link, an empty line, then Summary: and the summary in italics, never in quotes", () => {
     const study: Study = {
       ...exampleStudy(),
       summary: {
@@ -19,7 +19,7 @@ describe("formatMarkdownWithSummary", () => {
     const result = formatMarkdownWithSummary(study);
     expect(result).not.toBeNull();
 
-    const expectedPlain = `[Schoenfeld et al. (2017)](https://doi.org/10.1080/02640414.2016.1210197)\n\n"Volume drives hypertrophy."`;
+    const expectedPlain = `[Schoenfeld et al. (2017)](https://doi.org/10.1080/02640414.2016.1210197)\n\nSummary: *Volume drives hypertrophy.*`;
     expect(result?.plainText).toBe(expectedPlain);
   });
 
@@ -37,11 +37,11 @@ describe("formatMarkdownWithSummary", () => {
     const result = formatMarkdownWithSummary(study);
     expect(result).not.toBeNull();
 
-    const expectedPlain = `[Schoenfeld et al. (2017)](https://doi.org/10.1080/02640414.2016.1210197)\n\n"Volume drives hypertrophy."`;
+    const expectedPlain = `[Schoenfeld et al. (2017)](https://doi.org/10.1080/02640414.2016.1210197)\n\nSummary: *Volume drives hypertrophy.*`;
     expect(result?.plainText).toBe(expectedPlain);
   });
 
-  it("produces an HTML version with escaped quotes, <, and &", () => {
+  it("produces an HTML version with the summary in <em>, its < and & escaped", () => {
     const study: Study = {
       ...exampleStudy(),
       summary: {
@@ -55,7 +55,7 @@ describe("formatMarkdownWithSummary", () => {
     const result = formatMarkdownWithSummary(study);
     expect(result).not.toBeNull();
 
-    const escaped = "&quot;&lt;Volume &amp; Growth&gt;&quot;";
+    const escaped = "Summary: <em>&lt;Volume &amp; Growth&gt;</em>";
     const expectedHtml = `<a href="https://doi.org/10.1080/02640414.2016.1210197">Schoenfeld et al. (2017)</a><br><br>${escaped}`;
     expect(result?.html).toBe(expectedHtml);
   });

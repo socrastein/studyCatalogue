@@ -275,7 +275,7 @@ test.describe("on the Edit Study page", () => {
   });
 });
 
-test.describe("the MD+ citation (the markdown link with the summary in quotes)", () => {
+test.describe("the MD+ citation (the markdown link with the summary below it)", () => {
   test("copies for a study with a draft summary, as for an approved one", async ({
     page,
   }) => {
