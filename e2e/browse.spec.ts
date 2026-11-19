@@ -45,6 +45,11 @@ function shownTitles(page: Page) {
   return page.getByRole("article").getByRole("heading", { level: 2 });
 }
 
+/** Opens More Options, the fold-out that holds the topics, the facets and the sort. */
+async function openMoreOptions(page: Page): Promise<void> {
+  await page.getByRole("button", { name: /^More Options/ }).click();
+}
+
 /** Adds a topic filter by typing in the topic drop-down and pressing Enter. */
 async function filterByTopic(page: Page, text: string): Promise<void> {
   const topics = page.getByRole("combobox", { name: "Add to Topics" });
@@ -58,7 +63,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("lists every study, newest first, with a count", async ({ page }) => {
-  await expect(page.getByText("4 studies", { exact: true })).toBeVisible();
+  await expect(page.getByText("Showing 4 of 4 studies")).toBeVisible();
   await expect(shownTitles(page)).toHaveText([
     "Resistance training for knee osteoarthritis",
     "Volume and hypertrophy in trained men",
@@ -70,6 +75,7 @@ test("lists every study, newest first, with a count", async ({ page }) => {
 test("the Topics drop-down lists every topic without typing", async ({
   page,
 }) => {
+  await openMoreOptions(page);
   await page.getByRole("combobox", { name: "Add to Topics" }).click();
   await expect(page.getByRole("option").first()).toHaveText("Biology");
   await expect(
@@ -80,6 +86,7 @@ test("the Topics drop-down lists every topic without typing", async ({
 test("finds hypertrophy meta-analyses in trained lifters, and puts the search in the URL", async ({
   page,
 }) => {
+  await openMoreOptions(page);
   await filterByTopic(page, "Hypertrophy");
   await page
     .getByRole("group", { name: "Training Status" })
@@ -93,7 +100,7 @@ test("finds hypertrophy meta-analyses in trained lifters, and puts the search in
   await expect(shownTitles(page)).toHaveText([
     "Volume and hypertrophy in trained men",
   ]);
-  await expect(page.getByText("1 of 4 studies match")).toBeVisible();
+  await expect(page.getByText("Showing 1 of 4 studies")).toBeVisible();
   await expect(page).toHaveURL(/tag=exercise-science(%2F|\/)hypertrophy/);
 });
 
@@ -111,6 +118,7 @@ test("filters in the URL survive a reload", async ({ page }) => {
 test("finds pain studies in older adults, and notes the study that does not report age", async ({
   page,
 }) => {
+  await openMoreOptions(page);
   await page.getByRole("searchbox", { name: "Search" }).fill("pain");
   await page
     .getByRole("group", { name: "Age Group" })
@@ -137,7 +145,7 @@ test("a topic on a card links to the list filtered by it", async ({ page }) => {
 test("shows a way out when nothing matches", async ({ page }) => {
   await page.getByRole("searchbox", { name: "Search" }).fill("zebrafish");
   await expect(page.getByText("No studies match these filters.")).toBeVisible();
-  await page.getByRole("button", { name: "Clear All Filters" }).first().click();
+  await page.getByRole("button", { name: "Clear Filters" }).click();
   await expect(shownTitles(page)).toHaveCount(4);
 });
 
@@ -180,6 +188,7 @@ test("the browse page has no accessibility violations, with and without filters"
   page,
 }) => {
   await expectNoAxeViolations(page);
+  await openMoreOptions(page);
   await page.getByRole("searchbox", { name: "Search" }).fill("pain");
   await page
     .getByRole("group", { name: "Age Group" })
@@ -207,12 +216,41 @@ test("an abstract unfolds and folds again from its button", async ({
   await expect(abstractText).toBeHidden();
 });
 
-test("on a phone the filters start folded away", async ({ page }) => {
+test("on a phone the search is in view and More Options starts folded away", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 800 });
   await page.reload();
-  await expect(page.getByRole("searchbox", { name: "Search" })).toBeHidden();
-  await page.getByText("Filters").click();
   await expect(page.getByRole("searchbox", { name: "Search" })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Age Group" })).toBeHidden();
+  await openMoreOptions(page);
+  await expect(page.getByRole("group", { name: "Age Group" })).toBeVisible();
+});
+
+test("More Options says how many of its options are set, and Clear Filters appears only while something is", async ({
+  page,
+}) => {
+  const clear = page.getByRole("button", { name: "Clear Filters" });
+  const moreOptions = page.getByRole("button", { name: /^More Options/ });
+  await expect(clear).toHaveCount(0);
+  await expect(moreOptions).toHaveText("More Options");
+
+  await page.getByRole("searchbox", { name: "Search" }).fill("pain");
+  await expect(clear).toBeVisible();
+  await expect(moreOptions).toHaveText("More Options");
+
+  await openMoreOptions(page);
+  await page
+    .getByRole("group", { name: "Age Group" })
+    .getByRole("checkbox", { name: "Older adults (65+)" })
+    .check();
+  await filterByTopic(page, "Hypertrophy");
+  await expect(moreOptions).toHaveText("More Options (2 active)");
+
+  await clear.click();
+  await expect(clear).toHaveCount(0);
+  await expect(shownTitles(page)).toHaveCount(4);
+  await expect(moreOptions).toHaveText("More Options");
 });
 
 /** A study known by its first author and year, e.g. "Krieger 2010", for checking the sort orders. */
@@ -238,6 +276,7 @@ test("the list can be sorted, and the order stays in the URL alongside the filte
   const newestFirst = ["Androulakis 2021", "Schoenfeld 2017", "Krieger 2010"];
   await expect(titles).toHaveText(newestFirst);
 
+  await openMoreOptions(page);
   await chooseDropdownOption(page, "Sort By", "First author, A to Z");
   await expect(page).toHaveURL("/?sort=author");
   const byAuthor = ["Androulakis 2021", "Krieger 2010", "Schoenfeld 2017"];
