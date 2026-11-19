@@ -94,8 +94,8 @@ describe("filterStudies", () => {
     expect(titlesMatching({ subjects: ["animals"] })).toEqual(["Rat muscle"]);
   });
 
-  it("searches every word anywhere: title, abstract, authors and tag names, ignoring case and accents", () => {
-    expect(titlesMatching({ query: "older RESUME" })).toEqual([
+  it("searches the title, authors and topic names, ignoring case and accents", () => {
+    expect(titlesMatching({ query: "older ADULTS" })).toEqual([
       "Knee pain in older adults",
     ]);
     expect(titlesMatching({ query: "protein schoenfeld" })).toEqual([
@@ -106,16 +106,9 @@ describe("filterStudies", () => {
     ]);
   });
 
-  it("searches the publication year, so an author and year narrow to one paper", () => {
-    const papers = [
-      study("Spine loading", { year: 2021 }),
-      study("Spine posture", { year: 2018 }),
-    ];
-    const filters = { ...emptyFilters(), query: "spine 2021" };
-    const titles = filterStudies(papers, TAGS, filters).matches.map(
-      (match) => match.title,
-    );
-    expect(titles).toEqual(["Spine loading"]);
+  it("does not search the abstract or the year", () => {
+    expect(titlesMatching({ query: "resume" })).toEqual([]);
+    expect(titlesMatching({ query: "2017" })).toEqual([]);
   });
 
   it("leaves out studies that do not report a filtered population facet, and counts them", () => {

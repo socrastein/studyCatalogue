@@ -108,10 +108,10 @@ test("filters in the URL survive a reload", async ({ page }) => {
   ]);
 });
 
-test("finds joint pain in older adults, and notes the study that does not report age", async ({
+test("finds pain studies in older adults, and notes the study that does not report age", async ({
   page,
 }) => {
-  await page.getByRole("searchbox", { name: "Search" }).fill("joint pain");
+  await page.getByRole("searchbox", { name: "Search" }).fill("pain");
   await page
     .getByRole("group", { name: "Age Group" })
     .getByRole("checkbox", { name: "Older adults (65+)" })
@@ -180,7 +180,7 @@ test("the browse page has no accessibility violations, with and without filters"
   page,
 }) => {
   await expectNoAxeViolations(page);
-  await page.getByRole("searchbox", { name: "Search" }).fill("joint");
+  await page.getByRole("searchbox", { name: "Search" }).fill("pain");
   await page
     .getByRole("group", { name: "Age Group" })
     .getByRole("checkbox", { name: "Older adults (65+)" })

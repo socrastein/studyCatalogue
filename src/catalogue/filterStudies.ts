@@ -6,7 +6,6 @@
  * Population facets (age group, training status, sex) can be unreported. A study that does not report a facet never
  * matches a filter on it, and the result counts how many such studies were left out, so they are not silently lost.
  */
-import { fullName } from "./citations/authorNames";
 import type {
   AgeGroupId,
   SexId,
@@ -16,7 +15,7 @@ import type {
 } from "./facets";
 import type { Study } from "./study";
 import { descendantIds, type Tag } from "./tags";
-import { foldForMatching } from "./textMatching";
+import { matchesSearch, searchTextOf } from "./studySearch";
 
 export type StudyFilters = {
   /** Words to search for; every word must appear somewhere in the study. Empty searches nothing. */
@@ -101,7 +100,6 @@ function studyMatcher(
   tags: readonly Tag[],
   filters: StudyFilters,
 ): (study: Study) => boolean {
-  const queryWords = searchWords(filters.query);
   const acceptedTagSets = filters.tagIds.map((tagId) =>
     descendantIds(tagId, tags),
   );
@@ -112,16 +110,9 @@ function studyMatcher(
     return (
       matchesDesignAndSubjects(study, filters) &&
       hasEveryTag &&
-      containsEveryWord(study, tags, queryWords)
+      matchesSearch(searchTextOf(study, tags), filters.query)
     );
   };
-}
-
-/** The separate words of a search, folded for matching; none for a blank search. */
-function searchWords(query: string): string[] {
-  return foldForMatching(query)
-    .split(/\s+/)
-    .filter((word) => word !== "");
 }
 
 /** Whether the study's design and subjects are among those chosen (or nothing is chosen). */
@@ -135,17 +126,6 @@ function matchesDesignAndSubjects(
     study.subjects,
   );
   return hasChosenDesign && hasChosenSubjects;
-}
-
-/** Whether every search word appears somewhere in the study; true when there are no words. */
-function containsEveryWord(
-  study: Study,
-  tags: readonly Tag[],
-  words: readonly string[],
-): boolean {
-  if (words.length === 0) return true;
-  const text = searchableText(study, tags);
-  return words.every((word) => text.includes(word));
 }
 
 /** Whether the study passes every population facet filter: each filtered facet shares a value with the study. */
@@ -183,21 +163,4 @@ function isChosenOrUnfiltered<Id extends string>(
 /** Whether the study has at least one of the accepted tags. */
 function hasTagIn(study: Study, accepted: Set<string>): boolean {
   return study.tagIds.some((tagId) => accepted.has(tagId));
-}
-
-/**
- * Everything a search looks in, folded for matching: title, authors, year, journal, abstract, and the names and
- * aliases of the study's tags. The year is searched as text, so "howe 2021" finds Howe's 2021 paper.
- */
-function searchableText(study: Study, tags: readonly Tag[]): string {
-  const studyTags = tags.filter((tag) => study.tagIds.includes(tag.id));
-  const parts = [
-    study.title,
-    ...study.authors.map(fullName),
-    String(study.year),
-    study.journal,
-    study.abstract,
-    ...studyTags.flatMap((tag) => [tag.name, ...tag.aliases]),
-  ];
-  return foldForMatching(parts.join(" "));
 }
