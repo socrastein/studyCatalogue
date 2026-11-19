@@ -81,17 +81,58 @@ describe("matching papers to studies", () => {
     expect(result.unmatchedFiles).toHaveLength(1);
   });
 
-  it("never matches a study whose first author is an organization", () => {
+  it("matches an organization's study by the organization's full name", () => {
     const study = studyBy(
-      [{ kind: "organization", name: "American College of Sports Medicine" }],
-      2009,
-      "Position stand",
+      [{ kind: "organization", name: "General Chiropractic Council" }],
+      2026,
+      "Guidance for Registrants: Claims made for the Chiropractic Vertebral Subluxation Complex",
     );
     const result = matchPapers(
       [study],
-      ["(American College of Sports Medicine, 2009) Position stand.pdf"],
+      [
+        "(General Chiropractic Council, 2026) Claims Made for Chiropractic Vertebral Subluxation Complex.pdf",
+      ],
     );
-    expect(result.studiesWithoutPaper).toEqual([study]);
+    expect(result.studiesWithoutPaper).toEqual([]);
+    expect(result.unmatchedFiles).toEqual([]);
+  });
+
+  it("matches an organization's study named by its abbreviation when the year agrees and two title words are shared", () => {
+    const study = studyBy(
+      [
+        {
+          kind: "organization",
+          name: "National Institute for Health and Care Excellence",
+        },
+      ],
+      2021,
+      "Chronic pain (primary and secondary) in over 16s: assessment of all chronic pain",
+    );
+    const result = matchPapers(
+      [study],
+      ["(NICE, 2021) Chronic Pain Primary and Secondary NG193.pdf"],
+    );
+    expect(result.studiesWithoutPaper).toEqual([]);
+  });
+
+  it("does not match an organization's study on one shared title word, or in another year", () => {
+    const study = studyBy(
+      [
+        {
+          kind: "organization",
+          name: "National Institute for Health and Care Excellence",
+        },
+      ],
+      2021,
+      "Chronic pain (primary and secondary) in over 16s",
+    );
+    const oneWord = matchPapers([study], ["(NICE, 2021) Pain Guideline.pdf"]);
+    const otherYear = matchPapers(
+      [study],
+      ["(NICE, 2016) Chronic Pain Primary and Secondary.pdf"],
+    );
+    expect(oneWord.studiesWithoutPaper).toEqual([study]);
+    expect(otherYear.studiesWithoutPaper).toEqual([study]);
   });
 
   it("lists the studies with no file, sorted by first author, then year, then title", () => {

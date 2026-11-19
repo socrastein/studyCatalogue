@@ -14,6 +14,12 @@ import {
 } from "./paperFileName";
 import type { Study } from "./study";
 
+/**
+ * How many title words a file named by an abbreviation must share with an organization's study. Two, so a single
+ * common word ("pain") never ties a guideline to a file.
+ */
+const ORGANIZATION_TITLE_WORDS = 2;
+
 /** A file that did not belong to exactly one study, and why. */
 export type UnmatchedFile =
   /** The name is not in the form "(Surname, Year) Short Title.pdf", so no study can be looked up. */
@@ -123,18 +129,25 @@ function studiesSharingMostTitleWords(
 }
 
 /**
- * Whether a study's first author has the file's surname and the study has the file's year. A study whose first author
- * is an organization has no surname, so no file matches it by surname.
+ * Whether a study's first author and year are the file's. A person matches by family name. An organization has no
+ * family name, and Matt's files name it either in full ("General Chiropractic Council") or by its abbreviation
+ * ("NICE" for "National Institute for Health and Care Excellence"), so it matches by its full name, or, in the
+ * file's year, by a title that shares at least ORGANIZATION_TITLE_WORDS words with the study's.
  *
  * @param study A study in the catalogue.
  * @param parsed The file's parts.
  */
 function hasSameAuthorAndYear(study: Study, parsed: PaperFileName): boolean {
   const firstAuthor = study.authors[0];
-  if (firstAuthor?.kind !== "person") return false;
+  if (firstAuthor === undefined || study.year !== parsed.year) return false;
+  const surname = comparableText(parsed.surname);
+  if (firstAuthor.kind === "person")
+    return comparableText(firstAuthor.family) === surname;
+  const isFullName = comparableText(firstAuthor.name) === surname;
   return (
-    study.year === parsed.year &&
-    comparableText(firstAuthor.family) === comparableText(parsed.surname)
+    isFullName ||
+    sharedTitleWordCount(parsed.shortTitle, study.title) >=
+      ORGANIZATION_TITLE_WORDS
   );
 }
 
