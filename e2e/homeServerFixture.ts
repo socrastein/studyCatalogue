@@ -20,28 +20,38 @@ const BODY_LIMIT_BYTES = 32 * 1024 * 1024;
 export type RunningHomeServer = {
   /** The address to open, e.g. "http://127.0.0.1:4192/". */
   url: string;
+  /**
+   * The papers folder the server scans: empty and temporary, so a test writes the made-up PDF names it needs into it
+   * (never Matt's folder).
+   */
+  papersFolder: string;
 };
 
 export const test = base.extend<{ homeServer: RunningHomeServer }>({
   homeServer: async ({}, use, testInfo) => {
     const port = FIRST_TEST_PORT + (testInfo.parallelIndex % TEST_PORT_COUNT);
     const dataDirectory = await mkdtemp(join(tmpdir(), "study-catalogue-e2e-"));
+    const papersFolder = await mkdtemp(
+      join(tmpdir(), "study-catalogue-papers-"),
+    );
     const catalogueFile = await openCatalogueFile(dataDirectory);
     const server = createServer(
       createRequestHandler({
         catalogueFile,
         distDirectory: resolve("dist"),
         bodyLimitBytes: BODY_LIMIT_BYTES,
+        papersDirectory: papersFolder,
         log: () => {},
       }),
     );
     await new Promise<void>((done) => server.listen(port, "127.0.0.1", done));
     try {
-      await use({ url: `http://127.0.0.1:${port}/` });
+      await use({ url: `http://127.0.0.1:${port}/`, papersFolder });
     } finally {
       server.closeAllConnections();
       await new Promise((done) => server.close(done));
       await rm(dataDirectory, { recursive: true, force: true });
+      await rm(papersFolder, { recursive: true, force: true });
     }
   },
 

@@ -1,5 +1,6 @@
 /**
- * The server's request handler: the catalogue API at /api/catalogue, and the built app for everything else. One log
+ * The server's request handler: the catalogue API at /api/catalogue, the papers list at /api/papers, and the built app
+ * for everything else. One log
  * line per request (method, path, status, milliseconds), never a body: a catalogue is the owner's data.
  *
  * There is no authentication, on purpose. The server is meant for a home network behind the router's firewall and is
@@ -13,16 +14,23 @@ import {
   type SaveRequest,
 } from "../src/catalogue/homeServerProtocol";
 import type { CatalogueFile } from "./catalogueFile";
+import { listPaperFileNames } from "./papers";
 import { BodyTooLargeError, readBody } from "./readBody";
 import { serveStaticFile } from "./staticFiles";
 
-/** What the handler needs: the stored catalogue, the built app, the size limit and where to log. */
+/**
+ * What the handler needs: the stored catalogue, the built app, the size limit, the papers folder and where to log.
+ */
 export type RequestHandlerParts = {
   catalogueFile: CatalogueFile;
   distDirectory: string;
   bodyLimitBytes: number;
+  papersDirectory: string;
   log: (line: string) => void;
 };
+
+/** The address of the papers list: the PDF names in Matt's papers folder (papers.ts). */
+const PAPERS_API_PATH = "/api/papers";
 
 /**
  * The handler to give to `http.createServer`.
@@ -58,6 +66,7 @@ async function answer(
   const path = pathOf(request);
   if (path === CATALOGUE_API_PATH)
     return answerCatalogue(parts, request, response);
+  if (path === PAPERS_API_PATH) return answerPapers(parts, request, response);
   if (path.startsWith("/api/"))
     return sendError(response, 404, "No such API address");
   const isReading = request.method === "GET" || request.method === "HEAD";
@@ -77,6 +86,24 @@ async function answerCatalogue(
   }
   if (request.method === "PUT") return answerSave(parts, request, response);
   return refuseMethod(response);
+}
+
+/**
+ * The papers list: GET answers `{ files }` with the PDF names, or 503 with a message naming the folder when it cannot
+ * be read. Never an empty list for an unreadable folder: that would claim the papers are not there.
+ */
+async function answerPapers(
+  parts: RequestHandlerParts,
+  request: IncomingMessage,
+  response: ServerResponse,
+): Promise<number> {
+  if (request.method !== "GET") return refuseMethod(response);
+  const listing = await listPaperFileNames(parts.papersDirectory);
+  if (listing.kind === "unreadable") {
+    const message = `The papers folder ${listing.folder} cannot be read (${listing.reason}). Is the drive mounted?`;
+    return sendError(response, 503, message);
+  }
+  return sendJson(response, 200, JSON.stringify({ files: listing.fileNames }));
 }
 
 /** A save: refuse a body that is too large, unreadable or invalid; otherwise save, or hand back the newer copy. */

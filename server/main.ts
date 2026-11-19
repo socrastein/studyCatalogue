@@ -22,6 +22,7 @@ function createHomeServer(
       catalogueFile,
       distDirectory: settings.distDirectory,
       bodyLimitBytes: settings.bodyLimitBytes,
+      papersDirectory: settings.papersDirectory,
       log: (line) => console.log(line),
     }),
   );

@@ -40,6 +40,7 @@ beforeEach(async () => {
       catalogueFile,
       distDirectory,
       bodyLimitBytes: BODY_LIMIT_BYTES,
+      papersDirectory: join(directory, "papers"),
       log: (line) => logLines.push(line),
     }),
   );
@@ -149,6 +150,39 @@ describe("saving the catalogue", () => {
   it("answers 405 to other methods", async () => {
     const response = await fetch(`${ORIGIN}/api/catalogue`, {
       method: "DELETE",
+    });
+    expect(response.status).toBe(405);
+  });
+});
+
+describe("the papers list", () => {
+  it("answers the PDF names in the papers folder, with no paths", async () => {
+    await mkdir(join(directory, "papers", "_fetched"), { recursive: true });
+    await writeFile(
+      join(directory, "papers", "_fetched", "(Watson, 2017) LIFTMOR RCT.pdf"),
+      "",
+    );
+    await writeFile(join(directory, "papers", "deepResearch.md"), "");
+    const response = await fetch(`${ORIGIN}/api/papers`);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(await response.json()).toEqual({
+      files: ["(Watson, 2017) LIFTMOR RCT.pdf"],
+    });
+  });
+
+  it("answers 503 with a message naming the folder when it cannot be read, never an empty list", async () => {
+    const response = await fetch(`${ORIGIN}/api/papers`);
+    expect(response.status).toBe(503);
+    const body = (await response.json()) as { error: string };
+    expect(body.error).toContain(join(directory, "papers"));
+    expect(body.error).toContain("Is the drive mounted?");
+  });
+
+  it("answers 405 to other methods", async () => {
+    const response = await fetch(`${ORIGIN}/api/papers`, {
+      method: "PUT",
+      body: "{}",
     });
     expect(response.status).toBe(405);
   });

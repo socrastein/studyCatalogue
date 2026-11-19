@@ -5,6 +5,7 @@
  *   --port / STUDY_CATALOGUE_PORT           the port to listen on
  *   --host / STUDY_CATALOGUE_HOST           the address to listen on ("0.0.0.0" is every network interface)
  *   --dist-dir / STUDY_CATALOGUE_DIST_DIR   the built app to serve
+ *   --papers-dir / STUDY_CATALOGUE_PAPERS_DIR   the folder of papers (PDFs) the Fetch page scans
  *   --body-limit-bytes / STUDY_CATALOGUE_BODY_LIMIT_BYTES   the largest save accepted
  */
 import { homedir } from "node:os";
@@ -16,6 +17,7 @@ export type ServerSettings = {
   host: string;
   distDirectory: string;
   bodyLimitBytes: number;
+  papersDirectory: string;
 };
 
 /** The port the home server listens on unless told otherwise. */
@@ -29,6 +31,12 @@ const DEFAULT_DATA_DIR = join(homedir(), ".local", "share", "studyCatalogue");
  * home network can reach it.
  */
 const DEFAULT_HOST = "0.0.0.0";
+
+/**
+ * The folder of Matt's papers, scanned for the Fetch page. It is on his external drive, which is not mounted on every
+ * boot, so a missing folder is reported as an error by the server (papers.ts) rather than read as "no papers".
+ */
+export const DEFAULT_PAPERS_DIRECTORY = "/mnt/Sata500GB/Studies";
 
 /**
  * The largest save accepted, 32 MiB. A study with an abstract is about 3 KB of JSON, so this holds ten thousand
@@ -63,6 +71,8 @@ function readSettingsFrom(
 ): ServerSettings {
   const dataDir = choice("data-dir", DATA_DIR_VARIABLE) ?? DEFAULT_DATA_DIR;
   const distDir = choice("dist-dir", DIST_DIR_VARIABLE) ?? defaultDistDirectory;
+  const papersDir =
+    choice("papers-dir", PAPERS_DIR_VARIABLE) ?? DEFAULT_PAPERS_DIRECTORY;
   return {
     dataDirectory: resolve(dataDir),
     port: readWholeNumber("port", choice("port", PORT_VARIABLE), DEFAULT_PORT),
@@ -73,6 +83,7 @@ function readSettingsFrom(
       choice("body-limit-bytes", BODY_LIMIT_VARIABLE),
       DEFAULT_BODY_LIMIT_BYTES,
     ),
+    papersDirectory: resolve(papersDir),
   };
 }
 
@@ -82,6 +93,7 @@ const KNOWN_FLAGS = [
   "host",
   "dist-dir",
   "body-limit-bytes",
+  "papers-dir",
 ];
 
 /** The settings' environment variables: each flag also has a variable, and the flag wins over it. */
@@ -90,6 +102,7 @@ const PORT_VARIABLE = "STUDY_CATALOGUE_PORT";
 const HOST_VARIABLE = "STUDY_CATALOGUE_HOST";
 const DIST_DIR_VARIABLE = "STUDY_CATALOGUE_DIST_DIR";
 const BODY_LIMIT_VARIABLE = "STUDY_CATALOGUE_BODY_LIMIT_BYTES";
+const PAPERS_DIR_VARIABLE = "STUDY_CATALOGUE_PAPERS_DIR";
 
 /** The flags as name to value, for `--name value` and `--name=value`. */
 function readFlags(argv: string[]): Map<string, string> {
